@@ -10,13 +10,13 @@
     <version>1.580.1</version>
     <relativePath/>
   </parent>
-  <groupId>splunk</groupId>
+  <groupId>com.splunk.app</groupId>
   <artifactId>splunkins</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
-  <name>TODO Plugin</name>
-  <description>TODO</description>
+  <name>splunkins</name>
+  <description>A Jenkins plugin for forwarding test results to a Splunk indexer.</description>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
   <licenses>
     <license>
@@ -27,9 +27,9 @@
   <!-- If you want this to appear on the wiki page:
   <developers>
     <developer>
-      <id>bhacker</id>
-      <name>Bob Q. Hacker</name>
-      <email>bhacker@nowhere.net</email>
+      <id>djenkins</id>
+      <name>Danielle Jenkins</name>
+      <email>djenkins@splunk.com</email>
     </developer>
   </developers>
   -->
