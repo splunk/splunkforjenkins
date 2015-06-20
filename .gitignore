@@ -1,2 +1,15 @@
-target/
+target
 work
+
+# Vim junk files
+.*.swp
+*~
+
+# IntelliJ project files
+.idea/
+*.iml
+
+# Eclipse IDE project files
+.classpath
+.project
+.settings/
