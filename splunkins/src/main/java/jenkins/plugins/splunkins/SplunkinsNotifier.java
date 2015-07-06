@@ -11,12 +11,15 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.logging.Logger;
+
 /**
  * Created by djenkins on 6/18/15.
  */
 public class SplunkinsNotifier extends Notifier {
     public int maxLines;
     public boolean failbuild;
+    private final static Logger LOGGER = Logger.getLogger(PluginImpl.class.getName());
 
     @DataBoundConstructor
     public SplunkinsNotifier(int maxLines, boolean failBuild){
@@ -29,6 +32,7 @@ public class SplunkinsNotifier extends Notifier {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream errorPrintStream = listener.getLogger();
         log = build.getLog(Integer.MAX_VALUE);
+        LOGGER.info(log);
 
         return !(failBuild);
     }
