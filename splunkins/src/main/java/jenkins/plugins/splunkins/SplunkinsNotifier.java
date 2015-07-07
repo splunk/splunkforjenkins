@@ -12,6 +12,8 @@ import hudson.tasks.Publisher;
 import java.io.IOException;
 import java.io.PrintStream;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -32,12 +34,13 @@ public class SplunkinsNotifier extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream errorPrintStream = listener.getLogger();
+        List<String> log = null;
         try {
             log = build.getLog(Integer.MAX_VALUE);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOGGER.info(log);
+        LOGGER.info(log.toString());
 
         return !(failBuild);
     }
