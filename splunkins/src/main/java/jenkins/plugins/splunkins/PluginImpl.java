@@ -10,6 +10,6 @@ public class PluginImpl extends Plugin {
     private final static Logger LOGGER = Logger.getLogger(PluginImpl.class.getName());
 
     public void start() throws Exception {
-        LOGGER.info(Messages.DESCRIPTION);
+        LOGGER.info(Messages.Description());
     }
 }
