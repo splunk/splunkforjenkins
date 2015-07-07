@@ -9,8 +9,9 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import java.io.OutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import org.kohsuke.stapler.DataBoundConstructor;
 import java.util.logging.Logger;
 
 /**
