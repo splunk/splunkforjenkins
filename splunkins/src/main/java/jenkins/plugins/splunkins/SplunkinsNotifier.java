@@ -1,5 +1,6 @@
 package jenkins.plugins.splunkins;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
@@ -40,8 +41,18 @@ public class SplunkinsNotifier extends Notifier {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        LOGGER.info(log.toString());
 
+        EnvVars envVars = new EnvVars();
+        try {
+            envVars = build.getEnvironment(listener);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        LOGGER.info(log.toString());
+        LOGGER.info(envVars.toString());
         return !(failBuild);
     }
 
