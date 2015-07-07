@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class SplunkinsNotifier extends Notifier {
     public int maxLines;
-    public boolean failbuild;
+    public boolean failBuild;
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
