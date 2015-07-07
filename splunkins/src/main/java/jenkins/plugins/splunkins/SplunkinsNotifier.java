@@ -1,4 +1,4 @@
-package splunk.splunkins;
+package jenkins.plugins.splunkins;
 
 import hudson.Extension;
 import hudson.Launcher;
@@ -19,7 +19,7 @@ import java.util.logging.Logger;
 public class SplunkinsNotifier extends Notifier {
     public int maxLines;
     public boolean failbuild;
-    private final static Logger LOGGER = Logger.getLogger(PluginImpl.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
     public SplunkinsNotifier(int maxLines, boolean failBuild){

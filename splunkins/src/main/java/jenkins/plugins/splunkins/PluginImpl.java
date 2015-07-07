@@ -1,4 +1,4 @@
-package splunk.splunkins;
+package jenkins.plugins.splunkins;
 
 import hudson.Plugin;
 import java.util.logging.Logger;
