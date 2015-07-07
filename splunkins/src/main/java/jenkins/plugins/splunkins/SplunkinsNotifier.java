@@ -32,7 +32,11 @@ public class SplunkinsNotifier extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream errorPrintStream = listener.getLogger();
-        log = build.getLog(Integer.MAX_VALUE);
+        try {
+            log = build.getLog(Integer.MAX_VALUE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         LOGGER.info(log);
 
         return !(failBuild);
