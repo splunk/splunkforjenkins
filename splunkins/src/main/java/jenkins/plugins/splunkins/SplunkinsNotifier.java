@@ -13,6 +13,7 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.FileNotFoundException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -62,11 +63,22 @@ public class SplunkinsNotifier extends Notifier {
         LOGGER.info("junitReport Path:" + this.junitReport.toString());
         LOGGER.info("workspace path:" + workspacePath);
 
-        if (!this.junitReport.equals("")){
+        if (!this.junitReport.equals("")){  // Ignore junitReport if not specified.
             FilePath fullReportPath = new FilePath(workspacePath, this.junitReport.toString());
             String report = null;
             try {
-                report = fullReportPath.readToString();
+                report = fullReportPath.readToString();  // Attempt to read junit xml report
+            } catch(FileNotFoundException e ){           // If the junit report file is not found...
+                String noSuchFileMsg = "Build: "+build.getFullDisplayName()+", Splunkins Error: "+e.getMessage();
+                LOGGER.warning(noSuchFileMsg);          // Write to Jenkins log
+                try {
+                    // Attempt to write to build's console log
+                    String buildConsoleError = "Splunkins cannot find JUnit XML Report:" + e.getMessage() + "\n";
+                    errorPrintStream.write(buildConsoleError.getBytes());
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                errorPrintStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
