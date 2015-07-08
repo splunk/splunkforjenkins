@@ -6,5 +6,8 @@
     <f:entry title="${%Can fail build}" field="failBuild">
       <f:checkbox checked="${instance.failBuild}" />
     </f:entry>
+    <f:entry title="${%JUnit Report Path}" field="junitReport">
+      <f:textbox default='' value="${instance.junitReport}" />
+    </f:entry>
   </f:block>
 </j:jelly>
