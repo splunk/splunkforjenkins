@@ -14,6 +14,7 @@ import hudson.tasks.Publisher;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.FileNotFoundException;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class SplunkinsNotifier extends Notifier {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        PrintStream errorPrintStream = listener.getLogger();
+        PrintStream buildLogStream = listener.getLogger();
         List<String> log = null;
         try {
             log = build.getLog(Integer.MAX_VALUE);
@@ -58,13 +59,15 @@ public class SplunkinsNotifier extends Notifier {
 
         FilePath workspacePath = build.getWorkspace(); // collect junit xml file
 
+        assert log != null;
         LOGGER.info(log.toString());
         LOGGER.info(envVars.toString());
-        LOGGER.info("junitReport Path:" + this.junitReport.toString());
+        LOGGER.info("junitReport Path:" + this.junitReport);
         LOGGER.info("workspace path:" + workspacePath);
 
+
         if (!this.junitReport.equals("")){  // Ignore junitReport if not specified.
-            FilePath fullReportPath = new FilePath(workspacePath, this.junitReport.toString());
+            FilePath fullReportPath = new FilePath(workspacePath, this.junitReport);
             String report = null;
             try {
                 report = fullReportPath.readToString();  // Attempt to read junit xml report
@@ -74,18 +77,19 @@ public class SplunkinsNotifier extends Notifier {
                 try {
                     // Attempt to write to build's console log
                     String buildConsoleError = "Splunkins cannot find JUnit XML Report:" + e.getMessage() + "\n";
-                    errorPrintStream.write(buildConsoleError.getBytes());
+                    buildLogStream.write(buildConsoleError.getBytes());
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-                errorPrintStream.flush();
+                buildLogStream.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            assert report != null;
             LOGGER.info("fullReportPath:" + fullReportPath);
-            LOGGER.info(report);
+            LOGGER.info("XML report:\n"+report);
         }
 
         return !(failBuild);
