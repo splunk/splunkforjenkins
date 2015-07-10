@@ -37,15 +37,14 @@ public class SplunkinsNotifier extends Notifier {
         this.testArtifacts = testArtifacts;
     }
 
-
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
 
-        List<String> log = getBuildLog(build);
+        String log = getBuildLog(build);
         String envVars = getBuildEnvVars(build, listener);
         String artifactContents = readTestArtifact(this.testArtifacts, build, buildLogStream);
-        LOGGER.info(log.toString());
+        LOGGER.info(log);
         LOGGER.info(envVars);
         LOGGER.info("XML report:\n"+artifactContents);
 
@@ -53,14 +52,14 @@ public class SplunkinsNotifier extends Notifier {
     }
 
     // Returns the build log as a list of strings.
-    public List<String> getBuildLog(AbstractBuild<?, ?> build){
+    public String getBuildLog(AbstractBuild<?, ?> build){
         List<String> log = new ArrayList<String>();
         try {
             log = build.getLog(Integer.MAX_VALUE);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return log;
+        return log.toString();
     }
 
     // Returns environment variables for the build.
