@@ -17,6 +17,7 @@ import java.io.FileNotFoundException;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -40,14 +41,31 @@ public class SplunkinsNotifier extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
-        List<String> log = null;
+
+        List<String> log = getBuildLog(build);
+        String envVars = getBuildEnvVars(build, listener);
+        String artifactContents = readTestArtifact(this.testArtifacts, build, buildLogStream);
+        LOGGER.info(log.toString());
+        LOGGER.info(envVars);
+        LOGGER.info("XML report:\n"+artifactContents);
+
+        return !(failBuild);
+    }
+
+    // Returns the build log as a list of strings.
+    public List<String> getBuildLog(AbstractBuild<?, ?> build){
+        List<String> log = new ArrayList<String>();
         try {
             log = build.getLog(Integer.MAX_VALUE);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return log;
+    }
 
-        EnvVars envVars = new EnvVars();
+    // Returns environment variables for the build.
+    public String getBuildEnvVars(AbstractBuild<?, ?> build, BuildListener listener){
+        EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(listener);
         } catch (IOException e) {
@@ -55,25 +73,21 @@ public class SplunkinsNotifier extends Notifier {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        return envVars.toString();
+    }
 
-
-        FilePath workspacePath = build.getWorkspace(); // collect junit xml file
-
-        assert log != null;
-        LOGGER.info(log.toString());
-        LOGGER.info(envVars.toString());
-        LOGGER.info("testArtifacts Path:" + this.testArtifacts);
-        LOGGER.info("workspace path:" + workspacePath);
-
-
-        if (!this.testArtifacts.equals("")){  // Ignore testArtifacts if nothing is specified.
-            FilePath fullReportPath = new FilePath(workspacePath, this.testArtifacts);
-            String report = null;
+    // Reads test artifact text files and returns their contents. Logs errors to both the Jenkins build log and the
+    // Jenkins internal logging. If you provide a blank string for a filename, you'll get a blank string in return.
+    public String readTestArtifact(String artifactName, AbstractBuild<?, ?> build, PrintStream buildLogStream){
+        String report = "";
+        FilePath workspacePath = build.getWorkspace();   // collect junit xml file
+        if (!artifactName.equals("")){                   // Ignore testArtifacts if nothing is specified.
+            FilePath fullReportPath = new FilePath(workspacePath, artifactName);
             try {
-                report = fullReportPath.readToString();  // Attempt to read junit xml report
-            } catch(FileNotFoundException e ){           // If the junit report file is not found...
+                report = fullReportPath.readToString();  // Attempt to read test artifact
+            } catch(FileNotFoundException e ){           // If the test artifact file is not found...
                 String noSuchFileMsg = "Build: "+build.getFullDisplayName()+", Splunkins Error: "+e.getMessage();
-                LOGGER.warning(noSuchFileMsg);          // Write to Jenkins log
+                LOGGER.warning(noSuchFileMsg);           // Write to Jenkins log
                 try {
                     // Attempt to write to build's console log
                     String buildConsoleError = "Splunkins cannot find JUnit XML Report:" + e.getMessage() + "\n";
@@ -88,13 +102,9 @@ public class SplunkinsNotifier extends Notifier {
                 e.printStackTrace();
             }
             assert report != null;
-            LOGGER.info("fullReportPath:" + fullReportPath);
-            LOGGER.info("XML report:\n"+report);
         }
-
-        return !(failBuild);
+        return report;
     }
-
 
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.BUILD;
