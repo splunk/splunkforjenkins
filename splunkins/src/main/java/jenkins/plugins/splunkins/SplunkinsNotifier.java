@@ -26,14 +26,14 @@ import java.util.logging.Logger;
 public class SplunkinsNotifier extends Notifier {
     public int maxLines;
     public boolean failBuild;
-    public String junitReport;
+    public String testArtifacts;
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(int maxLines, boolean failBuild, String junitReport){
+    public SplunkinsNotifier(int maxLines, boolean failBuild, String testArtifacts){
         this.maxLines = maxLines;
         this.failBuild = failBuild;
-        this.junitReport = junitReport;
+        this.testArtifacts = testArtifacts;
     }
 
 
@@ -62,12 +62,12 @@ public class SplunkinsNotifier extends Notifier {
         assert log != null;
         LOGGER.info(log.toString());
         LOGGER.info(envVars.toString());
-        LOGGER.info("junitReport Path:" + this.junitReport);
+        LOGGER.info("testArtifacts Path:" + this.testArtifacts);
         LOGGER.info("workspace path:" + workspacePath);
 
 
-        if (!this.junitReport.equals("")){  // Ignore junitReport if not specified.
-            FilePath fullReportPath = new FilePath(workspacePath, this.junitReport);
+        if (!this.testArtifacts.equals("")){  // Ignore testArtifacts if nothing is specified.
+            FilePath fullReportPath = new FilePath(workspacePath, this.testArtifacts);
             String report = null;
             try {
                 report = fullReportPath.readToString();  // Attempt to read junit xml report
