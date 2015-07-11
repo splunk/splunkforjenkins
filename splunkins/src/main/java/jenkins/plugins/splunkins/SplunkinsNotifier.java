@@ -48,7 +48,7 @@ public class SplunkinsNotifier extends Notifier {
         LOGGER.info(envVars);
         LOGGER.info("XML report:\n"+artifactContents);
 
-        return !(failBuild);
+        return true;
     }
 
     // Returns the build log as a list of strings.
