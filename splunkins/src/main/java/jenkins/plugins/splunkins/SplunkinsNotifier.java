@@ -25,30 +25,40 @@ import java.util.logging.Logger;
  * Created by djenkins on 6/18/15.
  */
 public class SplunkinsNotifier extends Notifier {
-    public int maxLines;
-    public boolean failBuild;
-    public String testArtifacts;
+    public boolean collectBuildLog;
+    public boolean collectEnvVars;
+    public String testArtifactFilename;
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(int maxLines, boolean failBuild, String testArtifacts){
-        this.maxLines = maxLines;
-        this.failBuild = failBuild;
-        this.testArtifacts = testArtifacts;
+    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String testArtifactFilename){
+        this.collectBuildLog = collectBuildLog;
+        this.collectEnvVars = collectEnvVars;
+        this.testArtifactFilename = testArtifactFilename;
     }
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
 
-        String log = getBuildLog(build);
-        String envVars = getBuildEnvVars(build, listener);
-        String artifactContents = readTestArtifact(this.testArtifacts, build, buildLogStream);
-        LOGGER.info(log);
-        LOGGER.info(envVars);
-        LOGGER.info("XML report:\n"+artifactContents);
+        LOGGER.info("Collect buildlog: "+this.collectBuildLog);
+        LOGGER.info("collect artifacts: "+this.collectEnvVars);
 
-        return !(failBuild);
+
+        if (this.collectEnvVars) {
+            String log = getBuildLog(build);
+            LOGGER.info(log);
+        }
+        if (this.collectEnvVars){
+            String envVars = getBuildEnvVars(build, listener);
+            LOGGER.info(envVars);
+        }
+        if (!this.testArtifactFilename.equals("")) {
+            String artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
+            LOGGER.info("XML report:\n" + artifactContents);
+        }
+
+        return true;
     }
 
     // Returns the build log as a list of strings.
@@ -76,32 +86,30 @@ public class SplunkinsNotifier extends Notifier {
     }
 
     // Reads test artifact text files and returns their contents. Logs errors to both the Jenkins build log and the
-    // Jenkins internal logging. If you provide a blank string for a filename, you'll get a blank string in return.
+    // Jenkins internal logging.
     public String readTestArtifact(String artifactName, AbstractBuild<?, ?> build, PrintStream buildLogStream){
         String report = "";
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
-        if (!artifactName.equals("")){                   // Ignore testArtifacts if nothing is specified.
-            FilePath fullReportPath = new FilePath(workspacePath, artifactName);
+        FilePath fullReportPath = new FilePath(workspacePath, artifactName);
+        try {
+            report = fullReportPath.readToString();  // Attempt to read test artifact
+        } catch(FileNotFoundException e ){           // If the test artifact file is not found...
+            String noSuchFileMsg = "Build: "+build.getFullDisplayName()+", Splunkins Error: "+e.getMessage();
+            LOGGER.warning(noSuchFileMsg);           // Write to Jenkins log
             try {
-                report = fullReportPath.readToString();  // Attempt to read test artifact
-            } catch(FileNotFoundException e ){           // If the test artifact file is not found...
-                String noSuchFileMsg = "Build: "+build.getFullDisplayName()+", Splunkins Error: "+e.getMessage();
-                LOGGER.warning(noSuchFileMsg);           // Write to Jenkins log
-                try {
-                    // Attempt to write to build's console log
-                    String buildConsoleError = "Splunkins cannot find JUnit XML Report:" + e.getMessage() + "\n";
-                    buildLogStream.write(buildConsoleError.getBytes());
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                buildLogStream.flush();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                // Attempt to write to build's console log
+                String buildConsoleError = "Splunkins cannot find JUnit XML Report:" + e.getMessage() + "\n";
+                buildLogStream.write(buildConsoleError.getBytes());
+            } catch (IOException e1) {
+                e1.printStackTrace();
             }
-            assert report != null;
+            buildLogStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+        assert report != null;
         return report;
     }
 

@@ -1,13 +1,13 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <f:block>
-    <f:entry title="${%Max lines}" field="maxLines">
-      <f:number default="1000" value="${instance.maxLines}" checkUrl="'descriptorByName/SplunkinsInstallation/checkInteger?value='+escape(this.value)" />
+    <f:entry title="${%Send build log}" field="collectBuildLog">
+      <f:checkbox default="true"  />
     </f:entry>
-    <f:entry title="${%Can fail build}" field="failBuild">
-      <f:checkbox checked="${instance.failBuild}" />
+    <f:entry title="${%Send environment variables}" field="collectEnvVars">
+      <f:checkbox default="true" />
     </f:entry>
-    <f:entry title="${%JUnit Report Path}" field="junitReport">
-      <f:textbox default='' value="${instance.junitReport}" />
+    <f:entry title="${%Relative path to build artifacts}" field="testArtifactFilename">
+      <f:textbox default='' value="${instance.testArtifactFilename}" />
     </f:entry>
   </f:block>
 </j:jelly>
