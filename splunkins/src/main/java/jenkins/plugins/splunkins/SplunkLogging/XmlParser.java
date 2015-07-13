@@ -1,3 +1,5 @@
+package jenkins.plugins.splunkins.SplunkLogging;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;

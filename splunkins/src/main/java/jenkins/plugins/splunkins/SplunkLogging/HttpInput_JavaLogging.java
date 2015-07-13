@@ -1,17 +1,6 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.InputStream;
+package jenkins.plugins.splunkins.SplunkLogging;
+
 import java.util.HashMap;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
-import org.apache.commons.io.IOUtils;
-import org.json.XML;
-import org.json.simple.JSONObject;
-import org.w3c.dom.Document;
 
 
 
