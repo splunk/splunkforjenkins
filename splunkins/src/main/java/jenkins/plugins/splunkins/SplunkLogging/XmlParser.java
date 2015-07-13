@@ -15,18 +15,8 @@ import java.util.logging.Logger;
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 
-	public void xmlParser(Logger logger) throws FileNotFoundException, IOException, JSONException, ParseException{
-		StringBuilder sb = new StringBuilder();
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				"/Users/kjotwani/Downloads/test-result.xml"))) {
-			String sCurrentLine;
-			while ((sCurrentLine = br.readLine()) != null) {
-				sb.append(sCurrentLine);
-			}
-
-		}
-
-		JSONObject xmlJSONObj = XML.toJSONObject(sb.toString());
+	public void xmlParser(String xmlString, Logger logger) throws FileNotFoundException, IOException, JSONException, ParseException{
+		JSONObject xmlJSONObj = XML.toJSONObject(xmlString);
 		ArrayList<JSONObject> list = parse(xmlJSONObj);
 
 		for (int i = 0; i < list.size(); i++)
