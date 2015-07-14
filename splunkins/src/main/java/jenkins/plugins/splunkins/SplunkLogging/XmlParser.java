@@ -1,10 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.logging.Logger;
+package jenkins.plugins.splunkins.SplunkLogging;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -12,25 +6,21 @@ import org.json.JSONObject;
 import org.json.XML;
 import org.json.simple.parser.ParseException;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.logging.Logger;
+
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 
-	public void xmlParser(Logger logger) throws FileNotFoundException, IOException, JSONException, ParseException{
-		StringBuilder sb = new StringBuilder();
-		try (BufferedReader br = new BufferedReader(new FileReader(
-				"/Users/kjotwani/Downloads/test-result.xml"))) {
-			String sCurrentLine;
-			while ((sCurrentLine = br.readLine()) != null) {
-				sb.append(sCurrentLine);
-			}
-
-		}
-
-		JSONObject xmlJSONObj = XML.toJSONObject(sb.toString());
+	public void xmlParser(String xmlString, Logger logger) throws IOException, JSONException, ParseException{
+		JSONObject xmlJSONObj = XML.toJSONObject(xmlString);
 		ArrayList<JSONObject> list = parse(xmlJSONObj);
 
-		for (int i = 0; i < list.size(); i++)
-			logger.info(list.get(i).toString());
+        for (JSONObject jsonObj : list) {
+            logger.info(jsonObj.toString());
+        }
 	}
 
 	private ArrayList<JSONObject> parse(JSONObject json)
@@ -41,12 +31,12 @@ public class XmlParser {
 		while (keys.hasNext()) {
 			String key = keys.next();
 			try {
-				JSONObject originalJSON = json.getJSONObject(key.toString());
+				JSONObject originalJSON = json.getJSONObject(key);
 				parse(originalJSON);
 				commonElements = originalJSON;
 			} catch (JSONException e) {
-				if ("testcase".equalsIgnoreCase(key.toString())) {
-					JSONArray jsonarr = json.getJSONArray(key.toString());
+				if ("testcase".equalsIgnoreCase(key)) {
+					JSONArray jsonarr = json.getJSONArray(key);
 					for (int n = 0; n < jsonarr.length(); n++) {
 						JSONObject object = jsonarr.getJSONObject(n);
 
@@ -80,5 +70,4 @@ public class XmlParser {
 		return arr;
 
 	}
-
 }

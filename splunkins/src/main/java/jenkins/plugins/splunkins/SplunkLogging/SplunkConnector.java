@@ -1,3 +1,7 @@
+package jenkins.plugins.splunkins.SplunkLogging;
+
+import com.splunk.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -7,11 +11,6 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import com.splunk.HttpService;
-import com.splunk.ResponseMessage;
-import com.splunk.SSLSecurityProtocol;
-import com.splunk.Service;
-import com.splunk.ServiceArgs;
 
 public class SplunkConnector {
 	private static Service service;
@@ -77,7 +76,7 @@ public class SplunkConnector {
 	/**
 	 * read splunk host info from .splunkrc file
 	 */
-	static ServiceArgs getSplunkHostInfo() throws IOException {
+	public static ServiceArgs getSplunkHostInfo() throws IOException {
 
 		if (serviceArgs.isEmpty()) {
 			// set default value
