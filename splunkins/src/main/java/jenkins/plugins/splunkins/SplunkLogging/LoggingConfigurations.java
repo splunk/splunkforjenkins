@@ -1,8 +1,3 @@
-package jenkins.plugins.splunkins.SplunkLogging;
-
-import ch.qos.logback.core.joran.spi.JoranException;
-import com.splunk.ServiceArgs;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -14,6 +9,7 @@ import java.util.List;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.splunk.ServiceArgs;
 
 
 public class LoggingConfigurations {
@@ -21,7 +17,7 @@ public class LoggingConfigurations {
 	 /*
     create logging.property and force java logging  manager to reload the configurations
     */
-    public static void loadJavaLoggingConfiguration(String configFileTemplate, String configFile, HashMap<String, String> userInputs) throws IOException, JoranException {
+    public static void loadJavaLoggingConfiguration(String configFileTemplate, String configFile, HashMap<String, String> userInputs) throws IOException {
         ServiceArgs serviceArgs = SplunkConnector.getSplunkHostInfo();
 
         String configFilePath = updateConfigFile(configFileTemplate, configFile, userInputs, serviceArgs);
@@ -86,3 +82,4 @@ public class LoggingConfigurations {
     }
 
 }
+
