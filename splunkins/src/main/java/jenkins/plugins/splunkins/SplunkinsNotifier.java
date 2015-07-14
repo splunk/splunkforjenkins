@@ -1,5 +1,6 @@
 package jenkins.plugins.splunkins;
 
+import ch.qos.logback.core.joran.spi.JoranException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -11,13 +12,17 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.FileNotFoundException;
-
+import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
+import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
+import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -40,10 +45,10 @@ public class SplunkinsNotifier extends Notifier {
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
+        String artifactContents = null;
 
         LOGGER.info("Collect buildlog: "+this.collectBuildLog);
         LOGGER.info("collect artifacts: "+this.collectEnvVars);
-
 
         if (this.collectEnvVars) {
             String log = getBuildLog(build);
@@ -54,9 +59,42 @@ public class SplunkinsNotifier extends Notifier {
             LOGGER.info(envVars);
         }
         if (!this.testArtifactFilename.equals("")) {
-            String artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
+            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
             LOGGER.info("XML report:\n" + artifactContents);
         }
+
+        String httpinputName = "httpInputs";
+        String token = null;
+        try {
+            token = SplunkConnector.createHttpinput(httpinputName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String loggerName = "splunkLogger";
+        HashMap<String, String> userInputs = new HashMap<String, String>();
+        userInputs.put("user_httpinput_token", token);
+        userInputs.put("user_logger_name", loggerName);
+        try {
+            LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JoranException e) {
+            e.printStackTrace();
+        }
+
+        java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(loggerName);
+//
+        XmlParser parser = new XmlParser();
+        try {
+            parser.xmlParser(artifactContents, LOGGER);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        //SplunkConnector.deleteHttpinput(httpinputName);
 
         return true;
     }
