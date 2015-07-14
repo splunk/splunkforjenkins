@@ -1,3 +1,6 @@
+package jenkins.plugins.splunkins.SplunkLogging;
+
+import com.splunk.ServiceArgs;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -9,7 +12,6 @@ import java.util.List;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.splunk.ServiceArgs;
 
 
 public class LoggingConfigurations {

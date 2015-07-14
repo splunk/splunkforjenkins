@@ -1,6 +1,5 @@
 package jenkins.plugins.splunkins;
 
-import ch.qos.logback.core.joran.spi.JoranException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -79,8 +78,6 @@ public class SplunkinsNotifier extends Notifier {
         try {
             LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JoranException e) {
             e.printStackTrace();
         }
 
