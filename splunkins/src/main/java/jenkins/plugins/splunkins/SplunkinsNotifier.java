@@ -15,6 +15,7 @@ import hudson.tasks.Publisher;
 import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -88,10 +89,12 @@ public class SplunkinsNotifier extends Notifier {
         XmlParser parser = new XmlParser();
         try {
             parser.xmlParser(artifactContents, LOGGER);
-        } catch (IOException e) {
+        } catch (JSONException e) {
             e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
+        } catch (ParseException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
         }
 
         //SplunkConnector.deleteHttpinput(httpinputName);
@@ -120,6 +123,7 @@ public class SplunkinsNotifier extends Notifier {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        assert envVars != null;
         return envVars.toString();
     }
 
