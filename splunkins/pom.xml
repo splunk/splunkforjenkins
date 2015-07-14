@@ -7,7 +7,7 @@
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
-        <version>1.580.1</version>
+        <version>1.620</version>
         <relativePath/>
     </parent>
     <groupId>com.splunk.app</groupId> <!-- com.splunk.jenkins -->
@@ -30,6 +30,11 @@
             <id>djenkins</id>
             <name>Danielle Jenkins</name>
             <email>djenkins@splunk.com</email>
+        </developer>
+        <developer>
+            <id>kjotwani</id>
+            <name>Kashyap Jotwani</name>
+            <email>kjotwani@splunk.com</email>
         </developer>
     </developers>
     -->
@@ -83,7 +88,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.7</version>
+            <version>1.7.5</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
