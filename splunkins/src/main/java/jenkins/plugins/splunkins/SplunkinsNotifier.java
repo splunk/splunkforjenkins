@@ -14,8 +14,6 @@ import hudson.tasks.Publisher;
 import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
-import org.json.JSONException;
-import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.FileNotFoundException;
