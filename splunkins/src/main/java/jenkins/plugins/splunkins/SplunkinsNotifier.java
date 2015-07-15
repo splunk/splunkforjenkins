@@ -45,9 +45,6 @@ public class SplunkinsNotifier extends Notifier {
         PrintStream buildLogStream = listener.getLogger();
         String artifactContents = null;
 
-        LOGGER.info("Collect buildlog: "+this.collectBuildLog);
-        LOGGER.info("collect artifacts: "+this.collectEnvVars);
-
         if (this.collectEnvVars) {
             String log = getBuildLog(build);
             LOGGER.info(log);
