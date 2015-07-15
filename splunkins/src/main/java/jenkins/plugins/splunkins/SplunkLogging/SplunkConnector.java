@@ -1,20 +1,13 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
+import com.splunk.*;
+import jenkins.plugins.splunkins.SplunkinsInstallation;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import com.splunk.HttpService;
-import com.splunk.ResponseMessage;
-import com.splunk.SSLSecurityProtocol;
-import com.splunk.Service;
-import com.splunk.ServiceArgs;
 
 public class SplunkConnector {
 	private static Service service;
@@ -66,6 +59,8 @@ public class SplunkConnector {
 	public static Service connectToSplunk() throws IOException {
 
 		if (service == null) {
+			HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
+
 			getSplunkHostInfo();
 
 			// get splunk service and login
@@ -77,44 +72,18 @@ public class SplunkConnector {
 	}
 
 	/**
-	 * read splunk host info from .splunkrc file
+	 * Get the splunk host info from the global configuration page
 	 */
 	static ServiceArgs getSplunkHostInfo() throws IOException {
 
 		if (serviceArgs.isEmpty()) {
 			// set default value
-			serviceArgs.setUsername("admin");
-			serviceArgs.setPassword("changeme");
-			serviceArgs.setHost("localhost");
-			serviceArgs.setPort(8089);
-			serviceArgs.setScheme("https");
-
-			// update serviceArgs with splunk host info
-			String splunkhostfile = System.getProperty("user.home")
-					+ File.separator + ".splunkrc";
-			HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-			
-			List<String> lines = Files
-					.readAllLines(new File(splunkhostfile).toPath(),
-							Charset.defaultCharset());
-	    
-			for (String line : lines) {
-				if (line.toLowerCase().contains(Constants.HOST + "=")) {
-					serviceArgs.setHost(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains("admin=")) {
-					serviceArgs.setUsername(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains("password=")) {
-					serviceArgs.setPassword(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains(Constants.SCHEME + "=")) {
-					serviceArgs.setScheme(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains(Constants.PORT + "=")) {
-					serviceArgs.setPort(Integer.parseInt(line.split("=")[1]));
-				}
-			}
+			SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getLogstashDescriptor();
+			serviceArgs.setHost(descriptor.host);
+			serviceArgs.setPort(descriptor.port);
+			serviceArgs.setUsername(descriptor.username);
+			serviceArgs.setPassword(descriptor.password);
+			serviceArgs.setScheme(descriptor.scheme);
 		}
 		return serviceArgs;
 	}
