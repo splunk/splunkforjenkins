@@ -1,6 +1,5 @@
 package jenkins.plugins.splunkins;
 
-import ch.qos.logback.core.joran.spi.JoranException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -15,8 +14,6 @@ import hudson.tasks.Publisher;
 import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
-import org.json.JSONException;
-import org.json.simple.parser.ParseException;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.FileNotFoundException;
@@ -59,10 +56,6 @@ public class SplunkinsNotifier extends Notifier {
             String envVars = getBuildEnvVars(build, listener);
             LOGGER.info(envVars);
         }
-        if (!this.testArtifactFilename.equals("")) {
-            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
-            LOGGER.info("XML report:\n" + artifactContents);
-        }
 
         String httpinputName = "httpInputs";
         String token = null;
@@ -80,22 +73,17 @@ public class SplunkinsNotifier extends Notifier {
             LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (JoranException e) {
-            e.printStackTrace();
         }
 
         java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(loggerName);
-//
-        XmlParser parser = new XmlParser();
-        try {
-            parser.xmlParser(artifactContents, LOGGER);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (ParseException e1) {
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
+
+        if (!this.testArtifactFilename.equals("")) {
+            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
+            LOGGER.info("XML report:\n" + artifactContents);
         }
+
+        XmlParser parser = new XmlParser();
+        parser.xmlParser(LOGGER, artifactContents);
 
         //SplunkConnector.deleteHttpinput(httpinputName);
 
@@ -118,9 +106,7 @@ public class SplunkinsNotifier extends Notifier {
         EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(listener);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         assert envVars != null;
@@ -146,9 +132,7 @@ public class SplunkinsNotifier extends Notifier {
                 e1.printStackTrace();
             }
             buildLogStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         assert report != null;
