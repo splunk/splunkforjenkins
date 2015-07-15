@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 
-	public void xmlParser(Logger logger, ArrayList<String> logs) {
+	public void xmlParser(Logger logger, String logs) {
 		Object xmlJSONObj;
 
 		try {

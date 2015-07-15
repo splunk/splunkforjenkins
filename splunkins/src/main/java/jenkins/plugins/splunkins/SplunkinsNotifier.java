@@ -56,10 +56,6 @@ public class SplunkinsNotifier extends Notifier {
             String envVars = getBuildEnvVars(build, listener);
             LOGGER.info(envVars);
         }
-        if (!this.testArtifactFilename.equals("")) {
-            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
-            LOGGER.info("XML report:\n" + artifactContents);
-        }
 
         String httpinputName = "httpInputs";
         String token = null;
@@ -80,9 +76,14 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(loggerName);
-//
+
+        if (!this.testArtifactFilename.equals("")) {
+            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
+            LOGGER.info("XML report:\n" + artifactContents);
+        }
+
         XmlParser parser = new XmlParser();
-        parser.xmlParser(LOGGER, );
+        parser.xmlParser(LOGGER, artifactContents);
 
         //SplunkConnector.deleteHttpinput(httpinputName);
 
