@@ -1,20 +1,13 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
+import com.splunk.*;
+import jenkins.plugins.splunkins.SplunkinsInstallation;
+
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import com.splunk.HttpService;
-import com.splunk.ResponseMessage;
-import com.splunk.SSLSecurityProtocol;
-import com.splunk.Service;
-import com.splunk.ServiceArgs;
 
 public class SplunkConnector {
 	private static Service service;
