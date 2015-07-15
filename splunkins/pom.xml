@@ -44,6 +44,7 @@
         <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
     </scm>
     -->
+
     <repositories>
         <repository>
             <id>central</id>
@@ -62,13 +63,9 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+
     <!-- If you want to depend on other plugins: -->
     <dependencies>
-        <dependency>
-            <groupId>com.splunk.logging</groupId>
-            <artifactId>splunk-library-javalogging</artifactId>
-            <version>1.0.1</version>
-        </dependency>
         <dependency>
             <groupId>com.splunk</groupId>
             <artifactId>splunk</artifactId>
