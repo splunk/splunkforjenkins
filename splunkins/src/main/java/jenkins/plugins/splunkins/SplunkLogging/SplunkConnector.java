@@ -66,6 +66,8 @@ public class SplunkConnector {
 	public static Service connectToSplunk() throws IOException {
 
 		if (service == null) {
+			HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
+
 			getSplunkHostInfo();
 
 			// get splunk service and login
@@ -92,8 +94,6 @@ public class SplunkConnector {
 			// update serviceArgs with splunk host info
 			String splunkhostfile = System.getProperty("user.home")
 					+ File.separator + ".splunkrc";
-			HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-			
 			List<String> lines = Files
 					.readAllLines(new File(splunkhostfile).toPath(),
 							Charset.defaultCharset());
