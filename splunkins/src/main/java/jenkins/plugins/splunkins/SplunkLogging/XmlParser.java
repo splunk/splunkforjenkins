@@ -24,22 +24,10 @@ public class XmlParser {
 		Object xmlJSONObj;
 
 		try {
-			for (int i = 0; i < logs.size(); i++) {
-				StringBuilder sb = new StringBuilder();
-
-				BufferedReader br = new BufferedReader(new FileReader(
-						logs.get(i)));
-				String sCurrentLine;
-				while ((sCurrentLine = br.readLine()) != null) {
-					sb.append(sCurrentLine.trim());
-				}
-
-				br.close();
-
-				if (validateXMLSchema(Constants.xsdPath, sb.toString()))
-					xmlJSONObj = (JSONObject) XML.toJSONObject(sb.toString());
+				if (validateXMLSchema(Constants.xsdPath, logs.toString()))
+					xmlJSONObj = (JSONObject) XML.toJSONObject(logs.toString());
 				else
-					xmlJSONObj = (String) sb.toString();
+					xmlJSONObj = (String) logs.toString();
 
 				if (xmlJSONObj instanceof JSONObject) {
 					ArrayList<JSONObject> list = parse((JSONObject) xmlJSONObj);
@@ -50,8 +38,7 @@ public class XmlParser {
 					logger.info(xmlJSONObj.toString());
 				}
 
-			}
-		} catch (IOException | JSONException | ParseException e) {
+		} catch (JSONException | ParseException e) {
 			e.printStackTrace();
 		} 
 	}
@@ -110,7 +97,7 @@ public class XmlParser {
         
         try {
             SchemaFactory factory = 
-                    SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+                    SchemaFactory.newInstance(XMLConstants.XML_NS_URI);
             Schema schema = factory.newSchema(new File(xsdPath));
             Validator validator = schema.newValidator();
             validator.validate(new StreamSource(new StringReader(xmlString)));
