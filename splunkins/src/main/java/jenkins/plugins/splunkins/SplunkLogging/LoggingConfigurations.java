@@ -1,6 +1,5 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
-import com.splunk.ServiceArgs;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -12,6 +11,8 @@ import java.util.List;
 import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.splunk.ServiceArgs;
 
 
 public class LoggingConfigurations {
@@ -37,16 +38,17 @@ public class LoggingConfigurations {
 
         String configFileDir = SplunkConnector.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         List<String> lines = Files.readAllLines(new File(configFileDir, configFileTemplate).toPath(), Charset.defaultCharset());
+        
         for (int i = 0; i < lines.size(); i++) {
-            if (lines.get(i).contains("%host%")) {
-                lines.set(i, lines.get(i).replace("%host%", serviceArgs.host));
+            if (lines.get(i).contains("%" + Constants.HOST +"%")) {
+                lines.set(i, lines.get(i).replace("%" + Constants.HOST + "%", serviceArgs.host));
             }
-            if (lines.get(i).contains("%port%")) {
-                lines.set(i, lines.get(i).replace("%port%", serviceArgs.port.toString()));
+            if (lines.get(i).contains("%" + Constants.PORT + "%")) {
+                lines.set(i, lines.get(i).replace("%" + Constants.PORT + "%", serviceArgs.port.toString()));
             }
 
-            if (lines.get(i).contains("%scheme%")) {
-                lines.set(i, lines.get(i).replace("%scheme%", serviceArgs.scheme));
+            if (lines.get(i).contains("%" + Constants.SCHEME + "%")) {
+                lines.set(i, lines.get(i).replace("%" + Constants.SCHEME + "%", serviceArgs.scheme));
             }
 
             String match = FindUserInputConfiguration(lines.get(i));

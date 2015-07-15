@@ -1,7 +1,5 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
-import com.splunk.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -12,10 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.splunk.HttpService;
+import com.splunk.ResponseMessage;
+import com.splunk.SSLSecurityProtocol;
+import com.splunk.Service;
+import com.splunk.ServiceArgs;
+
 public class SplunkConnector {
 	private static Service service;
 	private static final ServiceArgs serviceArgs = new ServiceArgs();
-    private static final String httpInputTokenEndpointPath = "/services/data/inputs/http";
 
 	public static String createHttpinput(String httpinputName) throws Exception {
 		connectToSplunk();
@@ -30,12 +33,12 @@ public class SplunkConnector {
 
 		deleteHttpinput(httpinputName);
 
-		ResponseMessage msg = service.post(httpInputTokenEndpointPath, args);
+		ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
 		assert msg.getStatus() == 201;
 
 		// get httpinput token
 		args = new HashMap();
-		ResponseMessage response = service.get(httpInputTokenEndpointPath + "/"
+		ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/"
 				+ httpinputName, args);
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
 				response.getContent(), "UTF-8"));
@@ -76,7 +79,7 @@ public class SplunkConnector {
 	/**
 	 * read splunk host info from .splunkrc file
 	 */
-	public static ServiceArgs getSplunkHostInfo() throws IOException {
+	static ServiceArgs getSplunkHostInfo() throws IOException {
 
 		if (serviceArgs.isEmpty()) {
 			// set default value
@@ -90,12 +93,13 @@ public class SplunkConnector {
 			String splunkhostfile = System.getProperty("user.home")
 					+ File.separator + ".splunkrc";
 			HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-
+			
 			List<String> lines = Files
 					.readAllLines(new File(splunkhostfile).toPath(),
 							Charset.defaultCharset());
+	    
 			for (String line : lines) {
-				if (line.toLowerCase().contains("host=")) {
+				if (line.toLowerCase().contains(Constants.HOST + "=")) {
 					serviceArgs.setHost(line.split("=")[1]);
 				}
 				if (line.toLowerCase().contains("admin=")) {
@@ -104,10 +108,10 @@ public class SplunkConnector {
 				if (line.toLowerCase().contains("password=")) {
 					serviceArgs.setPassword(line.split("=")[1]);
 				}
-				if (line.toLowerCase().contains("scheme=")) {
+				if (line.toLowerCase().contains(Constants.SCHEME + "=")) {
 					serviceArgs.setScheme(line.split("=")[1]);
 				}
-				if (line.toLowerCase().contains("port=")) {
+				if (line.toLowerCase().contains(Constants.PORT + "=")) {
 					serviceArgs.setPort(Integer.parseInt(line.split("=")[1]));
 				}
 			}
@@ -125,13 +129,13 @@ public class SplunkConnector {
 		Map args = new HashMap();
 		args.put("disabled", 0);
 		ResponseMessage response = service.post(
-				"/servicesNS/admin/search/data/inputs/http/http", args);
+				Constants.httpInputCreateEndpoint, args);
 		assert response.getStatus() == 200;
 
 		args.clear();
 		args.put("index", "main");
 		ResponseMessage index_response = service.post(
-				"/servicesNS/admin/search/data/inputs/http/http", args);
+				Constants.httpInputCreateEndpoint, args);
 		assert index_response.getStatus() == 200;
 
 	}
@@ -142,10 +146,10 @@ public class SplunkConnector {
 	public static void deleteHttpinput(String httpinputName) throws Exception {
 		connectToSplunk();
 		try {
-			ResponseMessage response = service.get(httpInputTokenEndpointPath
+			ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath
 					+ "/" + httpinputName);
 			if (response.getStatus() == 200) {
-				response = service.delete(httpInputTokenEndpointPath + "/"
+				response = service.delete(Constants.httpInputTokenEndpointPath + "/"
 						+ httpinputName);
 				assert response.getStatus() == 200;
 			}
@@ -156,3 +160,4 @@ public class SplunkConnector {
 	}
 
 }
+
