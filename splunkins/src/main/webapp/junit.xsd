@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- This is a schema to validate that xml collected conforms to junit xml standards -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-
     <xs:element name="failure">
         <xs:complexType mixed="true">
             <xs:attribute name="type" type="xs:string" use="optional"/>
