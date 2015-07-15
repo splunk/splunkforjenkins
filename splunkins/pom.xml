@@ -7,10 +7,9 @@
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
         <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
-        <version>1.620</version>
+        <version>1.609</version>
         <relativePath/>
     </parent>
-    <groupId>com.splunk.app</groupId> <!-- com.splunk.jenkins -->
     <artifactId>splunkins</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
@@ -45,6 +44,7 @@
         <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
     </scm>
     -->
+
     <repositories>
         <repository>
             <id>central</id>
@@ -63,13 +63,9 @@
             <url>http://repo.jenkins-ci.org/public/</url>
         </pluginRepository>
     </pluginRepositories>
+
     <!-- If you want to depend on other plugins: -->
     <dependencies>
-        <dependency>
-            <groupId>com.splunk.logging</groupId>
-            <artifactId>splunk-library-javalogging</artifactId>
-            <version>1.0.1</version>
-        </dependency>
         <dependency>
             <groupId>com.splunk</groupId>
             <artifactId>splunk</artifactId>
@@ -86,19 +82,22 @@
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
+            <groupId>org.jvnet.localizer</groupId>
+            <artifactId>localizer</artifactId>
+            <version>1.23</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
+            <groupId>org.kohsuke.stapler</groupId>
+            <artifactId>stapler</artifactId>
+            <version>1.237</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>1.0.13</version>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.10</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>
