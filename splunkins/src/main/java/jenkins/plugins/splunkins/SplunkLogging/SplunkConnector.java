@@ -79,42 +79,18 @@ public class SplunkConnector {
 	}
 
 	/**
-	 * read splunk host info from .splunkrc file
+	 * Get the splunk host info from the global configuration page
 	 */
 	static ServiceArgs getSplunkHostInfo() throws IOException {
 
 		if (serviceArgs.isEmpty()) {
 			// set default value
-			serviceArgs.setUsername("admin");
-			serviceArgs.setPassword("changeme");
-			serviceArgs.setHost("localhost");
-			serviceArgs.setPort(8089);
-			serviceArgs.setScheme("https");
-
-			// update serviceArgs with splunk host info
-			String splunkhostfile = System.getProperty("user.home")
-					+ File.separator + ".splunkrc";
-			List<String> lines = Files
-					.readAllLines(new File(splunkhostfile).toPath(),
-							Charset.defaultCharset());
-	    
-			for (String line : lines) {
-				if (line.toLowerCase().contains(Constants.HOST + "=")) {
-					serviceArgs.setHost(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains("admin=")) {
-					serviceArgs.setUsername(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains("password=")) {
-					serviceArgs.setPassword(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains(Constants.SCHEME + "=")) {
-					serviceArgs.setScheme(line.split("=")[1]);
-				}
-				if (line.toLowerCase().contains(Constants.PORT + "=")) {
-					serviceArgs.setPort(Integer.parseInt(line.split("=")[1]));
-				}
-			}
+			SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getLogstashDescriptor();
+			serviceArgs.setHost(descriptor.host);
+			serviceArgs.setPort(descriptor.port);
+			serviceArgs.setUsername(descriptor.username);
+			serviceArgs.setPassword(descriptor.password);
+			serviceArgs.setScheme(descriptor.scheme);
 		}
 		return serviceArgs;
 	}
