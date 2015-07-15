@@ -1,18 +1,15 @@
+package jenkins.plugins.splunkins.SplunkLogging;
+
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
 import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -23,7 +20,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 import org.json.simple.parser.ParseException;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 public class XmlParser {

@@ -1,3 +1,5 @@
+package jenkins.plugins.splunkins.SplunkLogging;
+
 public class Constants {
 	public static final String TESTCASE = "testcase";
 	public static final String TESTSUITE = "testsuite";
