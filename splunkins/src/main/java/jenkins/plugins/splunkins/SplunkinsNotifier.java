@@ -84,15 +84,7 @@ public class SplunkinsNotifier extends Notifier {
         java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(loggerName);
 //
         XmlParser parser = new XmlParser();
-        try {
-            parser.xmlParser(artifactContents, LOGGER);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        } catch (ParseException e1) {
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
+        parser.xmlParser(LOGGER, );
 
         //SplunkConnector.deleteHttpinput(httpinputName);
 
@@ -115,9 +107,7 @@ public class SplunkinsNotifier extends Notifier {
         EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(listener);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         assert envVars != null;
@@ -143,9 +133,7 @@ public class SplunkinsNotifier extends Notifier {
                 e1.printStackTrace();
             }
             buildLogStream.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
         assert report != null;
