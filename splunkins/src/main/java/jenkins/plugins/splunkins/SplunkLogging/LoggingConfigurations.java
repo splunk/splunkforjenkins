@@ -15,8 +15,7 @@ import java.util.regex.Pattern;
 
 
 public class LoggingConfigurations {
-	private final static Logger LOGGER = Logger
-			.getLogger(SplunkinsNotifier.class.getName());
+	private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 	/*
 	 * create logging.property and force java logging manager to reload the
 	 * configurations
@@ -27,11 +26,9 @@ public class LoggingConfigurations {
 		try {
 			ServiceArgs serviceArgs = SplunkConnector.getSplunkHostInfo();
 
-			String configFilePath = updateConfigFile(configFileTemplate,
-					configFile, userInputs, serviceArgs);
+			String configFilePath = updateConfigFile(configFileTemplate, configFile, userInputs, serviceArgs);
 
-			FileInputStream configFileStream = new FileInputStream(
-					configFilePath);
+			FileInputStream configFileStream = new FileInputStream(configFilePath);
 
 			LogManager.getLogManager().readConfiguration(configFileStream);
 
@@ -47,9 +44,9 @@ public class LoggingConfigurations {
 	 * host, read the template from configFileTemplate, and create the updated
 	 * configfile to configFile
 	 */
-	public static String updateConfigFile(String configFileTemplate,
-			String configFile, HashMap<String, String> userInputs,
-			ServiceArgs serviceArgs) throws IOException {
+	public static String updateConfigFile(String configFileTemplate, String configFile, HashMap<String,
+			String> userInputs, ServiceArgs serviceArgs) throws IOException {
+
 		SplunkConnector.getSplunkHostInfo();
 
 		LOGGER.info(Constants.pluginPath);
@@ -58,32 +55,20 @@ public class LoggingConfigurations {
 
 		for (int i = 0; i < lines.size(); i++) {
 			if (lines.get(i).contains("%" + Constants.HOST + "%")) {
-				lines.set(
-						i,
-						lines.get(i).replace("%" + Constants.HOST + "%",
-								serviceArgs.host));
+				lines.set(i, lines.get(i).replace("%" + Constants.HOST + "%", serviceArgs.host));
 			}
 			if (lines.get(i).contains("%" + Constants.PORT + "%")) {
-				lines.set(
-						i,
-						lines.get(i).replace("%" + Constants.PORT + "%",
-								serviceArgs.port.toString()));
+				lines.set(i, lines.get(i).replace("%" + Constants.PORT + "%", serviceArgs.port.toString()));
 			}
 
 			if (lines.get(i).contains("%" + Constants.SCHEME + "%")) {
-				lines.set(
-						i,
-						lines.get(i).replace("%" + Constants.SCHEME + "%",
-								serviceArgs.scheme));
+				lines.set(i, lines.get(i).replace("%" + Constants.SCHEME + "%", serviceArgs.scheme));
 			}
 
 			String match = FindUserInputConfiguration(lines.get(i));
 			if (!match.isEmpty()) {
 				if (userInputs.keySet().contains(match))
-					lines.set(
-							i,
-							lines.get(i).replace("%" + match + "%",
-									userInputs.get(match)));
+					lines.set(i, lines.get(i).replace("%" + match + "%", userInputs.get(match)));
 				else
 					lines.set(i, "");
 			}
