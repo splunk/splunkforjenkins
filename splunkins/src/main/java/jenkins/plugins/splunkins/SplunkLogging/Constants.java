@@ -18,6 +18,9 @@ public class Constants {
     
     public static final String xsdPath  = Jenkins.getInstance().getPluginManager().getPlugin("splunkins").baseResourceURL.getPath() + File.separator + "junit.xsd";
     public static final String W3C_XML_SCHEMA_NS_URI = "http://www.w3.org/2001/XMLSchema";
+    
+    public static final String LOGGING_TEMPLATE = "logging_template.properties";
+    public static final String LOGGING_PROPERTIES = "logging.properties";
 	
 
 }

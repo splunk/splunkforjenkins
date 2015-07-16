@@ -11,9 +11,11 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import jenkins.plugins.splunkins.SplunkLogging.Constants;
 import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.FileNotFoundException;
@@ -32,12 +34,14 @@ public class SplunkinsNotifier extends Notifier {
     public boolean collectEnvVars;
     public String testArtifactFilename;
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
+    public EnvVars envVars;
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String testArtifactFilename){
+    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String testArtifactFilename, EnvVars envVars){
         this.collectBuildLog = collectBuildLog;
         this.collectEnvVars = collectEnvVars;
         this.testArtifactFilename = testArtifactFilename;
+        this.envVars = envVars;
     }
 
     @Override
@@ -47,12 +51,14 @@ public class SplunkinsNotifier extends Notifier {
 
         if (this.collectEnvVars) {
             String log = getBuildLog(build);
+            LOGGER.info(log);
         }
         if (this.collectEnvVars){
-            String envVars = getBuildEnvVars(build, listener);
+            envVars = getBuildEnvVars(build, listener);
+            LOGGER.info(envVars.toString());
         }
 
-        String httpinputName = "httpInputs";
+        String httpinputName =  envVars.get("JOB_NAME").toString() + "_" +  envVars.get("BUILD_NUMBER").toString() ;
         String token = null;
         try {
             token = SplunkConnector.createHttpinput(httpinputName);
@@ -64,7 +70,7 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<String, String>();
         userInputs.put("user_httpinput_token", token);
         userInputs.put("user_logger_name", loggerName);
-        LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
+        LoggingConfigurations.loadJavaLoggingConfiguration(Constants.LOGGING_TEMPLATE, Constants.LOGGING_PROPERTIES, userInputs);
 
         java.util.logging.Logger splunkLogger = java.util.logging.Logger.getLogger(loggerName);
 
@@ -92,7 +98,7 @@ public class SplunkinsNotifier extends Notifier {
     }
 
     // Returns environment variables for the build.
-    public String getBuildEnvVars(AbstractBuild<?, ?> build, BuildListener listener){
+    public EnvVars getBuildEnvVars(AbstractBuild<?, ?> build, BuildListener listener){
         EnvVars envVars = null;
         try {
             envVars = build.getEnvironment(listener);
@@ -100,7 +106,7 @@ public class SplunkinsNotifier extends Notifier {
             e.printStackTrace();
         }
         assert envVars != null;
-        return envVars.toString();
+        return envVars;
     }
 
     // Reads test artifact text files and returns their contents. Logs errors to both the Jenkins build log and the
