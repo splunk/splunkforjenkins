@@ -7,18 +7,16 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Logger;
-
-import jenkins.plugins.splunkins.SplunkinsNotifier;
 
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
@@ -28,18 +26,17 @@ public class XmlParser {
 		Object xmlJSONObj;
 
 		try {
-				if (validateXMLSchema(Constants.xsdPath, logs.toString())){
+				if (validateXMLSchema(Constants.xsdPath, logs)){
 					LOGGER.info(logs);
-					xmlJSONObj = (JSONObject) XML.toJSONObject(logs.toString());
+					xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
 				}
-				else
-					xmlJSONObj = (String) logs.toString();
-
+				else {
+					xmlJSONObj = (String) logs;
+				}
 				if (xmlJSONObj instanceof JSONObject) {
-					ArrayList<JSONObject> list = parse((JSONObject) xmlJSONObj);
+					ArrayList<JSONObject> jsonObjs = parse((JSONObject) xmlJSONObj);
 
-					for (int j = 0; j < list.size(); j++)
-						logger.info(list.get(j).toString());
+					for (JSONObject jsonObj : jsonObjs) logger.info(jsonObj.toString());
 				} else {
 					logger.info(xmlJSONObj.toString());
 				}
@@ -58,12 +55,12 @@ public class XmlParser {
 		while (keys.hasNext()) {
 			String key = keys.next();
 			try {
-				JSONObject originalJSON = json.getJSONObject(key.toString());
+				JSONObject originalJSON = json.getJSONObject(key);
 				parse(originalJSON);
 				commonElements = originalJSON;
 			} catch (JSONException e) {
-				if (Constants.TESTCASE.equalsIgnoreCase(key.toString())) {
-					JSONArray jsonarr = json.getJSONArray(key.toString());
+				if (Constants.TESTCASE.equalsIgnoreCase(key)) {
+					JSONArray jsonarr = json.getJSONArray(key);
 					for (int n = 0; n < jsonarr.length(); n++) {
 						JSONObject object = jsonarr.getJSONObject(n);
 
@@ -83,14 +80,13 @@ public class XmlParser {
 		return merge(commonElements, jsonObjects);
 	}
 
-	private ArrayList<JSONObject> merge(JSONObject obj1,
-			ArrayList<JSONObject> obj2) throws JSONException {
+	private ArrayList<JSONObject> merge(JSONObject jsonObj1, ArrayList<JSONObject> jsonObjList) throws JSONException {
 		ArrayList<JSONObject> arr = new ArrayList<JSONObject>();
 
-		for (int i = 0; i < obj2.size(); i++) {
+		for (JSONObject jsonObj2 : jsonObjList) {
 			JSONObject json = new JSONObject();
-			json.append(Constants.TESTSUITE, obj1);
-			json.append(Constants.TESTSUITE, obj2.get(i));
+			json.append(Constants.TESTSUITE, jsonObj1);
+			json.append(Constants.TESTSUITE, jsonObj2);
 			arr.add(json);
 
 		}
@@ -102,8 +98,7 @@ public class XmlParser {
 	private boolean validateXMLSchema(String xsdPath, String xmlString){
         
         try {
-            SchemaFactory factory = 
-                    SchemaFactory.newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
+            SchemaFactory factory = SchemaFactory.newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
             Schema schema = factory.newSchema(new File(xsdPath));
             Validator validator = schema.newValidator();
             validator.validate(new StreamSource(new StringReader(xmlString)));
