@@ -64,23 +64,18 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<String, String>();
         userInputs.put("user_httpinput_token", token);
         userInputs.put("user_logger_name", loggerName);
-        try {
-            LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        LoggingConfigurations.loadJavaLoggingConfiguration("logging_template.properties", "logging.properties", userInputs);
 
-        java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(loggerName);
+        java.util.logging.Logger splunkLogger = java.util.logging.Logger.getLogger(loggerName);
 
+        LOGGER.info(this.testArtifactFilename);
         if (!this.testArtifactFilename.equals("")) {
             artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
             LOGGER.info("XML report:\n" + artifactContents);
         }
 
         XmlParser parser = new XmlParser();
-        parser.xmlParser(LOGGER, artifactContents);
-
-        //SplunkConnector.deleteHttpinput(httpinputName);
+        parser.xmlParser(splunkLogger, artifactContents);
 
         return true;
     }

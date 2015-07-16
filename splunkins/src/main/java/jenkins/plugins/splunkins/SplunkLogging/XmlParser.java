@@ -12,20 +12,26 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.logging.Logger;
 
+import jenkins.plugins.splunkins.SplunkinsNotifier;
+
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
+    private final static Logger LOGGER = Logger.getLogger(XmlParser.class.getName());
 
 	public void xmlParser(Logger logger, String logs) {
 		Object xmlJSONObj;
 
 		try {
-				if (validateXMLSchema(Constants.xsdPath, logs.toString()))
+				if (validateXMLSchema(Constants.xsdPath, logs.toString())){
+					LOGGER.info(logs);
 					xmlJSONObj = (JSONObject) XML.toJSONObject(logs.toString());
+				}
 				else
 					xmlJSONObj = (String) logs.toString();
 
