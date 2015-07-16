@@ -21,7 +21,7 @@ public class SplunkinsInstallation extends ToolInstallation {
         super(name, home, properties);
     }
 
-    public static Descriptor getLogstashDescriptor() {
+    public static Descriptor getSplunkinsDescriptor() {
         return (Descriptor) Jenkins.getInstance().getDescriptor(SplunkinsInstallation.class);
     }
 
