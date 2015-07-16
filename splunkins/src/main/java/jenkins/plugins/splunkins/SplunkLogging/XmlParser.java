@@ -97,7 +97,7 @@ public class XmlParser {
         
         try {
             SchemaFactory factory = 
-                    SchemaFactory.newInstance(XMLConstants.XML_NS_URI);
+                    SchemaFactory.newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
             Schema schema = factory.newSchema(new File(xsdPath));
             Validator validator = schema.newValidator();
             validator.validate(new StreamSource(new StringReader(xmlString)));
