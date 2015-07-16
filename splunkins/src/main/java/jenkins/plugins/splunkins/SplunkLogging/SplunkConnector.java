@@ -78,7 +78,7 @@ public class SplunkConnector {
 
 		if (serviceArgs.isEmpty()) {
 			// set default value
-			SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getLogstashDescriptor();
+			SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
 			serviceArgs.setHost(descriptor.host);
 			serviceArgs.setPort(descriptor.port);
 			serviceArgs.setUsername(descriptor.username);

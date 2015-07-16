@@ -47,11 +47,9 @@ public class SplunkinsNotifier extends Notifier {
 
         if (this.collectEnvVars) {
             String log = getBuildLog(build);
-            LOGGER.info(log);
         }
         if (this.collectEnvVars){
             String envVars = getBuildEnvVars(build, listener);
-            LOGGER.info(envVars);
         }
 
         String httpinputName = "httpInputs";
