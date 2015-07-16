@@ -1,6 +1,5 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -16,6 +15,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jenkins.model.Jenkins;
 import jenkins.plugins.splunkins.SplunkinsNotifier;
 
 import com.splunk.ServiceArgs;
@@ -59,9 +59,7 @@ public class LoggingConfigurations {
 			ServiceArgs serviceArgs) throws IOException {
 		SplunkConnector.getSplunkHostInfo();
 
-		String configFileDir = Constants.JENKINS_HOME + File.separator
-				 + "plugins" + File.separator
-				+ "splunkins";
+		String configFileDir = Jenkins.getInstance().getPluginManager().getPlugin("splunkins").baseResourceURL.getPath();
 		LOGGER.info(configFileDir);
 		List<String> lines = Files.readAllLines(new File(configFileDir,
 				configFileTemplate).toPath(), Charset.defaultCharset());
