@@ -1,11 +1,9 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import com.splunk.ServiceArgs;
+import jenkins.plugins.splunkins.SplunkinsNotifier;
+
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -14,11 +12,6 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import jenkins.model.Jenkins;
-import jenkins.plugins.splunkins.SplunkinsNotifier;
-
-import com.splunk.ServiceArgs;
 
 
 public class LoggingConfigurations {
