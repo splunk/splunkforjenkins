@@ -24,12 +24,6 @@ import com.splunk.ServiceArgs;
 public class LoggingConfigurations {
 	private final static Logger LOGGER = Logger
 			.getLogger(SplunkinsNotifier.class.getName());
-	private static final String LoggerConf = "handlers=com.splunk.logging.HttpEventCollectorLoggingHandler\n"
-			+ "com.splunk.logging.HttpEventCollectorLoggingHandler.url=https://localhost:8088\n"
-			+ "com.splunk.logging.HttpEventCollectorLoggingHandler.token=5C6D3158-AE2D-4892-AE82-F5EF68049061\n"
-			+ "com.splunk.logging.HttpEventCollectorLoggingHandler.disableCertificateValidation=true\n"
-			+ "com.splunk.logging.HttpEventCollectorLoggingHandler.send_mode=sequential\n";
-
 	/*
 	 * create logging.property and force java logging manager to reload the
 	 * configurations
