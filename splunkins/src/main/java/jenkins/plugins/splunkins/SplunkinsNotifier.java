@@ -58,7 +58,7 @@ public class SplunkinsNotifier extends Notifier {
             LOGGER.info(envVars.toString());
         }
 
-        String httpinputName =  envVars.get("JOB_NAME").toString() + "_" +  envVars.get("BUILD_NUMBER").toString() ;
+        String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
         String token = null;
         try {
             token = SplunkConnector.createHttpinput(httpinputName);
