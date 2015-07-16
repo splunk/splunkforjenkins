@@ -52,10 +52,9 @@ public class LoggingConfigurations {
 			ServiceArgs serviceArgs) throws IOException {
 		SplunkConnector.getSplunkHostInfo();
 
-		String configFileDir = Jenkins.getInstance().getPluginManager().getPlugin("splunkins").baseResourceURL.getPath();
-		LOGGER.info(configFileDir);
-		List<String> lines = Files.readAllLines(new File(configFileDir,
-				configFileTemplate).toPath(), Charset.defaultCharset());
+		LOGGER.info(Constants.pluginPath);
+		List<String> lines = Files.readAllLines(new File(Constants.pluginPath, configFileTemplate).toPath(),
+				Charset.defaultCharset());
 
 		for (int i = 0; i < lines.size(); i++) {
 			if (lines.get(i).contains("%" + Constants.HOST + "%")) {
@@ -90,7 +89,7 @@ public class LoggingConfigurations {
 			}
 		}
 
-		String configFilePath = new File(configFileDir, configFile).getPath();
+		String configFilePath = new File(Constants.pluginPath, configFile).getPath();
 		FileWriter fw = new FileWriter(configFilePath);
 		for (String line : lines) {
 			if (!line.isEmpty()) {
