@@ -32,6 +32,7 @@ public class SplunkinsInstallation extends ToolInstallation {
         public String username;
         public String password;
         public String scheme;
+        public String globalConfigTitle = Messages.GlobalConfigTitle();
 
         public Descriptor() {
             super();
@@ -54,7 +55,7 @@ public class SplunkinsInstallation extends ToolInstallation {
 
         @Override
         public String getDisplayName() {
-            return Messages.DisplayName();
+            return Messages.GlobalConfigTitle();
         }
 
         /*

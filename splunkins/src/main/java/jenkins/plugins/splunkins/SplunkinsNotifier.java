@@ -148,6 +148,9 @@ public class SplunkinsNotifier extends Notifier {
 
     @Extension
     public static class Descriptor extends BuildStepDescriptor<Publisher> {
+        public String configBuildStepSendLog = Messages.ConfigBuildStepSendLog();
+        public String configBuildStepSendEnvVars = Messages.ConfigBuildStepSendEnvVars();
+        public String configBuildStepSendFiles = Messages.ConfigBuildStepSendFiles();
 
         @Override
         public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
@@ -155,7 +158,7 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         public String getDisplayName() {
-            return Messages.DisplayName();
+            return Messages.ConfigBuildStepTitle();
         }
     }
 }
