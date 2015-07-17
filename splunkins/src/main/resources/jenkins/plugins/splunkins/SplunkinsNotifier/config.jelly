@@ -6,8 +6,8 @@
         <f:entry title="${%Send environment variables}" field="collectEnvVars">
             <f:checkbox default="true" />
         </f:entry>
-        <f:entry title="${%Relative path to build artifacts}" field="testArtifactFilename">
-            <f:textbox default='' value="${instance.testArtifactFilename}" />
+        <f:entry title="${%Files to send}" field="filesToSend">
+            <f:textbox default='*.xml' value="${instance.filesToSend}" />
         </f:entry>
     </f:block>
 </j:jelly>
