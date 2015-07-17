@@ -51,11 +51,9 @@ public class SplunkinsNotifier extends Notifier {
 
         if (this.collectEnvVars) {
             String log = getBuildLog(build);
-            LOGGER.info(log);
         }
         if (this.collectEnvVars){
             envVars = getBuildEnvVars(build, listener);
-            LOGGER.info(envVars.toString());
         }
 
         String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
@@ -74,7 +72,6 @@ public class SplunkinsNotifier extends Notifier {
 
         java.util.logging.Logger splunkLogger = java.util.logging.Logger.getLogger(loggerName);
 
-        LOGGER.info(this.testArtifactFilename);
         if (!this.testArtifactFilename.equals("")) {
             artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
             LOGGER.info("XML report:\n" + artifactContents);
