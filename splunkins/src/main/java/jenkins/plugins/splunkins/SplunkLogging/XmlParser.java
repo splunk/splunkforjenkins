@@ -7,8 +7,6 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
-import com.splunk.logging.HttpEventCollectorLoggingHandler;
-
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -24,28 +22,26 @@ import java.util.logging.Logger;
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 
-    public void xmlParser(Logger splunkLogger,String logs) {
-    	HttpEventCollectorLoggingHandler.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        Object xmlJSONObj;
+    public ArrayList<JSONObject> xmlParser(String logs) {
+        Object xmlJSONObj = null;
+        ArrayList<JSONObject> jsonObjs = null;
 
         try {
                 if (validateXMLSchema(Constants.xsdPath, logs)){
                     xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
                 }
                 else {
-                    xmlJSONObj = (String) logs;
+                	//TODO
                 }
                 if (xmlJSONObj instanceof JSONObject) {
-                    ArrayList<JSONObject> jsonObjs = parse((JSONObject) xmlJSONObj);
+                    jsonObjs = parse((JSONObject) xmlJSONObj);
+            		return jsonObjs;
 
-	                for (JSONObject jsonObj : jsonObjs) 
-	                	splunkLogger.info(jsonObj.toString());
-                } else {
-                	splunkLogger.info(xmlJSONObj.toString());
-                }
+                } 
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
         }
+		return jsonObjs;
     }
 
     private ArrayList<JSONObject> parse(JSONObject json) throws JSONException,

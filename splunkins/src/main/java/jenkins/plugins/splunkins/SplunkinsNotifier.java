@@ -12,19 +12,21 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import jenkins.plugins.splunkins.SplunkLogging.Constants;
-import jenkins.plugins.splunkins.SplunkLogging.LoggingConfigurations;
+import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventInfo;
+import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
 
+import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import com.splunk.logging.HttpEventCollectorLoggingHandler;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -37,10 +39,11 @@ public class SplunkinsNotifier extends Notifier {
     public boolean collectEnvVars;
     public String testArtifactFilename;
     public EnvVars envVars;
+    private static String host;
+    private static String port;
+    private static String scheme;
+
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
-    
-    private static String loggerName = "splunkLogger";
-    private final static java.util.logging.Logger splunk_Logger = java.util.logging.Logger.getLogger("splunk.java.util");
 
     @DataBoundConstructor
     public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String testArtifactFilename, EnvVars envVars){
@@ -50,7 +53,8 @@ public class SplunkinsNotifier extends Notifier {
         this.envVars = envVars;
     }
 
-    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
+	@Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
         String artifactContents = null;
@@ -68,25 +72,44 @@ public class SplunkinsNotifier extends Notifier {
         String token = null;
         try {
             token = SplunkConnector.createHttpinput(httpinputName);
+            host = SplunkConnector.getSplunkHostInfo().host;
+            scheme = SplunkConnector.getSplunkHostInfo().scheme;
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         HashMap<String, String> userInputs = new HashMap<String, String>();
-        userInputs.put("user_httpinput_token", token);
-        userInputs.put("user_logger_name", loggerName);
-        LoggingConfigurations.loadJavaLoggingConfiguration(Constants.LOGGING_TEMPLATE, Constants.LOGGING_PROPERTIES, userInputs);
+        userInputs.put("user_httpinput_token", token); 
         
+        
+        Dictionary dictionary = new Hashtable();
+        dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
+        dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
+        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");           
+      
 
         if (!this.testArtifactFilename.equals("")) {
             artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
             //splunk_Logger.info("XML report:\n" + artifactContents);
         }
+        
 
         XmlParser parser = new XmlParser();
-        parser.xmlParser(splunk_Logger, artifactContents);
-        parser.xmlParser(LOGGER, artifactContents);
-
+        ArrayList<JSONObject> jsonList= parser.xmlParser(artifactContents);
+        
+        if (jsonList.size() > 0){
+        	  HttpInputsEventSender sender = new HttpInputsEventSender(
+                      scheme + "://"+ host + ":8088", token, 0, 0, 0, 5, "sequential", dictionary);
+        	  
+              sender.disableCertificateValidation();
+              
+              for (int i=0 ;i< jsonList.size() ; i++){
+            	  sender.send("INFO", jsonList.get(i).toString());
+              }
+              
+              sender.close();
+        }
+        
         return true;
     }
 
