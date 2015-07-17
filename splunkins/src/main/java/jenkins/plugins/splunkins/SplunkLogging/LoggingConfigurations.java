@@ -49,7 +49,6 @@ public class LoggingConfigurations {
 
         SplunkConnector.getSplunkHostInfo();
 
-        LOGGER.info(Constants.pluginPath);
         List<String> lines = Files.readAllLines(new File(Constants.pluginPath, configFileTemplate).toPath(),
                 Charset.defaultCharset());
 

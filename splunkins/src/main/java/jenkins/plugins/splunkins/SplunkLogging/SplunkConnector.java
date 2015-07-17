@@ -31,10 +31,8 @@ public class SplunkConnector {
 
         // get httpinput token
         args = new HashMap();
-        ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/"
-                + httpinputName, args);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                response.getContent(), "UTF-8"));
+        ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName, args);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
         String token = "";
         while (true) {
             String line = reader.readLine();
@@ -95,14 +93,12 @@ public class SplunkConnector {
         // enable logging endpoint
         Map args = new HashMap();
         args.put("disabled", 0);
-        ResponseMessage response = service.post(
-                Constants.httpInputCreateEndpoint, args);
+        ResponseMessage response = service.post(Constants.httpInputCreateEndpoint, args);
         assert response.getStatus() == 200;
 
         args.clear();
         args.put("index", "main");
-        ResponseMessage index_response = service.post(
-                Constants.httpInputCreateEndpoint, args);
+        ResponseMessage index_response = service.post(Constants.httpInputCreateEndpoint, args);
         assert index_response.getStatus() == 200;
     }
 
@@ -112,11 +108,9 @@ public class SplunkConnector {
     public static void deleteHttpinput(String httpinputName) throws Exception {
         connectToSplunk();
         try {
-            ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath
-                    + "/" + httpinputName);
+            ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
             if (response.getStatus() == 200) {
-                response = service.delete(Constants.httpInputTokenEndpointPath + "/"
-                        + httpinputName);
+                response = service.delete(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
                 assert response.getStatus() == 200;
             }
         } catch (com.splunk.HttpException e) {
