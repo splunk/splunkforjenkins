@@ -1,9 +1,14 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
 import com.splunk.ServiceArgs;
-import jenkins.plugins.splunkins.SplunkinsNotifier;
+import com.splunk.logging.HttpEventCollectorLoggingHandler;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -13,15 +18,18 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jenkins.plugins.splunkins.SplunkinsNotifier;
 
 public class LoggingConfigurations {
-    private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(LoggingConfigurations.class.getName());
+
     /*
      * create logging.property and force java logging manager to reload the
      * configurations
      */
     public static void loadJavaLoggingConfiguration(String configFileTemplate,
             String configFile, HashMap<String, String> userInputs) {
+    	
 
         try {
             ServiceArgs serviceArgs = SplunkConnector.getSplunkHostInfo();
@@ -29,8 +37,46 @@ public class LoggingConfigurations {
             String configFilePath = updateConfigFile(configFileTemplate, configFile, userInputs, serviceArgs);
 
             FileInputStream configFileStream = new FileInputStream(configFilePath);
+            LogManager.getLogManager().readConfiguration(configFileStream); 
+            configFileStream.close();
+            
+            
+            URL url3 = org.apache.http.ssl.TrustStrategy.class.getProtectionDomain().getCodeSource().getLocation();
+            ClassLoader loader3 = URLClassLoader.newInstance(
+            	    new URL[] { url3 },
+            	    org.apache.http.ssl.TrustStrategy.class.getClass().getClassLoader()
+            	);
+            	Class<?> clazz3 = Class.forName("org.apache.http.ssl.TrustStrategy", true, loader3);
+              clazz3.newInstance();
+            
+              
+              
+            URL url2 = org.apache.http.conn.ssl.TrustStrategy.class.getProtectionDomain().getCodeSource().getLocation();
+            ClassLoader loader2 = URLClassLoader.newInstance(
+            	    new URL[] { url2 },
+            	    org.apache.http.conn.ssl.TrustStrategy.class.getClass().getClassLoader()
+            	);
+            	Class<?> clazz2 = Class.forName("org.apache.http.conn.ssl.TrustStrategy", true, loader2);
+              clazz2.newInstance();
+              
+              
+              
+            URL url = HttpEventCollectorLoggingHandler.class.getProtectionDomain().getCodeSource().getLocation();
+            ClassLoader loader = URLClassLoader.newInstance(
+            	    new URL[] { url },
+            	    HttpEventCollectorLoggingHandler.class.getClass().getClassLoader()
+            	);
+            	Class<?> clazz = Class.forName("com.splunk.logging.HttpEventCollectorLoggingHandler", true, loader);
+              clazz.newInstance();
+              
 
-            LogManager.getLogManager().readConfiguration(configFileStream);
+              
+
+              
+           
+            java.util.logging.Logger LOGGER_NEW = java.util.logging.Logger.getLogger("splunkLogger");
+            LOGGER.info(configFilePath.toString());
+            LOGGER_NEW.info(configFilePath.toString());
 
         } catch (Exception e) {
             StringWriter errors = new StringWriter();
@@ -49,7 +95,6 @@ public class LoggingConfigurations {
 
         SplunkConnector.getSplunkHostInfo();
 
-        LOGGER.info(Constants.pluginPath);
         List<String> lines = Files.readAllLines(new File(Constants.pluginPath, configFileTemplate).toPath(),
                 Charset.defaultCharset());
 

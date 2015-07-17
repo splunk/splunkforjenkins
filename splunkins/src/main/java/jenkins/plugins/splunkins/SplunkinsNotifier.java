@@ -18,12 +18,15 @@ import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import com.splunk.logging.HttpEventCollectorLoggingHandler;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -33,8 +36,11 @@ public class SplunkinsNotifier extends Notifier {
     public boolean collectBuildLog;
     public boolean collectEnvVars;
     public String testArtifactFilename;
-    private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
     public EnvVars envVars;
+    private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
+    
+    private static String loggerName = "splunkLogger";
+    private final static java.util.logging.Logger splunk_Logger = java.util.logging.Logger.getLogger("splunk.java.util");
 
     @DataBoundConstructor
     public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String testArtifactFilename, EnvVars envVars){
@@ -66,22 +72,20 @@ public class SplunkinsNotifier extends Notifier {
             e.printStackTrace();
         }
 
-        String loggerName = "splunkLogger";
         HashMap<String, String> userInputs = new HashMap<String, String>();
         userInputs.put("user_httpinput_token", token);
         userInputs.put("user_logger_name", loggerName);
         LoggingConfigurations.loadJavaLoggingConfiguration(Constants.LOGGING_TEMPLATE, Constants.LOGGING_PROPERTIES, userInputs);
+        
 
-        java.util.logging.Logger splunkLogger = java.util.logging.Logger.getLogger(loggerName);
-
-        LOGGER.info(this.testArtifactFilename);
         if (!this.testArtifactFilename.equals("")) {
             artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
-            LOGGER.info("XML report:\n" + artifactContents);
+            //splunk_Logger.info("XML report:\n" + artifactContents);
         }
 
         XmlParser parser = new XmlParser();
-        parser.xmlParser(splunkLogger, artifactContents);
+        parser.xmlParser(splunk_Logger, artifactContents);
+        parser.xmlParser(LOGGER, artifactContents);
 
         return true;
     }

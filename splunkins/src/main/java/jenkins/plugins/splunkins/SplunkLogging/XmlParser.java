@@ -7,10 +7,13 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
+import com.splunk.logging.HttpEventCollectorLoggingHandler;
+
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,14 +23,13 @@ import java.util.logging.Logger;
 
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
-    private final static Logger LOGGER = Logger.getLogger(XmlParser.class.getName());
 
-    public void xmlParser(Logger logger, String logs) {
+    public void xmlParser(Logger splunkLogger,String logs) {
+    	HttpEventCollectorLoggingHandler.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         Object xmlJSONObj;
 
         try {
                 if (validateXMLSchema(Constants.xsdPath, logs)){
-                    LOGGER.info(logs);
                     xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
                 }
                 else {
@@ -36,9 +38,10 @@ public class XmlParser {
                 if (xmlJSONObj instanceof JSONObject) {
                     ArrayList<JSONObject> jsonObjs = parse((JSONObject) xmlJSONObj);
 
-	                for (JSONObject jsonObj : jsonObjs) logger.info(jsonObj.toString());
+	                for (JSONObject jsonObj : jsonObjs) 
+	                	splunkLogger.info(jsonObj.toString());
                 } else {
-                    logger.info(xmlJSONObj.toString());
+                	splunkLogger.info(xmlJSONObj.toString());
                 }
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
