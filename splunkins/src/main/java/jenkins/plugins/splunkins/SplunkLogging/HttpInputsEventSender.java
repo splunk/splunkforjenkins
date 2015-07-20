@@ -129,7 +129,7 @@ public class HttpInputsEventSender extends TimerTask{
      * @note in case of batching the event isn't sent immediately
      * @param severity event severity level (info, warning, etc.)
      * @param message event text
-     * @throws ParseException 
+     * @throws ParseException
      */
     public synchronized void send(final String severity, final String message) {
         LOGGER.info("Sending: "+message);
@@ -145,7 +145,7 @@ public class HttpInputsEventSender extends TimerTask{
 
     /**
      * Flush all pending events
-     * @throws ParseException 
+     * @throws ParseException
      */
     public synchronized void flush() {
         if (eventsBatch.size() > 0) {
@@ -160,7 +160,7 @@ public class HttpInputsEventSender extends TimerTask{
 
     /**
      * Close events sender
-     * @throws ParseException 
+     * @throws ParseException
      */
     public void close() {
         if (timer != null)
@@ -282,13 +282,13 @@ public class HttpInputsEventSender extends TimerTask{
                     } catch (IOException e) {
                         reply = e.getMessage();
                     }
-                   
+
                 }
             }
 
             public void failed(final Exception ex) {
                 if (retriesCount >= retriesOnError) {
-                	System.out.println(ex.getMessage());
+                    System.out.println(ex.getMessage());
                 } else {
                     // retry
                     retriesCount ++;
@@ -299,17 +299,17 @@ public class HttpInputsEventSender extends TimerTask{
             public void cancelled() {}
         });
     }
-    
-	private Object stringOrJSON(String message) {
-		try {
-			return ((JSONObject) new JSONParser().parse(message));
 
-		} catch (ParseException ex) {
-			if (message instanceof String) {
-				return (String)message;
+    private Object stringOrJSON(String message) {
+        try {
+            return ((JSONObject) new JSONParser().parse(message));
 
-			}
-		}
-		return (String)message;
-	}
+        } catch (ParseException ex) {
+            if (message instanceof String) {
+                return (String)message;
+
+            }
+        }
+        return (String)message;
+    }
 }
