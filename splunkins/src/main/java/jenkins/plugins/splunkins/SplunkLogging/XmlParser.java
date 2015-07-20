@@ -7,10 +7,13 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
+import hudson.EnvVars;
+
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,29 +23,27 @@ import java.util.logging.Logger;
 
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
-    private final static Logger LOGGER = Logger.getLogger(XmlParser.class.getName());
 
-    public void xmlParser(Logger logger, String logs) {
-        Object xmlJSONObj;
+    public ArrayList<JSONObject> xmlParser(String logs, EnvVars envVars) {
+        Object xmlJSONObj = null;
+        ArrayList<JSONObject> jsonObjs = null;
 
         try {
                 if (validateXMLSchema(Constants.xsdPath, logs)){
-                    LOGGER.info(logs);
                     xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
                 }
                 else {
-                    xmlJSONObj = (String) logs;
+                	//TODO
                 }
                 if (xmlJSONObj instanceof JSONObject) {
-                    ArrayList<JSONObject> jsonObjs = parse((JSONObject) xmlJSONObj);
+                    jsonObjs = parse((JSONObject) xmlJSONObj);
+            		return jsonObjs;
 
-	                for (JSONObject jsonObj : jsonObjs) logger.info(jsonObj.toString());
-                } else {
-                    logger.info(xmlJSONObj.toString());
-                }
+                } 
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
         }
+		return jsonObjs;
     }
 
     private ArrayList<JSONObject> parse(JSONObject json) throws JSONException,

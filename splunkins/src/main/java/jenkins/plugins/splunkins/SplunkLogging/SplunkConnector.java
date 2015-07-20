@@ -57,7 +57,6 @@ public class SplunkConnector {
 
         if (service == null) {
             HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-
             getSplunkHostInfo();
 
             // get splunk service and login
@@ -70,7 +69,7 @@ public class SplunkConnector {
     /**
      * Get the splunk host info from the global configuration page
      */
-    static ServiceArgs getSplunkHostInfo() throws IOException {
+    public static ServiceArgs getSplunkHostInfo() throws IOException {
 
         if (serviceArgs.isEmpty()) {
             // set default value
