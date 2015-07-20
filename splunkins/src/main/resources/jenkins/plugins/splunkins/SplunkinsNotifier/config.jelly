@@ -1,13 +1,13 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
     <f:block>
-        <f:entry title="${%Send build log}" field="collectBuildLog">
+        <f:entry title="${descriptor.configBuildStepSendLog}" field="collectBuildLog">
             <f:checkbox default="true"  />
         </f:entry>
-        <f:entry title="${%Send environment variables}" field="collectEnvVars">
+        <f:entry title="${descriptor.configBuildStepSendEnvVars}" field="collectEnvVars">
             <f:checkbox default="true" />
         </f:entry>
-        <f:entry title="${%Relative path to build artifacts}" field="testArtifactFilename">
-            <f:textbox default='' value="${instance.testArtifactFilename}" />
+        <f:entry title="${descriptor.configBuildStepSendFiles}" field="filesToSend">
+            <f:textbox default='*.xml' value="${instance.filesToSend}" />
         </f:entry>
     </f:block>
 </j:jelly>
