@@ -27,7 +27,6 @@ import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
@@ -35,16 +34,17 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.net.ssl.SSLContext;
-
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
  * This is an internal helper class that sends logging events to Splunk http event collector.
  */
 public class HttpInputsEventSender extends TimerTask{
+    private final static Logger LOGGER = Logger.getLogger(HttpInputsEventSender.class.getName());
     public static final String MetadataTimeTag = "time";
     public static final String MetadataIndexTag = "index";
     public static final String MetadataSourceTag = "source";
@@ -129,9 +129,10 @@ public class HttpInputsEventSender extends TimerTask{
      * @note in case of batching the event isn't sent immediately
      * @param severity event severity level (info, warning, etc.)
      * @param message event text
-     * @throws ParseException 
+     * @throws ParseException
      */
     public synchronized void send(final String severity, final String message) {
+        LOGGER.info("Sending: "+message);
         // create event info container and add it to the batch
         HttpInputsEventInfo eventInfo =
                 new HttpInputsEventInfo(severity, message);
@@ -144,7 +145,7 @@ public class HttpInputsEventSender extends TimerTask{
 
     /**
      * Flush all pending events
-     * @throws ParseException 
+     * @throws ParseException
      */
     public synchronized void flush() {
         if (eventsBatch.size() > 0) {
@@ -159,7 +160,7 @@ public class HttpInputsEventSender extends TimerTask{
 
     /**
      * Close events sender
-     * @throws ParseException 
+     * @throws ParseException
      */
     public void close() {
         if (timer != null)
@@ -281,13 +282,13 @@ public class HttpInputsEventSender extends TimerTask{
                     } catch (IOException e) {
                         reply = e.getMessage();
                     }
-                   
+
                 }
             }
 
             public void failed(final Exception ex) {
                 if (retriesCount >= retriesOnError) {
-                	System.out.println(ex.getMessage());
+                    System.out.println(ex.getMessage());
                 } else {
                     // retry
                     retriesCount ++;
@@ -298,17 +299,17 @@ public class HttpInputsEventSender extends TimerTask{
             public void cancelled() {}
         });
     }
-    
-	private Object stringOrJSON(String message) {
-		try {
-			return ((JSONObject) new JSONParser().parse(message));
 
-		} catch (ParseException ex) {
-			if (message instanceof String) {
-				return (String)message;
+    private Object stringOrJSON(String message) {
+        try {
+            return ((JSONObject) new JSONParser().parse(message));
 
-			}
-		}
-		return (String)message;
-	}
+        } catch (ParseException ex) {
+            if (message instanceof String) {
+                return (String)message;
+
+            }
+        }
+        return (String)message;
+    }
 }

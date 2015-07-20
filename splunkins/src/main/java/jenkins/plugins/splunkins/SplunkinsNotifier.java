@@ -11,16 +11,17 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import jenkins.plugins.splunkins.SplunkLogging.Constants;
 import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
+import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -29,7 +30,6 @@ import java.util.logging.Logger;
 public class SplunkinsNotifier extends Notifier {
     public boolean collectBuildLog;
     public boolean collectEnvVars;
-    public String testArtifactFilename;
     public String filesToSend;
     public EnvVars envVars;
     private static String host;
@@ -38,18 +38,19 @@ public class SplunkinsNotifier extends Notifier {
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend, EnvVars envVars){
+    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend ){
         this.collectBuildLog = collectBuildLog;
         this.collectEnvVars = collectEnvVars;
         this.filesToSend = filesToSend;
-        this.envVars = envVars;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
-	@Override
+    @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
         String buildLog;
+        EnvVars envVars = null;
+
 
         if (this.collectEnvVars) {
             buildLog = getBuildLog(build);
@@ -69,57 +70,53 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         HashMap<String, String> userInputs = new HashMap<String, String>();
-        userInputs.put("user_httpinput_token", token); 
-        
-        
+        userInputs.put("user_httpinput_token", token);
+
         Dictionary dictionary = new Hashtable();
         dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
         dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");           
-      
-
-//		if (!("").equals(this.testArtifactFilename) && null != this.testArtifactFilename) {
-//			artifactContents = readTestArtifact(testArtifactFilename, build,
-//					buildLogStream);
-//			// splunk_Logger.info("XML report:\n" + artifactContents);
-//
-//			XmlParser parser = new XmlParser();
-//			ArrayList<JSONObject> jsonList = parser.xmlParser(artifactContents,
-//					envVars);
-//
-//			if (jsonList.size() > 0) {
-//				HttpInputsEventSender sender = new HttpInputsEventSender(scheme
-//						+ "://" + host + ":" + Constants.HTTPINPUTPORT, token,
-//						0, 0, 0, 5, "sequential", dictionary);
-//
-//				sender.disableCertificateValidation();
-//
-//				for (int i = 0; i < jsonList.size(); i++) {
-//					sender.send("INFO", jsonList.get(i).toString());
-//				}
-//
-//				sender.close();
-//			}
-//		}
-        
-        userInputs.put("user_httpinput_token", token);
+        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
         // Discover xml files to collect
         FilePath[] xmlFiles = collectXmlFiles(this.filesToSend, build, buildLogStream);
 
+        ArrayList<ArrayList> toSplunkList = new ArrayList<>();
+
         // Read and parse xml files
-//        for (FilePath xml : xmlFiles){
-//            XmlParser parser = new XmlParser();
-//            try {
-//                JSONObject json = parser.xmlParser(xml.readToString());
-//            } catch (IOException | InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        for (FilePath xmlFile : xmlFiles){
+            try {
+                XmlParser parser = new XmlParser();
+                ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
+                toSplunkList.add(testRun);
+                // Add envVars to each testcase
+//                for (JSONObject testcase : testRun){
+//                    Set keys = envVars.entrySet();
+//                    for (Object key : keys){
+//                        try {
+//                            testcase.append(key.toString(), envVars.get(key));
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        // Combine json objects
+        // Setup connection for sending to build data to Splunk
+        HttpInputsEventSender sender = new HttpInputsEventSender(scheme + "://" + host + ":" +
+                Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
 
-        // Send json data to splunk
+        sender.disableCertificateValidation();
+
+        // Send data to splunk
+        for (ArrayList toSplunkFile : toSplunkList) {
+            LOGGER.info("!!!!!!SENDING: "+toSplunkFile.toString());
+            sender.send("INFO", toSplunkFile.toString());
+        }
+
+        sender.close();
 
         return true;
     }
@@ -155,6 +152,7 @@ public class SplunkinsNotifier extends Notifier {
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         try {
             xmlFiles = workspacePath.list(filenamesExpression);
+            LOGGER.info("xmlFiles collected: "+xmlFiles.toString());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

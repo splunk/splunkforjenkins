@@ -8,8 +8,6 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
-import hudson.EnvVars;
-
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -26,25 +24,25 @@ public class XmlParser {
 	private JSONObject finalJSON = new JSONObject();
 	private static boolean entryOnce;
 	
-	
-	public ArrayList<JSONObject> xmlParser(String logs, EnvVars envVars) {
-		Object xmlJSONObj = null;
-		ArrayList<JSONObject> jsonObjs = null;
+    public ArrayList<JSONObject> xmlParser(String logs) {
+        Object xmlJSONObj = null;
+        ArrayList<JSONObject> jsonObjs = null;
 
-		try {
-			if (validateXMLSchema(Constants.xsdPath, logs)) {
-				xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
-			} else {
-				// TODO
-			}
-			if (xmlJSONObj instanceof JSONObject) {
-				jsonObjs = parse((JSONObject) xmlJSONObj);
-				return jsonObjs;
+        try {
+                if (validateXMLSchema(Constants.xsdPath, logs)){
+                    xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
+                }
+                else {
+                	//TODO: Add parsing for other files
+                }
+                if (xmlJSONObj instanceof JSONObject) {
+                    jsonObjs = parse((JSONObject) xmlJSONObj);
+            		return jsonObjs;
 
-			}
-		} catch (JSONException | ParseException e) {
-			e.printStackTrace();
-		}
+                } 
+        } catch (JSONException | ParseException e) {
+            e.printStackTrace();
+        }
 		return jsonObjs;
 	}
 
