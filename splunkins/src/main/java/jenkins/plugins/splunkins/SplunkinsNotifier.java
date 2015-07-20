@@ -111,9 +111,11 @@ public class SplunkinsNotifier extends Notifier {
         sender.disableCertificateValidation();
 
         // Send data to splunk
-        for (ArrayList toSplunkFile : toSplunkList) {
+        for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
             LOGGER.info("!!!!!!SENDING: "+toSplunkFile.toString());
-            sender.send("INFO", toSplunkFile.toString());
+            for (JSONObject json : toSplunkFile){
+            	sender.send("INFO", json.toString());
+            }
         }
 
         sender.close();
