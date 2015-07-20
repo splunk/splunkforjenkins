@@ -15,6 +15,7 @@ import jenkins.plugins.splunkins.SplunkLogging.Constants;
 import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -29,7 +30,6 @@ import java.util.logging.Logger;
 public class SplunkinsNotifier extends Notifier {
     public boolean collectBuildLog;
     public boolean collectEnvVars;
-    public String testArtifactFilename;
     public String filesToSend;
     public EnvVars envVars;
     private static String host;
@@ -78,7 +78,6 @@ public class SplunkinsNotifier extends Notifier {
         dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
 
-//        if (!("").equals(this.testArtifactFilename) && null != this.testArtifactFilename) {
 //            artifactContents = readTestArtifact(testArtifactFilename, build,
 //                    buildLogStream);
 //            // splunk_Logger.info("XML report:\n" + artifactContents);
