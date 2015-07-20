@@ -38,11 +38,10 @@ public class SplunkinsNotifier extends Notifier {
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend, EnvVars envVars){
+    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend ){
         this.collectBuildLog = collectBuildLog;
         this.collectEnvVars = collectEnvVars;
         this.filesToSend = filesToSend;
-        this.envVars = envVars;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
@@ -50,6 +49,8 @@ public class SplunkinsNotifier extends Notifier {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
         String buildLog;
+        EnvVars envVars = null;
+
 
         if (this.collectEnvVars) {
             buildLog = getBuildLog(build);
