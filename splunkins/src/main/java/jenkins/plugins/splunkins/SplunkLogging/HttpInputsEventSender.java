@@ -27,7 +27,6 @@ import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.nio.client.CloseableHttpAsyncClient;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.apache.http.impl.nio.client.HttpAsyncClients;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.JSONObject;
@@ -35,16 +34,17 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.net.ssl.SSLContext;
-
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.logging.Logger;
 
 
 /**
  * This is an internal helper class that sends logging events to Splunk http event collector.
  */
 public class HttpInputsEventSender extends TimerTask{
+    private final static Logger LOGGER = Logger.getLogger(HttpInputsEventSender.class.getName());
     public static final String MetadataTimeTag = "time";
     public static final String MetadataIndexTag = "index";
     public static final String MetadataSourceTag = "source";
@@ -132,6 +132,7 @@ public class HttpInputsEventSender extends TimerTask{
      * @throws ParseException 
      */
     public synchronized void send(final String severity, final String message) {
+        LOGGER.info("Sending: "+message);
         // create event info container and add it to the batch
         HttpInputsEventInfo eventInfo =
                 new HttpInputsEventInfo(severity, message);
