@@ -40,7 +40,6 @@ public class SplunkinsNotifier extends Notifier {
     public String testArtifactFilename;
     public EnvVars envVars;
     private static String host;
-    private static String port;
     private static String scheme;
 
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
@@ -88,27 +87,29 @@ public class SplunkinsNotifier extends Notifier {
         dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");           
       
 
-        if (!this.testArtifactFilename.equals("")) {
-            artifactContents = readTestArtifact(testArtifactFilename, build, buildLogStream);
-            //splunk_Logger.info("XML report:\n" + artifactContents);
-        }
-        
+		if (!("").equals(this.testArtifactFilename) && null != this.testArtifactFilename) {
+			artifactContents = readTestArtifact(testArtifactFilename, build,
+					buildLogStream);
+			// splunk_Logger.info("XML report:\n" + artifactContents);
 
-        XmlParser parser = new XmlParser();
-        ArrayList<JSONObject> jsonList= parser.xmlParser(artifactContents);
-        
-        if (jsonList.size() > 0){
-        	  HttpInputsEventSender sender = new HttpInputsEventSender(
-                      scheme + "://"+ host + ":8088", token, 0, 0, 0, 5, "sequential", dictionary);
-        	  
-              sender.disableCertificateValidation();
-              
-              for (int i=0 ;i< jsonList.size() ; i++){
-            	  sender.send("INFO", jsonList.get(i).toString());
-              }
-              
-              sender.close();
-        }
+			XmlParser parser = new XmlParser();
+			ArrayList<JSONObject> jsonList = parser.xmlParser(artifactContents,
+					envVars);
+
+			if (jsonList.size() > 0) {
+				HttpInputsEventSender sender = new HttpInputsEventSender(scheme
+						+ "://" + host + ":" + Constants.HTTPINPUTPORT, token,
+						0, 0, 0, 5, "sequential", dictionary);
+
+				sender.disableCertificateValidation();
+
+				for (int i = 0; i < jsonList.size(); i++) {
+					sender.send("INFO", jsonList.get(i).toString());
+				}
+
+				sender.close();
+			}
+		}
         
         return true;
     }

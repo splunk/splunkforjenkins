@@ -7,6 +7,8 @@ import org.json.XML;
 import org.json.simple.parser.ParseException;
 import org.xml.sax.SAXException;
 
+import hudson.EnvVars;
+
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -22,7 +24,7 @@ import java.util.logging.Logger;
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 
-    public ArrayList<JSONObject> xmlParser(String logs) {
+    public ArrayList<JSONObject> xmlParser(String logs, EnvVars envVars) {
         Object xmlJSONObj = null;
         ArrayList<JSONObject> jsonObjs = null;
 
