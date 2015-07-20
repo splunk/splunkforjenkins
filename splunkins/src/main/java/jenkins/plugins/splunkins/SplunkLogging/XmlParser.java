@@ -31,7 +31,7 @@ public class XmlParser {
                     xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
                 }
                 else {
-                	//TODO
+                	//TODO: Add parsing for other files
                 }
                 if (xmlJSONObj instanceof JSONObject) {
                     jsonObjs = parse((JSONObject) xmlJSONObj);
