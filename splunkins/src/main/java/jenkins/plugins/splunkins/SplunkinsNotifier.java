@@ -46,7 +46,7 @@ public class SplunkinsNotifier extends Notifier {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
-	@Override
+    @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
         String buildLog;
@@ -69,39 +69,39 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         HashMap<String, String> userInputs = new HashMap<String, String>();
-        userInputs.put("user_httpinput_token", token); 
-        
-        
+        userInputs.put("user_httpinput_token", token);
+
+
         Dictionary dictionary = new Hashtable();
         dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
         dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");           
-      
+        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
-//		if (!("").equals(this.testArtifactFilename) && null != this.testArtifactFilename) {
-//			artifactContents = readTestArtifact(testArtifactFilename, build,
-//					buildLogStream);
-//			// splunk_Logger.info("XML report:\n" + artifactContents);
+
+//        if (!("").equals(this.testArtifactFilename) && null != this.testArtifactFilename) {
+//            artifactContents = readTestArtifact(testArtifactFilename, build,
+//                    buildLogStream);
+//            // splunk_Logger.info("XML report:\n" + artifactContents);
 //
-//			XmlParser parser = new XmlParser();
-//			ArrayList<JSONObject> jsonList = parser.xmlParser(artifactContents,
-//					envVars);
+//            XmlParser parser = new XmlParser();
+//            ArrayList<JSONObject> jsonList = parser.xmlParser(artifactContents,
+//                    envVars);
 //
-//			if (jsonList.size() > 0) {
-//				HttpInputsEventSender sender = new HttpInputsEventSender(scheme
-//						+ "://" + host + ":" + Constants.HTTPINPUTPORT, token,
-//						0, 0, 0, 5, "sequential", dictionary);
+//            if (jsonList.size() > 0) {
+//                HttpInputsEventSender sender = new HttpInputsEventSender(scheme
+//                        + "://" + host + ":" + Constants.HTTPINPUTPORT, token,
+//                        0, 0, 0, 5, "sequential", dictionary);
 //
-//				sender.disableCertificateValidation();
+//                sender.disableCertificateValidation();
 //
-//				for (int i = 0; i < jsonList.size(); i++) {
-//					sender.send("INFO", jsonList.get(i).toString());
-//				}
+//                for (int i = 0; i < jsonList.size(); i++) {
+//                    sender.send("INFO", jsonList.get(i).toString());
+//                }
 //
-//				sender.close();
-//			}
-//		}
-        
+//                sender.close();
+//            }
+//        }
+
         userInputs.put("user_httpinput_token", token);
 
         // Discover xml files to collect
