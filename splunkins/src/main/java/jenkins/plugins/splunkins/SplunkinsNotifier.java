@@ -72,54 +72,51 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<String, String>();
         userInputs.put("user_httpinput_token", token);
 
-
         Dictionary dictionary = new Hashtable();
         dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
         dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
         dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
-
-//            artifactContents = readTestArtifact(testArtifactFilename, build,
-//                    buildLogStream);
-//            // splunk_Logger.info("XML report:\n" + artifactContents);
-//
-//            XmlParser parser = new XmlParser();
-//            ArrayList<JSONObject> jsonList = parser.xmlParser(artifactContents,
-//                    envVars);
-//
-//            if (jsonList.size() > 0) {
-//                HttpInputsEventSender sender = new HttpInputsEventSender(scheme
-//                        + "://" + host + ":" + Constants.HTTPINPUTPORT, token,
-//                        0, 0, 0, 5, "sequential", dictionary);
-//
-//                sender.disableCertificateValidation();
-//
-//                for (int i = 0; i < jsonList.size(); i++) {
-//                    sender.send("INFO", jsonList.get(i).toString());
-//                }
-//
-//                sender.close();
-//            }
-//        }
-
-        userInputs.put("user_httpinput_token", token);
-
         // Discover xml files to collect
         FilePath[] xmlFiles = collectXmlFiles(this.filesToSend, build, buildLogStream);
 
+        ArrayList<ArrayList> toSplunkList = new ArrayList<>();
+
         // Read and parse xml files
-//        for (FilePath xml : xmlFiles){
-//            XmlParser parser = new XmlParser();
-//            try {
-//                JSONObject json = parser.xmlParser(xml.readToString());
-//            } catch (IOException | InterruptedException e) {
-//                e.printStackTrace();
-//            }
-//        }
+        for (FilePath xmlFile : xmlFiles){
+            try {
+                XmlParser parser = new XmlParser();
+                ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
+                toSplunkList.add(testRun);
+                // Add envVars to each testcase
+//                for (JSONObject testcase : testRun){
+//                    Set keys = envVars.entrySet();
+//                    for (Object key : keys){
+//                        try {
+//                            testcase.append(key.toString(), envVars.get(key));
+//                        } catch (JSONException e) {
+//                            e.printStackTrace();
+//                        }
+//                    }
+//                }
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
-        // Combine json objects
+        // Setup connection for sending to build data to Splunk
+        HttpInputsEventSender sender = new HttpInputsEventSender(scheme + "://" + host + ":" +
+                Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
 
-        // Send json data to splunk
+        sender.disableCertificateValidation();
+
+        // Send data to splunk
+        for (ArrayList toSplunkFile : toSplunkList) {
+            LOGGER.info("!!!!!!SENDING: "+toSplunkFile.toString());
+            sender.send("INFO", toSplunkFile.toString());
+        }
+
+        sender.close();
 
         return true;
     }
@@ -155,6 +152,7 @@ public class SplunkinsNotifier extends Notifier {
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         try {
             xmlFiles = workspacePath.list(filenamesExpression);
+            LOGGER.info("xmlFiles collected: "+xmlFiles.toString());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
