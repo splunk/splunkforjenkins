@@ -22,7 +22,7 @@ import java.util.Iterator;
 public class XmlParser {
 	private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
 	private JSONObject finalJSON = new JSONObject();
-	private static boolean entryOnce;
+	private boolean entryOnce;
 	
     public ArrayList<JSONObject> xmlParser(String logs) {
         Object xmlJSONObj = null;
