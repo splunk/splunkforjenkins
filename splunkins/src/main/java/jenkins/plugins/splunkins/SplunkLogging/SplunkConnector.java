@@ -48,7 +48,7 @@ public class SplunkConnector {
         reader.close();
 
         if (token.isEmpty()) {
-            System.out.println("No ");
+            System.out.println("No");
         }
         return token;
     }

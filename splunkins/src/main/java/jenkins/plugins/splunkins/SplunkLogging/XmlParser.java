@@ -24,6 +24,12 @@ public class XmlParser {
 	private JSONObject finalJSON = new JSONObject();
 	private boolean entryOnce;
 	
+	/**
+	 * Parses the input XML to a JSON and then massages the JSON object as per requirement.
+	 * 
+	 * @param logs
+	 * @return
+	 */
     public ArrayList<JSONObject> xmlParser(String logs) {
         Object xmlJSONObj = null;
         ArrayList<JSONObject> jsonObjs = null;
@@ -46,6 +52,14 @@ public class XmlParser {
 		return jsonObjs;
 	}
 
+    /**
+     * Create a custom JSON object that is needed to be send to Splunk.
+     * 
+     * @param json
+     * @return
+     * @throws JSONException
+     * @throws ParseException
+     */
 	private ArrayList<JSONObject> parse(JSONObject json) throws JSONException,
 			ParseException {
 
@@ -90,6 +104,14 @@ public class XmlParser {
 		return merge(commonElements, jsonObjects);
 	}
 
+	/**
+	 * Merges the JSON Objects to form final custom JSONObject
+	 * 
+	 * @param jsonObj1
+	 * @param jsonObjList
+	 * @return
+	 * @throws JSONException
+	 */
 	private ArrayList<JSONObject> merge(JSONObject jsonObj1,
 			ArrayList<JSONObject> jsonObjList) throws JSONException {
 		ArrayList<JSONObject> arr = new ArrayList<JSONObject>();
@@ -103,6 +125,14 @@ public class XmlParser {
 
 		return arr;
 	}
+	
+	/**
+	 * Validates the input XML against xsd schema
+	 * 
+	 * @param xsdPath
+	 * @param xmlString
+	 * @return
+	 */
 
 	private boolean validateXMLSchema(String xsdPath, String xmlString) {
 		try {
@@ -118,6 +148,17 @@ public class XmlParser {
 		return true;
 	}
 
+	/**
+	 * 
+	 * This method is a workaround as XML.toJSON has a behavior where it forms a JSONArray when multiple elements have same name
+	 * and if only 1 element exists, it doesn't create a JSONArray. 
+	 * Workaround is always create JSONArray (in this case for testcase tag in XML)
+	 *
+	 * @param json
+	 * @return
+	 * @throws ParseException
+	 * @throws JSONException
+	 */
 	private JSONObject customJSONObject(JSONObject json) throws ParseException,
 			JSONException {
 
@@ -139,6 +180,7 @@ public class XmlParser {
 					json.put(key, jsonArray);
 				}
 			} catch (JSONException e) {
+				//Do Nothing
 
 			}
 
