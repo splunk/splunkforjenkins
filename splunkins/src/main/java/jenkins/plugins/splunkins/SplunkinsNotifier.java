@@ -87,18 +87,19 @@ public class SplunkinsNotifier extends Notifier {
             try {
                 XmlParser parser = new XmlParser();
                 ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
-                toSplunkList.add(testRun);
                 // Add envVars to each testcase
-//                for (JSONObject testcase : testRun){
-//                    Set keys = envVars.entrySet();
-//                    for (Object key : keys){
-//                        try {
-//                            testcase.append(key.toString(), envVars.get(key));
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }
+                for (JSONObject testcase : testRun){
+                    Set keys = envVars.keySet();
+                    for (Object key : keys){
+                        try {
+                            testcase.append(key.toString(), envVars.get(key));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                
+                toSplunkList.add(testRun);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
             }
