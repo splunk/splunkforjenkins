@@ -113,7 +113,6 @@ public class SplunkinsNotifier extends Notifier {
 
         // Send data to splunk
         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
-            LOGGER.info("!!!!!!SENDING: "+toSplunkFile.toString());
             for (JSONObject json : toSplunkFile){
                 sender.send("INFO", json.toString());
             }
