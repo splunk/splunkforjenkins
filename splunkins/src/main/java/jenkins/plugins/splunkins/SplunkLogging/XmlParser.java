@@ -23,10 +23,10 @@ public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
     private JSONObject finalJSON = new JSONObject();
     private boolean entryOnce;
-    
+
     /**
      * Parses the input XML to a JSON and then massages the JSON object as per requirement.
-     * 
+     *
      * @param logs
      * @return
      */
@@ -35,17 +35,17 @@ public class XmlParser {
         ArrayList<JSONObject> jsonObjs = null;
 
         try {
-                if (validateXMLSchema(Constants.xsdPath, logs)){
-                    xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
-                }
-                else {
-                    //TODO: Add parsing for other files
-                }
-                if (xmlJSONObj instanceof JSONObject) {
-                    jsonObjs = parse((JSONObject) xmlJSONObj);
-                    return jsonObjs;
+            if (validateXMLSchema(Constants.xsdPath, logs)){
+                xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
+            }
+            else {
+                //TODO: Add parsing for other files
+            }
+            if (xmlJSONObj instanceof JSONObject) {
+                jsonObjs = parse((JSONObject) xmlJSONObj);
+                return jsonObjs;
 
-                } 
+            }
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
         }
