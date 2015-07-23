@@ -50,7 +50,7 @@ public class SplunkinsNotifier extends Notifier {
 
         // Get the httpinput name
         String httpinputName;
-        if (descriptor.source == null){
+        if (descriptor.source == null || descriptor.source.isEmpty()){
             httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
         } else {
             httpinputName = descriptor.source;
