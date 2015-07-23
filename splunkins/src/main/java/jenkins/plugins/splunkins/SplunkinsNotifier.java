@@ -50,7 +50,7 @@ public class SplunkinsNotifier extends Notifier {
         EnvVars envVars = null;
 
 
-        if (this.collectEnvVars) {
+        if (this.collectBuildLog) {
             buildLog = getBuildLog(build);
         }
         if (this.collectEnvVars){
