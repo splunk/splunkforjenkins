@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SplunkConnector {
-    private static Service splunkService;
     private static final ServiceArgs serviceArgs = new ServiceArgs();
     private String splunkHost;
     private int splunkSoapport;
@@ -24,7 +23,6 @@ public class SplunkConnector {
         this.splunkUsername = splunkUsername;
         this.splunkPassword = splunkPassword;
         this.splunkScheme = splunkScheme;
-
     }
 
     /**
@@ -119,7 +117,6 @@ public class SplunkConnector {
      * delete http input token
      */
     public void deleteHttpinput(String httpinputName, Service service) throws Exception {
-        connectToSplunk();
         try {
             ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
             if (response.getStatus() == 200) {
