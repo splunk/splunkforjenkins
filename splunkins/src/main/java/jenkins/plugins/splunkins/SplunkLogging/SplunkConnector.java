@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class SplunkConnector {
     private static final ServiceArgs serviceArgs = new ServiceArgs();
+    private final static Logger LOGGER = Logger.getLogger(SplunkConnector.class.getName());
     private String splunkHost;
     private int splunkSoapport;
     private String splunkUsername;
@@ -75,6 +77,7 @@ public class SplunkConnector {
         Service service = null;
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         getSplunkHostInfo();
+        LOGGER.info("Connecting to Splunk with: "+serviceArgs.toString());
 
         // get splunk service and login
         service = Service.connect(serviceArgs);
