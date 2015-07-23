@@ -14,8 +14,39 @@
         <f:entry title="${%Password}" field="password">
             <f:password value="${descriptor.password}" />
         </f:entry>
-        <f:entry title="${%Scheme}" field="scheme">
-            <f:textbox value="${descriptor.scheme}" default="https" />
+        <f:entry name="scheme" title="${%Scheme}" field="scheme">
+            <select name="scheme">
+                <option value="https">https</option>
+                <option value="http">http</option>
+            </select>
+        </f:entry>
+        <f:entry title="${%Max Events Batch Count}" field="maxEventsBatchCount">
+            <f:textbox value="${descriptor.maxEventsBatchCount}" default="3"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
+        </f:entry>
+        <f:entry title="${%Max Events Batch Size}" field="maxEventsBatchSize">
+            <f:textbox value="${descriptor.maxEventsBatchSize}" default="${descriptor.maxEventsBatchSize}"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
+        </f:entry>
+        <f:entry title="${%Retries on Error}" field="retriesOnError">
+            <f:textbox value="${descriptor.retriesOnError}" default="3"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
+        </f:entry>
+        <f:entry title="${%Send Mode}" name="sendMode" field="sendMode">
+            <select name="sendMode">
+                <option value="sequential">sequential</option>
+                <option value="parallel">parallel</option>
+            </select>
+        </f:entry>
+        <f:entry title="${%Send Delay}" field="delay">
+            <f:textbox value="${descriptor.delay}" default="0"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
+        </f:entry>
+        <f:entry title="${%Splunk Index}" field="index">
+            <f:textbox value="${descriptor.index}" default="main" />
+        </f:entry>
+        <f:entry title="${%Splunk Source}" field="source">
+            <f:textbox value="${descriptor.source}" default="JobName_BuildNo" />
         </f:entry>
     </f:section>
 </j:jelly>

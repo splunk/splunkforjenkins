@@ -27,12 +27,19 @@ public class SplunkinsInstallation extends ToolInstallation {
 
     @Extension
     public static final class Descriptor extends ToolDescriptor<SplunkinsInstallation> {
+        public String globalConfigTitle = Messages.GlobalConfigTitle();
         public String host;
         public Integer port;
         public String username;
         public String password;
         public String scheme;
-        public String globalConfigTitle = Messages.GlobalConfigTitle();
+        public long maxEventsBatchCount;
+        public long maxEventsBatchSize = Long.MAX_VALUE;
+        public long retriesOnError;
+        public String sendMode;
+        public long delay;
+        public String index;
+        public String source;
 
         public Descriptor() {
             super();
@@ -64,6 +71,16 @@ public class SplunkinsInstallation extends ToolInstallation {
         public FormValidation doCheckInteger(@QueryParameter("value") String value) {
             try {
                 Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                return FormValidation.error(Messages.ValueIntErrorMsg());
+            }
+
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckLong(@QueryParameter("value") String value) {
+            try {
+                Long.parseLong(value);
             } catch (NumberFormatException e) {
                 return FormValidation.error(Messages.ValueIntErrorMsg());
             }
