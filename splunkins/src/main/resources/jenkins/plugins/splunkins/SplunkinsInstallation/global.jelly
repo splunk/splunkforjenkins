@@ -49,8 +49,7 @@
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Splunk Source}" field="source">
-            <f:textbox value="${descriptor.source}" default="${descriptor.source}"
-                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
+            <f:textbox value="${descriptor.source}" default="${descriptor.source}" />
         </f:entry>
     </f:section>
 </j:jelly>
