@@ -77,7 +77,6 @@ public class SplunkConnector {
     }
 
     public Service connectToSplunk() throws IOException {
-        Service service = null;
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         serviceArgs = getSplunkHostInfo();
         String connectDebugMsg = "Connecting to Splunk with: " + serviceArgs.toString();
@@ -85,7 +84,7 @@ public class SplunkConnector {
         buildLogStream.write((connectDebugMsg+"\n").getBytes());
 
         // get splunk service and login
-        service = Service.connect(serviceArgs);
+        Service service = Service.connect(serviceArgs);
         service.login();
         return service;
     }
