@@ -17,14 +17,14 @@ public class SplunkConnector {
     private static String splunkUsername;
     private static String splunkPassword;
     private static String splunkScheme;
-    
+
     public SplunkConnector(String splunkHost, int splunkSoapport, String splunkUsername, String splunkPassword, String splunkScheme){
-    	SplunkConnector.splunkHost = splunkHost;
-    	SplunkConnector.splunkSoapport = splunkSoapport;
-    	SplunkConnector.splunkUsername = splunkUsername;
-    	SplunkConnector.splunkPassword = splunkPassword;
-    	SplunkConnector.splunkScheme = splunkScheme;
-    	    	
+        SplunkConnector.splunkHost = splunkHost;
+        SplunkConnector.splunkSoapport = splunkSoapport;  // Splunk Management Port
+        SplunkConnector.splunkUsername = splunkUsername;
+        SplunkConnector.splunkPassword = splunkPassword;
+        SplunkConnector.splunkScheme = splunkScheme;
+
     }
 
     public static String createHttpinput(String httpinputName) throws Exception {
@@ -86,7 +86,7 @@ public class SplunkConnector {
     public static ServiceArgs getSplunkHostInfo() throws IOException {
 
         if (serviceArgs.isEmpty()) {
-        	
+
             serviceArgs.setHost(SplunkConnector.splunkHost);
             serviceArgs.setPort(SplunkConnector.splunkSoapport);
             serviceArgs.setUsername(SplunkConnector.splunkUsername);
