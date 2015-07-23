@@ -55,7 +55,7 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         // Create the Splunk instance connector
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
+        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
         String token = null;
         ServiceArgs hostInfo = null;
         try {

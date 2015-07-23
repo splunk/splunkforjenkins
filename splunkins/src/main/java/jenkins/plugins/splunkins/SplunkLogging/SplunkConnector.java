@@ -5,12 +5,14 @@ import com.splunk.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class SplunkConnector {
     private final static Logger LOGGER = Logger.getLogger(SplunkConnector.class.getName());
+    private final PrintStream buildLogStream;
     private ServiceArgs serviceArgs = new ServiceArgs();
     private String splunkHost;
     private int splunkSoapport;
@@ -19,12 +21,13 @@ public class SplunkConnector {
     private String splunkScheme;
 
     public SplunkConnector(String splunkHost, int splunkSoapport,
-                           String splunkUsername, String splunkPassword, String splunkScheme) {
+                           String splunkUsername, String splunkPassword, String splunkScheme, PrintStream buildLogStream) {
         this.splunkHost = splunkHost;
         this.splunkSoapport = splunkSoapport;  // Splunk Management Port
         this.splunkUsername = splunkUsername;
         this.splunkPassword = splunkPassword;
         this.splunkScheme = splunkScheme;
+        this.buildLogStream = buildLogStream;
     }
 
     /**
@@ -77,7 +80,9 @@ public class SplunkConnector {
         Service service = null;
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         serviceArgs = getSplunkHostInfo();
-        LOGGER.info("Connecting to Splunk with: "+serviceArgs.toString());
+        String connectDebugMsg = "Connecting to Splunk with: " + serviceArgs.toString();
+        LOGGER.info(connectDebugMsg);
+        buildLogStream.write((connectDebugMsg+"\n").getBytes());
 
         // get splunk service and login
         service = Service.connect(serviceArgs);
