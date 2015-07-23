@@ -43,7 +43,8 @@ public class SplunkinsNotifier extends Notifier {
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        PrintStream buildLogStream = listener.getLogger();
+        PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
+        EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
         String buildLog;
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
@@ -87,7 +88,6 @@ public class SplunkinsNotifier extends Notifier {
                         }
                     }
                 }
-                
                 toSplunkList.add(testRun);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
