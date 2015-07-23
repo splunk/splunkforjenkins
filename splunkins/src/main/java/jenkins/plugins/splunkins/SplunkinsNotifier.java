@@ -50,7 +50,7 @@ public class SplunkinsNotifier extends Notifier {
         EnvVars envVars = null;
 
 
-        if (this.collectEnvVars) {
+        if (this.collectBuildLog) {
             buildLog = getBuildLog(build);
         }
         if (this.collectEnvVars){
@@ -68,7 +68,7 @@ public class SplunkinsNotifier extends Notifier {
             e.printStackTrace();
         }
 
-        HashMap<String, String> userInputs = new HashMap<String, String>();
+        HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
 
         Dictionary dictionary = new Hashtable();

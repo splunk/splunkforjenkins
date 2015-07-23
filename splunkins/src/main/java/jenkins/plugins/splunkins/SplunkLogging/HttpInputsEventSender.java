@@ -132,7 +132,6 @@ public class HttpInputsEventSender extends TimerTask{
      * @throws ParseException
      */
     public synchronized void send(final String severity, final String message) {
-        LOGGER.info("Sending: "+message);
         // create event info container and add it to the batch
         HttpInputsEventInfo eventInfo =
                 new HttpInputsEventInfo(severity, message);
