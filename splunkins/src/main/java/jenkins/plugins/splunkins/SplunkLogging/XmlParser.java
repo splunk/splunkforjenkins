@@ -1,5 +1,6 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,55 +12,83 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.logging.Logger;
 
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
-    private final static Logger LOGGER = Logger.getLogger(XmlParser.class.getName());
+    private JSONObject finalJSON = new JSONObject();
+    private boolean entryOnce;
 
-    public void xmlParser(Logger logger, String logs) {
-        Object xmlJSONObj;
+    /**
+     * Parses the input XML to a JSON and then massages the JSON object as per requirement.
+     *
+     * @param logs
+     * @return
+     */
+    public ArrayList<JSONObject> xmlParser(String logs) {
+        Object xmlJSONObj = null;
+        ArrayList<JSONObject> jsonObjs = null;
 
         try {
-                if (validateXMLSchema(Constants.xsdPath, logs)){
-                    LOGGER.info(logs);
-                    xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
-                }
-                else {
-                    xmlJSONObj = (String) logs;
-                }
-                if (xmlJSONObj instanceof JSONObject) {
-                    ArrayList<JSONObject> jsonObjs = parse((JSONObject) xmlJSONObj);
+            if (validateXMLSchema(Constants.xsdPath, logs)){
+                xmlJSONObj = (JSONObject) XML.toJSONObject(logs);
+            }
+            else {
+                //TODO: Add parsing for other files
+            }
+            if (xmlJSONObj instanceof JSONObject) {
+                jsonObjs = parse((JSONObject) xmlJSONObj);
+                return jsonObjs;
 
-	                for (JSONObject jsonObj : jsonObjs) logger.info(jsonObj.toString());
-                } else {
-                    logger.info(xmlJSONObj.toString());
-                }
+            }
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
         }
+        return jsonObjs;
     }
 
+    /**
+     * Create a custom JSON object that is needed to be send to Splunk.
+     * 
+     * @param json
+     * @return
+     * @throws JSONException
+     * @throws ParseException
+     */
     private ArrayList<JSONObject> parse(JSONObject json) throws JSONException,
             ParseException {
 
-        Iterator<String> keys = json.keys();
+        if (!entryOnce) {
+            JSONObject transformedJSON = null;
+            Iterator<String> originalKeys = json.keys();
+            while (originalKeys.hasNext()) {
+                String key = originalKeys.next();
+                transformedJSON = customJSONObject(json.getJSONObject(key
+                        .toString()));
+                entryOnce = true;
+            }
+
+            finalJSON.put(Constants.TESTSUITE, transformedJSON);
+        }
+
+        Iterator<String> keys = finalJSON.keys();
         JSONObject commonElements = new JSONObject();
 
         while (keys.hasNext()) {
             String key = keys.next();
             try {
-                JSONObject originalJSON = json.getJSONObject(key);
-                parse(originalJSON);
+                JSONObject originalJSON = finalJSON.getJSONObject(key);
+                finalJSON = originalJSON;
+                parse(finalJSON);
                 commonElements = originalJSON;
             } catch (JSONException e) {
                 if (Constants.TESTCASE.equalsIgnoreCase(key)) {
-                    JSONArray jsonarr = json.getJSONArray(key);
+                    JSONArray jsonarr = finalJSON.getJSONArray(key);
                     for (int n = 0; n < jsonarr.length(); n++) {
                         JSONObject object = jsonarr.getJSONObject(n);
 
@@ -75,7 +104,16 @@ public class XmlParser {
         return merge(commonElements, jsonObjects);
     }
 
-    private ArrayList<JSONObject> merge(JSONObject jsonObj1, ArrayList<JSONObject> jsonObjList) throws JSONException {
+    /**
+     * Merges the JSON Objects to form final custom JSONObject
+     * 
+     * @param jsonObj1
+     * @param jsonObjList
+     * @return
+     * @throws JSONException
+     */
+    private ArrayList<JSONObject> merge(JSONObject jsonObj1,
+            ArrayList<JSONObject> jsonObjList) throws JSONException {
         ArrayList<JSONObject> arr = new ArrayList<JSONObject>();
 
         for (JSONObject jsonObj2 : jsonObjList) {
@@ -87,10 +125,19 @@ public class XmlParser {
 
         return arr;
     }
+    
+    /**
+     * Validates the input XML against xsd schema
+     * 
+     * @param xsdPath
+     * @param xmlString
+     * @return
+     */
 
-    private boolean validateXMLSchema(String xsdPath, String xmlString){
+    private boolean validateXMLSchema(String xsdPath, String xmlString) {
         try {
-            SchemaFactory factory = SchemaFactory.newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
+            SchemaFactory factory = SchemaFactory
+                    .newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
             Schema schema = factory.newSchema(new File(xsdPath));
             Validator validator = schema.newValidator();
             validator.validate(new StreamSource(new StringReader(xmlString)));
@@ -99,5 +146,45 @@ public class XmlParser {
             return false;
         }
         return true;
+    }
+
+    /**
+     * 
+     * This method is a workaround as XML.toJSON has a behavior where it forms a JSONArray when multiple elements have same name
+     * and if only 1 element exists, it doesn't create a JSONArray. 
+     * Workaround is always create JSONArray (in this case for testcase tag in XML)
+     *
+     * @param json
+     * @return
+     * @throws ParseException
+     * @throws JSONException
+     */
+    private JSONObject customJSONObject(JSONObject json) throws ParseException,
+            JSONException {
+
+        Iterator<String> keys = json.keys();
+        while (keys.hasNext()) {
+            try {
+                String key = keys.next();
+
+                JSONObject originalJSON = json.getJSONObject(key);
+                if (Constants.TESTCASE.equalsIgnoreCase(key.toString())) {
+                    JSONArray jsonArray = new JSONArray();
+                    Object testCaseObject = json.get(key.toString());
+
+                    if (!(testCaseObject instanceof JSONArray)) {
+                        jsonArray.put(testCaseObject);
+
+                    }
+                    json.remove(Constants.TESTCASE);
+                    json.put(key, jsonArray);
+                }
+            } catch (JSONException e) {
+                //Do Nothing
+
+            }
+
+        }
+        return json;
     }
 }
