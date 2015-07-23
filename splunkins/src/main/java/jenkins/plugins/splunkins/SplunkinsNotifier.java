@@ -152,7 +152,6 @@ public class SplunkinsNotifier extends Notifier {
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         try {
             xmlFiles = workspacePath.list(filenamesExpression);
-            LOGGER.info("xmlFiles collected: "+xmlFiles.toString());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -166,6 +165,7 @@ public class SplunkinsNotifier extends Notifier {
             }
             buildLogMsg = "Splunkins collected these files to send to Splunk: "+filenames.toString()+"\n";
         }
+        LOGGER.info(buildLogMsg);
         // Attempt to write to build's console log
         try {
             buildLogStream.write(buildLogMsg.getBytes());
