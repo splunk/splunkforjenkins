@@ -69,7 +69,7 @@ public class SplunkinsNotifier extends Notifier {
             e.printStackTrace();
         }
 
-        HashMap<String, String> userInputs = new HashMap<String, String>();
+        HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
 
         Dictionary dictionary = new Hashtable();
