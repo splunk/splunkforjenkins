@@ -119,7 +119,6 @@ public class SplunkConnector {
      * delete http input token
      */
     public void deleteHttpinput(String httpinputName, Service service) throws Exception {
-        connectToSplunk();
         try {
             ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
             if (response.getStatus() == 200) {
