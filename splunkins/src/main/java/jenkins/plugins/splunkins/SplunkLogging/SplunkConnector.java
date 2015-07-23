@@ -1,7 +1,6 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
 import com.splunk.*;
-import jenkins.plugins.splunkins.SplunkinsInstallation;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -12,21 +11,25 @@ import java.util.Map;
 public class SplunkConnector {
     private static Service service;
     private static final ServiceArgs serviceArgs = new ServiceArgs();
-    private static String splunkHost;
-    private static int splunkSoapport;
-    private static String splunkUsername;
-    private static String splunkPassword;
-    private static String splunkScheme;
+
+    public static String splunkHost;
+    public static int splunkSoapport;  // Splunk Management Port
+    public static String splunkUsername;
+    public static String splunkPassword;
+    public static String splunkScheme;
 
     public SplunkConnector(String splunkHost, int splunkSoapport, String splunkUsername, String splunkPassword, String splunkScheme){
         SplunkConnector.splunkHost = splunkHost;
-        SplunkConnector.splunkSoapport = splunkSoapport;  // Splunk Management Port
+        SplunkConnector.splunkSoapport = splunkSoapport;
         SplunkConnector.splunkUsername = splunkUsername;
         SplunkConnector.splunkPassword = splunkPassword;
         SplunkConnector.splunkScheme = splunkScheme;
-
     }
 
+
+    /**
+     * Ennables the logging endpoint, creates an httpinput, and returns the token.
+     */
     public static String createHttpinput(String httpinputName) throws Exception {
         connectToSplunk();
 
@@ -34,7 +37,7 @@ public class SplunkConnector {
         SplunkConnector.enableHttpinput();
 
         // create a httpinput
-        Map args = new HashMap();
+        Map<String, Object> args = new HashMap<>();
         args.put("name", httpinputName);
         args.put("description", "test http input");
 
@@ -44,7 +47,7 @@ public class SplunkConnector {
         assert msg.getStatus() == 201;
 
         // get httpinput token
-        args = new HashMap();
+        args = new HashMap<>();
         ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName, args);
         BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
         String token = "";
@@ -73,6 +76,7 @@ public class SplunkConnector {
             HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
             getSplunkHostInfo();
 
+
             // get splunk service and login
             service = Service.connect(serviceArgs);
             service.login();
@@ -86,7 +90,6 @@ public class SplunkConnector {
     public static ServiceArgs getSplunkHostInfo() throws IOException {
 
         if (serviceArgs.isEmpty()) {
-
             serviceArgs.setHost(SplunkConnector.splunkHost);
             serviceArgs.setPort(SplunkConnector.splunkSoapport);
             serviceArgs.setUsername(SplunkConnector.splunkUsername);
@@ -103,7 +106,7 @@ public class SplunkConnector {
         connectToSplunk();
 
         // enable logging endpoint
-        Map args = new HashMap();
+        Map<String, Object> args = new HashMap<>();
         args.put("disabled", 0);
         ResponseMessage response = service.post(Constants.httpInputCreateEndpoint, args);
         assert response.getStatus() == 200;
