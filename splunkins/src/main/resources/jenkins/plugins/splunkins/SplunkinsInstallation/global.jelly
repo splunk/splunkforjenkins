@@ -5,11 +5,11 @@
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkHost?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Port}" field="port">
-            <f:textbox value="${descriptor.port}" default="8089"
+            <f:textbox value="${descriptor.port}" default="${descriptor.port}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkInteger?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Username}" field="username">
-            <f:textbox value="${descriptor.username}" default="admin" />
+            <f:textbox value="${descriptor.username}" default="${descriptor.username}" />
         </f:entry>
         <f:entry title="${%Password}" field="password">
             <f:password value="${descriptor.password}" />
@@ -21,7 +21,7 @@
             </select>
         </f:entry>
         <f:entry title="${%Max Events Batch Count}" field="maxEventsBatchCount">
-            <f:textbox value="${descriptor.maxEventsBatchCount}" default="3"
+            <f:textbox value="${descriptor.maxEventsBatchCount}" default="${descriptor.maxEventsBatchCount}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Max Events Batch Size}" field="maxEventsBatchSize">
@@ -29,7 +29,7 @@
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Retries on Error}" field="retriesOnError">
-            <f:textbox value="${descriptor.retriesOnError}" default="3"
+            <f:textbox value="${descriptor.retriesOnError}" default="${descriptor.retriesOnError}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Send Mode}" name="sendMode" field="sendMode">
@@ -39,14 +39,14 @@
             </select>
         </f:entry>
         <f:entry title="${%Send Delay}" field="delay">
-            <f:textbox value="${descriptor.delay}" default="0"
+            <f:textbox value="${descriptor.delay}" default="${descriptor.delay}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Splunk Index}" field="index">
-            <f:textbox value="${descriptor.index}" default="main" />
+            <f:textbox value="${descriptor.index}" default="${descriptor.index}" />
         </f:entry>
         <f:entry title="${%Splunk Source}" field="source">
-            <f:textbox value="${descriptor.source}" default="JobName_BuildNo" />
+            <f:textbox value="${descriptor.source}" default="${descriptor.source}" />
         </f:entry>
     </f:section>
 </j:jelly>

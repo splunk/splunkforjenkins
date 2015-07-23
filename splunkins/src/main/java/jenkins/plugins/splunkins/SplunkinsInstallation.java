@@ -28,18 +28,20 @@ public class SplunkinsInstallation extends ToolInstallation {
     @Extension
     public static final class Descriptor extends ToolDescriptor<SplunkinsInstallation> {
         public String globalConfigTitle = Messages.GlobalConfigTitle();
+
+        // Defaults plugin global config values:
         public String host;
-        public Integer port;
-        public String username;
+        public Integer port = 8089;
+        public String username = "admin";
         public String password;
         public String scheme;
-        public long maxEventsBatchCount;
+        public long maxEventsBatchCount = 3;
         public long maxEventsBatchSize = Long.MAX_VALUE;
-        public long retriesOnError;
+        public long retriesOnError = 3;
         public String sendMode;
-        public long delay;
-        public String index;
-        public String source;
+        public long delay = 0;
+        public String index = "main";
+        public String source = "JobName_BuildNo";
 
         public Descriptor() {
             super();
