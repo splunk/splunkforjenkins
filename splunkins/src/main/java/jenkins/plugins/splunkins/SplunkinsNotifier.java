@@ -1,5 +1,6 @@
 package jenkins.plugins.splunkins;
 
+import com.splunk.ServiceArgs;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -46,12 +47,13 @@ public class SplunkinsNotifier extends Notifier {
         String buildLog;
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
         String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
-        
+        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
         String token = null;
+        ServiceArgs hostInfo = null;
         try {
             token = connector.createHttpinput(httpinputName);
+            hostInfo = connector.getSplunkHostInfo();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -93,7 +95,7 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         // Setup connection for sending to build data to Splunk
-        HttpInputsEventSender sender = new HttpInputsEventSender(descriptor.scheme + "://" + descriptor.host + ":" +
+        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
                 Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
 
         sender.disableCertificateValidation();
