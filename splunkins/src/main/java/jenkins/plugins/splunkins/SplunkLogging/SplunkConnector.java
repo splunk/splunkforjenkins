@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class SplunkConnector {
-    private static final ServiceArgs serviceArgs = new ServiceArgs();
+    private final static Logger LOGGER = Logger.getLogger(SplunkConnector.class.getName());
+    private ServiceArgs serviceArgs = new ServiceArgs();
     private String splunkHost;
     private int splunkSoapport;
     private String splunkUsername;
@@ -74,7 +76,8 @@ public class SplunkConnector {
     public Service connectToSplunk() throws IOException {
         Service service = null;
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
-        getSplunkHostInfo();
+        serviceArgs = getSplunkHostInfo();
+        LOGGER.info("Connecting to Splunk with: "+serviceArgs.toString());
 
         // get splunk service and login
         service = Service.connect(serviceArgs);
@@ -86,7 +89,6 @@ public class SplunkConnector {
      * Wraps the splunk connection parameters in a serviceArgs object for the splunk sdk
      */
     public ServiceArgs getSplunkHostInfo() throws IOException {
-
         if (serviceArgs.isEmpty()) {
             serviceArgs.setHost(this.splunkHost);
             serviceArgs.setPort(this.splunkSoapport);

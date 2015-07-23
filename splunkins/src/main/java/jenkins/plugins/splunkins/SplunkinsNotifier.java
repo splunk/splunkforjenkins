@@ -1,5 +1,6 @@
 package jenkins.plugins.splunkins;
 
+import com.splunk.ServiceArgs;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -29,41 +30,39 @@ import java.util.logging.Logger;
  */
 public class SplunkinsNotifier extends Notifier {
     public boolean collectBuildLog;
-    public boolean collectEnvVars;
     public String filesToSend;
-    public EnvVars envVars;
 
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend ){
-        this.collectBuildLog = collectBuildLog;
-        this.collectEnvVars = collectEnvVars;
+    public SplunkinsNotifier(String filesToSend ){
         this.filesToSend = filesToSend;
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-        PrintStream buildLogStream = listener.getLogger();
+        PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
+        EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
         String buildLog;
-        EnvVars envVars = null;
-
-
-        if (this.collectBuildLog) {
-            buildLog = getBuildLog(build);
-        }
-        if (this.collectEnvVars){
-            envVars = getBuildEnvVars(build, listener);
-        }
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
+
+        // Get the httpinput name
+        String httpinputName;
+        if (descriptor.source == null || descriptor.source.isEmpty()){
+            httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+        } else {
+            httpinputName = descriptor.source;
+        }
+
+        // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
-        String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
-        
         String token = null;
+        ServiceArgs hostInfo = null;
         try {
             token = connector.createHttpinput(httpinputName);
+            hostInfo = connector.getSplunkHostInfo();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -71,10 +70,10 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
 
-        Dictionary dictionary = new Hashtable();
-        dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
+        Dictionary metadata = new Hashtable();
+        metadata.put(HttpInputsEventSender.MetadataIndexTag, descriptor.indexName);
+        metadata.put(HttpInputsEventSender.MetadataSourceTag, "");
+        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
         // Discover xml files to collect
         FilePath[] xmlFiles = collectXmlFiles(this.filesToSend, build, buildLogStream);
@@ -97,7 +96,6 @@ public class SplunkinsNotifier extends Notifier {
                         }
                     }
                 }
-                
                 toSplunkList.add(testRun);
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
@@ -105,8 +103,9 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         // Setup connection for sending to build data to Splunk
-        HttpInputsEventSender sender = new HttpInputsEventSender(descriptor.scheme + "://" + descriptor.host + ":" +
-                Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
+        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
+                Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
+                descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
         sender.disableCertificateValidation();
 
@@ -153,7 +152,6 @@ public class SplunkinsNotifier extends Notifier {
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         try {
             xmlFiles = workspacePath.list(filenamesExpression);
-            LOGGER.info("xmlFiles collected: "+xmlFiles.toString());
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
@@ -167,6 +165,7 @@ public class SplunkinsNotifier extends Notifier {
             }
             buildLogMsg = "Splunkins collected these files to send to Splunk: "+filenames.toString()+"\n";
         }
+        LOGGER.info(buildLogMsg);
         // Attempt to write to build's console log
         try {
             buildLogStream.write(buildLogMsg.getBytes());
