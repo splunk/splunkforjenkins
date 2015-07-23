@@ -5,12 +5,14 @@ import com.splunk.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class SplunkConnector {
     private final static Logger LOGGER = Logger.getLogger(SplunkConnector.class.getName());
+    private final PrintStream buildLogStream;
     private ServiceArgs serviceArgs = new ServiceArgs();
     private String splunkHost;
     private int splunkSoapport;
@@ -19,12 +21,13 @@ public class SplunkConnector {
     private String splunkScheme;
 
     public SplunkConnector(String splunkHost, int splunkSoapport,
-                           String splunkUsername, String splunkPassword, String splunkScheme) {
+                           String splunkUsername, String splunkPassword, String splunkScheme, PrintStream buildLogStream) {
         this.splunkHost = splunkHost;
         this.splunkSoapport = splunkSoapport;  // Splunk Management Port
         this.splunkUsername = splunkUsername;
         this.splunkPassword = splunkPassword;
         this.splunkScheme = splunkScheme;
+        this.buildLogStream = buildLogStream;
     }
 
     /**
@@ -32,9 +35,9 @@ public class SplunkConnector {
      *
      * @param httpinputName
      * @return
-     * @throws Exception
+     * @throws Exception, com.splunk.HttpException
      */
-    public String createHttpinput(String httpinputName) throws Exception {
+    public String createHttpinput(String httpinputName) throws IOException, com.splunk.HttpException {
         Service service = connectToSplunk();
 
         this.enableHttpinput(service);
@@ -74,13 +77,14 @@ public class SplunkConnector {
     }
 
     public Service connectToSplunk() throws IOException {
-        Service service = null;
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         serviceArgs = getSplunkHostInfo();
-        LOGGER.info("Connecting to Splunk with: "+serviceArgs.toString());
+        String connectDebugMsg = "Connecting to Splunk with: " + serviceArgs.toString();
+        LOGGER.info(connectDebugMsg);
+        buildLogStream.write((connectDebugMsg+"\n").getBytes());
 
         // get splunk service and login
-        service = Service.connect(serviceArgs);
+        Service service = Service.connect(serviceArgs);
         service.login();
         return service;
     }
@@ -118,7 +122,7 @@ public class SplunkConnector {
     /**
      * delete http input token
      */
-    public void deleteHttpinput(String httpinputName, Service service) throws Exception {
+    public void deleteHttpinput(String httpinputName, Service service) throws com.splunk.HttpException {
         try {
             ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
             if (response.getStatus() == 200) {

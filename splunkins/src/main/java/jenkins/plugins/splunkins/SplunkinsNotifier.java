@@ -29,13 +29,12 @@ import java.util.logging.Logger;
  * Created by djenkins on 6/18/15.
  */
 public class SplunkinsNotifier extends Notifier {
-    public boolean collectBuildLog;
     public String filesToSend;
 
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(String filesToSend ){
+    public SplunkinsNotifier(String filesToSend){
         this.filesToSend = filesToSend;
     }
 
@@ -44,7 +43,6 @@ public class SplunkinsNotifier extends Notifier {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
         EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
-        String buildLog;
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
 
@@ -57,7 +55,7 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         // Create the Splunk instance connector
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
+        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
         String token = null;
         ServiceArgs hostInfo = null;
         try {
@@ -70,6 +68,7 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
 
+        // Set httpinput metadata
         Dictionary metadata = new Hashtable();
         metadata.put(HttpInputsEventSender.MetadataIndexTag, descriptor.indexName);
         metadata.put(HttpInputsEventSender.MetadataSourceTag, "");
