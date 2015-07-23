@@ -48,7 +48,16 @@ public class SplunkinsNotifier extends Notifier {
         String buildLog;
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
-        String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+
+        // Get the httpinput name
+        String httpinputName;
+        if (descriptor.source == null){
+            httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+        } else {
+            httpinputName = descriptor.source;
+        }
+
+        // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
         String token = null;
         ServiceArgs hostInfo = null;
@@ -62,13 +71,18 @@ public class SplunkinsNotifier extends Notifier {
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
 
-        Dictionary dictionary = new Hashtable();
-        dictionary.put(HttpInputsEventSender.MetadataIndexTag, "main");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTag, "");
-        dictionary.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
+        Dictionary metadata = new Hashtable();
+        metadata.put(HttpInputsEventSender.MetadataIndexTag, descriptor.indexName);
+        metadata.put(HttpInputsEventSender.MetadataSourceTag, "");
+        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
         // Discover xml files to collect
         FilePath[] xmlFiles = collectXmlFiles(this.filesToSend, build, buildLogStream);
+
+        // Get build log if selected
+//        if (this.collectBuildLog) {
+//            buildLog = getBuildLog(build);
+//        }
 
         ArrayList<ArrayList> toSplunkList = new ArrayList<>();
 
@@ -96,7 +110,8 @@ public class SplunkinsNotifier extends Notifier {
 
         // Setup connection for sending to build data to Splunk
         HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
-                Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
+                Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
+                descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
         sender.disableCertificateValidation();
 
