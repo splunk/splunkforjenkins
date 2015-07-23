@@ -35,8 +35,7 @@ public class SplunkinsNotifier extends Notifier {
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, String filesToSend ){
-        this.collectBuildLog = collectBuildLog;
+    public SplunkinsNotifier(String filesToSend ){
         this.filesToSend = filesToSend;
     }
 
@@ -78,11 +77,6 @@ public class SplunkinsNotifier extends Notifier {
 
         // Discover xml files to collect
         FilePath[] xmlFiles = collectXmlFiles(this.filesToSend, build, buildLogStream);
-
-        // Get build log if selected
-//        if (this.collectBuildLog) {
-//            buildLog = getBuildLog(build);
-//        }
 
         ArrayList<ArrayList> toSplunkList = new ArrayList<>();
 
