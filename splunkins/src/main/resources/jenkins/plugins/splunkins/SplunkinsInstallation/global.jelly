@@ -44,13 +44,12 @@
             <f:textbox value="${descriptor.delay}" default="${descriptor.delay}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
-        <f:entry title="${%Splunk Index}" field="index">
-            <f:textbox value="${descriptor.index}" default="${descriptor.index}"
+        <f:entry title="${%Splunk Index}" field="indexName">
+            <f:textbox value="${descriptor.indexName}" default="${descriptor.indexName}"
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Splunk Source}" field="source">
-            <f:textbox value="${descriptor.source}" default="${descriptor.source}"
-                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
+            <f:textbox value="${descriptor.source}" default="${descriptor.source}" />
         </f:entry>
     </f:section>
 </j:jelly>

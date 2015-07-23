@@ -40,8 +40,8 @@ public class SplunkinsInstallation extends ToolInstallation {
         public long retriesOnError = 3;
         public String sendMode;
         public long delay = 0;
-        public String index = "main";
-        public String source = "JobName_BuildNo";
+        public String indexName = "main";
+        public String source = null;
 
         public Descriptor() {
             super();
