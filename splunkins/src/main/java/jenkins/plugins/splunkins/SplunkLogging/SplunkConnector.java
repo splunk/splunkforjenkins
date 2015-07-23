@@ -32,9 +32,9 @@ public class SplunkConnector {
      *
      * @param httpinputName
      * @return
-     * @throws Exception
+     * @throws Exception, com.splunk.HttpException
      */
-    public String createHttpinput(String httpinputName) throws Exception {
+    public String createHttpinput(String httpinputName) throws IOException, com.splunk.HttpException {
         Service service = connectToSplunk();
 
         this.enableHttpinput(service);
@@ -118,7 +118,7 @@ public class SplunkConnector {
     /**
      * delete http input token
      */
-    public void deleteHttpinput(String httpinputName, Service service) throws Exception {
+    public void deleteHttpinput(String httpinputName, Service service) throws com.splunk.HttpException {
         try {
             ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
             if (response.getStatus() == 200) {
