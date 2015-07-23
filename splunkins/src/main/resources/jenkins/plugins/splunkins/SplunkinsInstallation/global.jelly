@@ -9,10 +9,12 @@
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkInteger?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Username}" field="username">
-            <f:textbox value="${descriptor.username}" default="${descriptor.username}" />
+            <f:textbox value="${descriptor.username}" default="${descriptor.username}"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Password}" field="password">
-            <f:password value="${descriptor.password}" />
+            <f:password value="${descriptor.password}"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry name="scheme" title="${%Scheme}" field="scheme">
             <select name="scheme">
@@ -43,10 +45,12 @@
                 checkUrl="'descriptorByName/SplunkinsInstallation/checkLong?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Splunk Index}" field="index">
-            <f:textbox value="${descriptor.index}" default="${descriptor.index}" />
+            <f:textbox value="${descriptor.index}" default="${descriptor.index}"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Splunk Source}" field="source">
-            <f:textbox value="${descriptor.source}" default="${descriptor.source}" />
+            <f:textbox value="${descriptor.source}" default="${descriptor.source}"
+                checkUrl="'descriptorByName/SplunkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
     </f:section>
 </j:jelly>
