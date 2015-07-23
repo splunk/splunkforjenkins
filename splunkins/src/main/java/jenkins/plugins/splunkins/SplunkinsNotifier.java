@@ -32,8 +32,6 @@ public class SplunkinsNotifier extends Notifier {
     public boolean collectEnvVars;
     public String filesToSend;
     public EnvVars envVars;
-    private static String host;
-    private static String scheme;
 
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
@@ -59,12 +57,13 @@ public class SplunkinsNotifier extends Notifier {
             envVars = getBuildEnvVars(build, listener);
         }
 
+        SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
+        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
         String httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+        
         String token = null;
         try {
-            token = SplunkConnector.createHttpinput(httpinputName);
-            host = SplunkConnector.getSplunkHostInfo().host;
-            scheme = SplunkConnector.getSplunkHostInfo().scheme;
+            token = connector.createHttpinput(httpinputName);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -106,7 +105,7 @@ public class SplunkinsNotifier extends Notifier {
         }
 
         // Setup connection for sending to build data to Splunk
-        HttpInputsEventSender sender = new HttpInputsEventSender(scheme + "://" + host + ":" +
+        HttpInputsEventSender sender = new HttpInputsEventSender(descriptor.scheme + "://" + descriptor.host + ":" +
                 Constants.HTTPINPUTPORT, token, 0, 0, 0, 5, "sequential", dictionary);
 
         sender.disableCertificateValidation();

@@ -12,26 +12,40 @@ import java.util.Map;
 public class SplunkConnector {
     private static Service service;
     private static final ServiceArgs serviceArgs = new ServiceArgs();
-    private static String splunkHost;
-    private static int splunkSoapport;
-    private static String splunkUsername;
-    private static String splunkPassword;
-    private static String splunkScheme;
-    
-    public SplunkConnector(String splunkHost, int splunkSoapport, String splunkUsername, String splunkPassword, String splunkScheme){
-    	SplunkConnector.splunkHost = splunkHost;
-    	SplunkConnector.splunkSoapport = splunkSoapport;
-    	SplunkConnector.splunkUsername = splunkUsername;
-    	SplunkConnector.splunkPassword = splunkPassword;
-    	SplunkConnector.splunkScheme = splunkScheme;
-    	    	
+    private String splunkHost;
+    private int splunkSoapport;
+    private String splunkUsername;
+    private String splunkPassword;
+    private String splunkScheme;
+
+    public SplunkConnector(String splunkHost, int splunkSoapport,
+            String splunkUsername, String splunkPassword, String splunkScheme) {
+        this.splunkHost = splunkHost;
+        this.splunkSoapport = splunkSoapport;
+        this.splunkUsername = splunkUsername;
+        this.splunkPassword = splunkPassword;
+        this.splunkScheme = splunkScheme;
+
     }
 
-    public static String createHttpinput(String httpinputName) throws Exception {
+    /**
+     * This is just to beat instantiation purposes.
+     */
+    public SplunkConnector() {
+    }
+
+    /**
+     * Create a new HttpInput in Splunk.
+     * 
+     * @param httpinputName
+     * @return
+     * @throws Exception
+     */
+    public String createHttpinput(String httpinputName) throws Exception {
+        SplunkConnector connector = new SplunkConnector();
         connectToSplunk();
 
-        // enable logging endpoint
-        SplunkConnector.enableHttpinput();
+        connector.enableHttpinput();
 
         // create a httpinput
         Map args = new HashMap();
@@ -40,13 +54,17 @@ public class SplunkConnector {
 
         deleteHttpinput(httpinputName);
 
-        ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
+        ResponseMessage msg = service.post(
+                Constants.httpInputTokenEndpointPath, args);
         assert msg.getStatus() == 201;
 
         // get httpinput token
         args = new HashMap();
-        ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName, args);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
+        ResponseMessage response = service.get(
+                Constants.httpInputTokenEndpointPath + "/" + httpinputName,
+                args);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(
+                response.getContent(), "UTF-8"));
         String token = "";
         while (true) {
             String line = reader.readLine();
@@ -67,7 +85,7 @@ public class SplunkConnector {
         return token;
     }
 
-    public static Service connectToSplunk() throws IOException {
+    public Service connectToSplunk() throws IOException {
 
         if (service == null) {
             HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
@@ -83,15 +101,15 @@ public class SplunkConnector {
     /**
      * Get the splunk host info from the global configuration page
      */
-    public static ServiceArgs getSplunkHostInfo() throws IOException {
+    public ServiceArgs getSplunkHostInfo() throws IOException {
 
         if (serviceArgs.isEmpty()) {
-        	
-            serviceArgs.setHost(SplunkConnector.splunkHost);
-            serviceArgs.setPort(SplunkConnector.splunkSoapport);
-            serviceArgs.setUsername(SplunkConnector.splunkUsername);
-            serviceArgs.setPassword(SplunkConnector.splunkPassword);
-            serviceArgs.setScheme(SplunkConnector.splunkScheme);
+
+            serviceArgs.setHost(this.splunkHost);
+            serviceArgs.setPort(this.splunkSoapport);
+            serviceArgs.setUsername(this.splunkUsername);
+            serviceArgs.setPassword(this.splunkPassword);
+            serviceArgs.setScheme(this.splunkScheme);
         }
         return serviceArgs;
     }
@@ -99,30 +117,35 @@ public class SplunkConnector {
     /**
      * enable http input features
      */
-    public static void enableHttpinput() throws IOException {
+    public void enableHttpinput() throws IOException {
         connectToSplunk();
 
         // enable logging endpoint
         Map args = new HashMap();
         args.put("disabled", 0);
-        ResponseMessage response = service.post(Constants.httpInputCreateEndpoint, args);
+        ResponseMessage response = service.post(
+                Constants.httpInputCreateEndpoint, args);
         assert response.getStatus() == 200;
 
         args.clear();
         args.put("index", "main");
-        ResponseMessage index_response = service.post(Constants.httpInputCreateEndpoint, args);
+        ResponseMessage index_response = service.post(
+                Constants.httpInputCreateEndpoint, args);
         assert index_response.getStatus() == 200;
     }
 
     /**
      * delete http input token
      */
-    public static void deleteHttpinput(String httpinputName) throws Exception {
+    public void deleteHttpinput(String httpinputName) throws Exception {
         connectToSplunk();
         try {
-            ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
+            ResponseMessage response = service
+                    .get(Constants.httpInputTokenEndpointPath + "/"
+                            + httpinputName);
             if (response.getStatus() == 200) {
-                response = service.delete(Constants.httpInputTokenEndpointPath + "/" + httpinputName);
+                response = service.delete(Constants.httpInputTokenEndpointPath
+                        + "/" + httpinputName);
                 assert response.getStatus() == 200;
             }
         } catch (com.splunk.HttpException e) {
