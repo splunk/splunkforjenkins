@@ -16,8 +16,8 @@
         </f:entry>
         <f:entry name="scheme" title="${%Scheme}" field="scheme">
             <select name="scheme">
-                <option value="https">https</option>
-                <option value="http">http</option>
+                <option value="https" selected="${descriptor.scheme == 'https'}">https</option>
+                <option value="http" selected="${descriptor.scheme == 'http'}">http</option>
             </select>
         </f:entry>
         <f:entry title="${%Max Events Batch Count}" field="maxEventsBatchCount">
@@ -34,8 +34,8 @@
         </f:entry>
         <f:entry title="${%Send Mode}" name="sendMode" field="sendMode">
             <select name="sendMode">
-                <option value="sequential">sequential</option>
-                <option value="parallel">parallel</option>
+                <option value="sequential" selected="${descriptor.sendMode == 'sequential'}">sequential</option>
+                <option value="parallel" selected="${descriptor.sendMode == 'parallel'}">parallel</option>
             </select>
         </f:entry>
         <f:entry title="${%Send Delay}" field="delay">
