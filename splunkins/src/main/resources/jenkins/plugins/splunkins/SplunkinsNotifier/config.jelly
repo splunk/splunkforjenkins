@@ -3,9 +3,6 @@
         <f:entry title="${descriptor.configBuildStepSendLog}" field="collectBuildLog">
             <f:checkbox default="true"  />
         </f:entry>
-        <f:entry title="${descriptor.configBuildStepSendEnvVars}" field="collectEnvVars">
-            <f:checkbox default="true" />
-        </f:entry>
         <f:entry title="${descriptor.configBuildStepSendFiles}" field="filesToSend">
             <f:textbox default='*.xml' value="${instance.filesToSend}" />
         </f:entry>

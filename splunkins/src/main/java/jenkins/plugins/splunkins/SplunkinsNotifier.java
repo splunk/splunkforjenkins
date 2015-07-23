@@ -29,16 +29,13 @@ import java.util.logging.Logger;
  */
 public class SplunkinsNotifier extends Notifier {
     public boolean collectBuildLog;
-    public boolean collectEnvVars;
     public String filesToSend;
-    public EnvVars envVars;
 
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(boolean collectBuildLog, boolean collectEnvVars, String filesToSend ){
+    public SplunkinsNotifier(boolean collectBuildLog, String filesToSend ){
         this.collectBuildLog = collectBuildLog;
-        this.collectEnvVars = collectEnvVars;
         this.filesToSend = filesToSend;
     }
 
@@ -47,15 +44,6 @@ public class SplunkinsNotifier extends Notifier {
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         PrintStream buildLogStream = listener.getLogger();
         String buildLog;
-        EnvVars envVars = null;
-
-
-        if (this.collectBuildLog) {
-            buildLog = getBuildLog(build);
-        }
-        if (this.collectEnvVars){
-            envVars = getBuildEnvVars(build, listener);
-        }
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme);
