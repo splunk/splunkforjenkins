@@ -12,6 +12,20 @@ import java.util.Map;
 public class SplunkConnector {
     private static Service service;
     private static final ServiceArgs serviceArgs = new ServiceArgs();
+    private static String splunkHost;
+    private static int splunkSoapport;
+    private static String splunkUsername;
+    private static String splunkPassword;
+    private static String splunkScheme;
+    
+    public SplunkConnector(String splunkHost, int splunkSoapport, String splunkUsername, String splunkPassword, String splunkScheme){
+    	SplunkConnector.splunkHost = splunkHost;
+    	SplunkConnector.splunkSoapport = splunkSoapport;
+    	SplunkConnector.splunkUsername = splunkUsername;
+    	SplunkConnector.splunkPassword = splunkPassword;
+    	SplunkConnector.splunkScheme = splunkScheme;
+    	    	
+    }
 
     public static String createHttpinput(String httpinputName) throws Exception {
         connectToSplunk();
@@ -72,13 +86,12 @@ public class SplunkConnector {
     public static ServiceArgs getSplunkHostInfo() throws IOException {
 
         if (serviceArgs.isEmpty()) {
-            // set default value
-            SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
-            serviceArgs.setHost(descriptor.host);
-            serviceArgs.setPort(descriptor.port);
-            serviceArgs.setUsername(descriptor.username);
-            serviceArgs.setPassword(descriptor.password);
-            serviceArgs.setScheme(descriptor.scheme);
+        	
+            serviceArgs.setHost(SplunkConnector.splunkHost);
+            serviceArgs.setPort(SplunkConnector.splunkSoapport);
+            serviceArgs.setUsername(SplunkConnector.splunkUsername);
+            serviceArgs.setPassword(SplunkConnector.splunkPassword);
+            serviceArgs.setScheme(SplunkConnector.splunkScheme);
         }
         return serviceArgs;
     }
