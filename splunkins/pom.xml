@@ -6,9 +6,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <!-- Baseline Jenkins version you use to build and test the plugin. Users
-            must have this version or newer to run. -->
-        <version>1.580.3</version>
+        <version>1.621</version>
         <relativePath />
     </parent>
     <artifactId>splunkins</artifactId>
@@ -63,6 +61,10 @@
             <id>central</id>
             <name>public</name>
             <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+        <repository>
+            <id>jenkins-releases</id>
+            <url>http://repo.jenkins-ci.org/releases/</url>
         </repository>
         <repository>
             <id>splunk</id>
@@ -141,6 +143,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <version>4.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.main</groupId>
+            <artifactId>jenkins-test-harness</artifactId>
+            <version>1.621</version>
+            <!--<scope>test</scope>-->
         </dependency>
     </dependencies>
 </project>
