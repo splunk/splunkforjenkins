@@ -27,9 +27,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.*;
 import java.util.logging.Logger;
@@ -37,16 +41,59 @@ import java.util.logging.Logger;
 /**
  * Created by djenkins on 6/18/15.
  */
-public class SplunkinsNotifier extends Notifier{
+public class SplunkinsNotifier extends Notifier implements Serializable{
+
+    private static final long serialVersionUID = 1L;
     public boolean collectBuildLog;
-    public String filesToSend;
+    public static String filesToSend;
     
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
     public SplunkinsNotifier(String filesToSend){
-        this.filesToSend = filesToSend;
+        SplunkinsNotifier.filesToSend = filesToSend;
     }
+    
+    
+    private static class RunOnSlave implements FileCallable<ArrayList<String>> {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        public void checkRoles(RoleChecker arg0) throws SecurityException {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public ArrayList<String> invoke(File file, VirtualChannel channel)
+                throws IOException, InterruptedException {
+            ArrayList<String> xmlFileData = new ArrayList<String>();
+            if (file.isDirectory()) {
+                ArrayList<File> files = new ArrayList<File>(Arrays.asList(file
+                        .listFiles()));
+                for (int i = 0; i < files.size(); i++) {
+                    StringBuilder sb = new StringBuilder();
+
+                    BufferedReader br = new BufferedReader(new FileReader(
+                            files.get(i).getCanonicalPath().toString()));
+                    String sCurrentLine;
+                    while ((sCurrentLine = br.readLine()) != null) {
+                        sb.append(sCurrentLine.trim());
+                    }
+
+                    br.close();
+                    xmlFileData.add(sb.toString());
+                    
+                }
+            } else {
+                return null;
+            }
+            return xmlFileData;
+        }
+
+    }
+    
+    
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
     public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
@@ -86,63 +133,87 @@ public class SplunkinsNotifier extends Notifier{
 
         //From here run the code on the slave
         
-        Callable<ArrayList<ArrayList>, IOException> runOnSlave = new Callable<ArrayList<ArrayList>, IOException>() {
-            private static final long serialVersionUID = -95560499446143099L;
+//        Callable<ArrayList<ArrayList>, IOException> runOnSlave = new Callable<ArrayList<ArrayList>, IOException>() {
+//            private static final long serialVersionUID = -95560499446143099L;
+//
+//            public ArrayList<ArrayList> call() throws IOException {
+//                // This code will run on the build slave
+//
+//                // Discover xml files to collect
+//                FilePath[] xmlFiles = null;
+//                try {
+//                    xmlFiles = collectXmlFiles(filesToSend, build,
+//                            buildLogStream);
+//                } catch (IOException e1) {
+//                    e1.printStackTrace();
+//                } catch (InterruptedException e1) {
+//                    e1.printStackTrace();
+//                }
+//                
+//                ArrayList<ArrayList> toSplunkList = new ArrayList<>();
+//
+//                // Read and parse xml files
+//                for (FilePath xmlFile : xmlFiles) {
+//                    try {
+//                        XmlParser parser = new XmlParser();
+//                        ArrayList<JSONObject> testRun = parser
+//                                .xmlParser(xmlFile.readToString());
+//                        // Add envVars to each testcase
+//                        for (JSONObject testcase : testRun) {
+//                            Set keys = envVars.keySet();
+//                            for (Object key : keys) {
+//                                try {
+//                                    testcase.append(key.toString(),
+//                                            envVars.get(key));
+//                                } catch (JSONException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        }
+//                        toSplunkList.add(testRun);
+//                    } catch (IOException | InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
+//                }
+//                return toSplunkList;
+//            }
+//
+//            @Override
+//            public void checkRoles(RoleChecker arg0) throws SecurityException {
+//                // TODO Auto-generated method stub
+//                
+//            }
+//        };
+        
+        
+        ArrayList<String> xmlFileData = new ArrayList<String>();
+        try {
+            FilePath fp = new FilePath(build.getWorkspace(), "");
+            LOGGER.info("Calling!!");
+            xmlFileData = fp.act(new RunOnSlave());
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+      ArrayList<ArrayList> toSplunkList = new ArrayList<>();
 
-            public ArrayList<ArrayList> call() throws IOException {
-                // This code will run on the build slave
-
-                // Discover xml files to collect
-                FilePath[] xmlFiles = null;
-                try {
-                    xmlFiles = collectXmlFiles(filesToSend, build,
-                            buildLogStream);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-                
-                ArrayList<ArrayList> toSplunkList = new ArrayList<>();
-
-                // Read and parse xml files
-                for (FilePath xmlFile : xmlFiles) {
+      // Read and parse xml files
+        for (String xmlData : xmlFileData) {
+            XmlParser parser = new XmlParser();
+            ArrayList<JSONObject> testRun = parser
+                    .xmlParser(xmlData.toString());
+            // Add envVars to each testcase
+            for (JSONObject testcase : testRun) {
+                Set keys = envVars.keySet();
+                for (Object key : keys) {
                     try {
-                        XmlParser parser = new XmlParser();
-                        ArrayList<JSONObject> testRun = parser
-                                .xmlParser(xmlFile.readToString());
-                        // Add envVars to each testcase
-                        for (JSONObject testcase : testRun) {
-                            Set keys = envVars.keySet();
-                            for (Object key : keys) {
-                                try {
-                                    testcase.append(key.toString(),
-                                            envVars.get(key));
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                        toSplunkList.add(testRun);
-                    } catch (IOException | InterruptedException e) {
+                        testcase.append(key.toString(), envVars.get(key));
+                    } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
-                return toSplunkList;
             }
-
-            @Override
-            public void checkRoles(RoleChecker arg0) throws SecurityException {
-                // TODO Auto-generated method stub
-                
-            }
-        };
-        
-        ArrayList<ArrayList> toSplunkList = null;
-        try {
-            toSplunkList = launcher.getChannel().call(runOnSlave);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            toSplunkList.add(testRun);
         }
         
         // Setup connection for sending to build data to Splunk
@@ -151,6 +222,8 @@ public class SplunkinsNotifier extends Notifier{
                 descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
         sender.disableCertificateValidation();
+        
+        
 
         // Send data to splunk
         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
