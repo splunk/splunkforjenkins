@@ -44,7 +44,6 @@ public class SplunkinsNotifier extends Notifier{
     public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
         final PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
         final EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
-        String buildLog;
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
 
@@ -150,17 +149,6 @@ public class SplunkinsNotifier extends Notifier{
         sender.close();
 
         return true;
-    }
-
-    // Returns the build log as a list of strings.
-    public String getBuildLog(AbstractBuild<?, ?> build){
-        List<String> log = new ArrayList<>();
-        try {
-            log = build.getLog(Integer.MAX_VALUE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return log.toString();
     }
 
     // Returns environment variables for the build.
