@@ -9,6 +9,7 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.remoting.Callable;
+import hudson.remoting.Channel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -75,62 +76,38 @@ public class SplunkinsNotifier extends Notifier{
         metadata.put(HttpInputsEventSender.MetadataSourceTag, "");
         metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
 
+        // Discover xml files to collect
+        FilePath[] xmlFiles = new FilePath[0];
+        try {
+            xmlFiles = collectXmlFiles(filesToSend, build, buildLogStream);
+        } catch (IOException | InterruptedException e1) {
+            e1.printStackTrace();
+        }
 
-        //From here run the code on the slave
-        Callable<ArrayList<ArrayList>, IOException> runOnSlave = new Callable<ArrayList<ArrayList>, IOException>() {
-            private static final long serialVersionUID = -95560499446143099L;
+        ArrayList<ArrayList> toSplunkList = new ArrayList<>();
 
-            public ArrayList<ArrayList> call() throws IOException {
-                // This code will run on the build slave
-
-                // Discover xml files to collect
-                FilePath[] xmlFiles = new FilePath[0];
-                try {
-                    xmlFiles = collectXmlFiles(filesToSend, build, buildLogStream);
-                } catch (IOException | InterruptedException e1) {
-                    e1.printStackTrace();
-                }
-
-                ArrayList<ArrayList> toSplunkList = new ArrayList<>();
-
-                // Read and parse xml files
-                for (FilePath xmlFile : xmlFiles) {
-                    try {
-                        XmlParser parser = new XmlParser();
-                        ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
-                        // Add envVars to each testcase
-                        for (JSONObject testcase : testRun) {
-                            Set keys = envVars.keySet();
-                            for (Object key : keys) {
-                                try {
-                                    testcase.append(key.toString(), envVars.get(key));
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                            }
+        // Read and parse xml files
+        for (FilePath xmlFile : xmlFiles) {
+            try {
+                XmlParser parser = new XmlParser();
+                ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
+                // Add envVars to each testcase
+                for (JSONObject testcase : testRun) {
+                    Set keys = envVars.keySet();
+                    for (Object key : keys) {
+                        try {
+                            testcase.append(key.toString(), envVars.get(key));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                        toSplunkList.add(testRun);
-                    } catch (IOException | InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
-                return toSplunkList;
+                toSplunkList.add(testRun);
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
             }
-
-            @Override
-            public void checkRoles(RoleChecker arg0) throws SecurityException {
-                // TODO Auto-generated method stub
-                
-            }
-        };
-        
-        ArrayList<ArrayList> toSplunkList = null;
-        try {
-            toSplunkList = launcher.getChannel().call(runOnSlave);
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
         }
-        
+
         // Setup connection for sending to build data to Splunk
         HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
                 Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
@@ -139,7 +116,6 @@ public class SplunkinsNotifier extends Notifier{
         sender.disableCertificateValidation();
 
         // Send data to splunk
-        assert toSplunkList != null;
         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
             for (JSONObject json : toSplunkFile){
                 sender.send("INFO", json.toString());
@@ -169,6 +145,11 @@ public class SplunkinsNotifier extends Notifier{
         FilePath[] xmlFiles = null;
         String buildLogMsg;
         FilePath workspacePath = build.getWorkspace();   // collect junit xml fil
+        if (workspacePath.isRemote()){
+            LOGGER.info("Collecting files on remote Jenkins slave...");
+        }else{
+            LOGGER.info("Collecting files on local Jenkins Master...");
+        }
         try {
             xmlFiles = workspacePath.list(filenamesExpression);
         } catch (IOException | InterruptedException e) {
