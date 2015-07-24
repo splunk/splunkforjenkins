@@ -85,7 +85,6 @@ public class SplunkinsNotifier extends Notifier{
 
 
         //From here run the code on the slave
-        
         Callable<ArrayList<ArrayList>, IOException> runOnSlave = new Callable<ArrayList<ArrayList>, IOException>() {
             private static final long serialVersionUID = -95560499446143099L;
 
@@ -93,31 +92,26 @@ public class SplunkinsNotifier extends Notifier{
                 // This code will run on the build slave
 
                 // Discover xml files to collect
-                FilePath[] xmlFiles = null;
+                FilePath[] xmlFiles = new FilePath[0];
                 try {
-                    xmlFiles = collectXmlFiles(filesToSend, build,
-                            buildLogStream);
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                } catch (InterruptedException e1) {
+                    xmlFiles = collectXmlFiles(filesToSend, build, buildLogStream);
+                } catch (IOException | InterruptedException e1) {
                     e1.printStackTrace();
                 }
-                
+
                 ArrayList<ArrayList> toSplunkList = new ArrayList<>();
 
                 // Read and parse xml files
                 for (FilePath xmlFile : xmlFiles) {
                     try {
                         XmlParser parser = new XmlParser();
-                        ArrayList<JSONObject> testRun = parser
-                                .xmlParser(xmlFile.readToString());
+                        ArrayList<JSONObject> testRun = parser.xmlParser(xmlFile.readToString());
                         // Add envVars to each testcase
                         for (JSONObject testcase : testRun) {
                             Set keys = envVars.keySet();
                             for (Object key : keys) {
                                 try {
-                                    testcase.append(key.toString(),
-                                            envVars.get(key));
+                                    testcase.append(key.toString(), envVars.get(key));
                                 } catch (JSONException e) {
                                     e.printStackTrace();
                                 }
@@ -153,6 +147,7 @@ public class SplunkinsNotifier extends Notifier{
         sender.disableCertificateValidation();
 
         // Send data to splunk
+        assert toSplunkList != null;
         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
             for (JSONObject json : toSplunkFile){
                 sender.send("INFO", json.toString());
@@ -166,7 +161,7 @@ public class SplunkinsNotifier extends Notifier{
 
     // Returns the build log as a list of strings.
     public String getBuildLog(AbstractBuild<?, ?> build){
-        List<String> log = new ArrayList<String>();
+        List<String> log = new ArrayList<>();
         try {
             log = build.getLog(Integer.MAX_VALUE);
         } catch (IOException e) {
