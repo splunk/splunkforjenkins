@@ -171,7 +171,7 @@ public class SplunkinsNotifier extends Notifier{
         }
         assert xmlFiles != null;
         if (xmlFiles.length == 0){
-            buildLogMsg = "Splunkins cannot find any files matching the expression: "+filenamesExpression+"\n";
+            buildLogMsg = "Splunkins cannot find any files in " + workspacePath.toString() + " matching the expression: " + filenamesExpression+"\n";
         }else{
             ArrayList<String> filenames = new ArrayList<>();
             for(FilePath file : xmlFiles){
