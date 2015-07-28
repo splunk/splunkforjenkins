@@ -55,7 +55,7 @@ public class SplunkConnector {
 
             token = getHttpInputToken(httpinputName, args, service);
         }
-        
+      
         return token;
     }
 
