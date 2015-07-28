@@ -112,7 +112,7 @@ public class XmlParser {
      * @return
      * @throws JSONException
      */
-    private ArrayList<JSONObject> merge(JSONObject jsonObj1,
+    public ArrayList<JSONObject> merge(JSONObject jsonObj1,
             ArrayList<JSONObject> jsonObjList) throws JSONException {
         ArrayList<JSONObject> arr = new ArrayList<JSONObject>();
 
@@ -134,7 +134,7 @@ public class XmlParser {
      * @return
      */
 
-    private boolean validateXMLSchema(String xsdPath, String xmlString) {
+    public boolean validateXMLSchema(String xsdPath, String xmlString) {
         try {
             SchemaFactory factory = SchemaFactory
                     .newInstance(Constants.W3C_XML_SCHEMA_NS_URI);
