@@ -1,7 +1,6 @@
 package jenkins.plugins.splunkins.SplunkLogging;
 
 import com.splunk.*;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,61 +30,32 @@ public class SplunkConnector {
     }
 
     /**
-     * Enables the logging endpoint, creates an httpinput, and returns the token.
+     * Enables the logging endpoint, checks if an httpinput exists, if true returns the token else creates a new httpInput and returns the token.
      *
      * @param httpinputName
-     * @return token
-     * @throws IOException, com.splunk.HttpException
+     * @return
+     * @throws IOException
      */
-    public String createHttpinput(String httpinputName) throws IOException, com.splunk.HttpException {
+    public String createHttpinput(String httpinputName) throws IOException {
+        String token = "";
         Service service = connectToSplunk();
 
         this.enableHttpinput(service);
 
-        // create a httpinput
-        Map<String, Object> args = new HashMap<>();
+        Map args = new HashMap();
         args.put("name", httpinputName);
         args.put("description", "test http input");
+        
+        if (this.checkIfHttpInputExists(httpinputName, args, service)) {
+            token = this.getHttpInputToken(httpinputName, args, service);
+        } else {
+            ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
+            assert msg.getStatus() == 201;
+            args = new HashMap<>();
+            token = this.getHttpInputToken(httpinputName, args, service);
 
-        deleteHttpinput(httpinputName, service);
-
-        ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
-        assert msg.getStatus() == 201;
-
-        // get httpinput token
-        args = new HashMap<>();
-        ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName, args);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
-
-        return parseToken(reader);
-    }
-
-
-    /**
-     * Parses a response from a Splunk instance in order to get the token.
-     *
-     * @param reader
-     * @return token
-     * @throws IOException
-     */
-    public static String parseToken(BufferedReader reader) throws IOException {
-        String token = "";
-        while (true) {
-            String line = reader.readLine();
-            if (line == null)
-                break;
-
-            if (line.contains("name=\"token\"")) {
-                token = line.split(">")[1];
-                token = token.split("<")[0];
-                break;
-            }
         }
-        reader.close();
-
-        if (token.isEmpty()) {
-            LOGGER.warning("Cannot find token for connecting to Splunk!");
-        }
+      
         return token;
 
     }
@@ -149,4 +119,64 @@ public class SplunkConnector {
                 throw e;
         }
     }
+    
+    /**
+     * Checks if a give HttpInput exists
+     * @param httpinputName
+     * @param args
+     * @return boolean
+     * @throws IOException
+     */
+    private boolean checkIfHttpInputExists(String httpinputName, Map args, Service service) throws IOException{
+        
+        boolean httpInputExists = false;
+        try {
+            service.get(Constants.httpInputTokenEndpointPath + "/"
+                    + httpinputName, args);
+            httpInputExists = true;
+        }catch(HttpException e){
+            httpInputExists = false;
+        }
+
+        return httpInputExists;
+        
+    }
+    
+    /**
+     * Get the Token for the given HttpInput
+     * 
+     * @param httpinputName
+     * @param args
+     * @param service
+     * @return token
+     * @throws IOException
+     */
+    private String getHttpInputToken(String httpinputName, Map args, Service service) throws IOException{
+        
+        ResponseMessage response = service.get(
+                Constants.httpInputTokenEndpointPath + "/" + httpinputName,
+                args);
+            BufferedReader reader = null;
+
+            reader = new BufferedReader(new InputStreamReader(
+                    response.getContent(), "UTF-8"));
+            String token = "";
+            while (true) {
+                String line = null;
+                line = reader.readLine();
+                if (line == null)
+                    break;
+
+                if (line.contains("name=\"token\"")) {
+                    token = line.split(">")[1];
+                    token = token.split("<")[0];
+                    break;
+                }
+            }
+            reader.close();
+            return token;
+
+        }
+    
+
 }

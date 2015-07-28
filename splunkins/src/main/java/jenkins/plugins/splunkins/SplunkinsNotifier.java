@@ -64,17 +64,10 @@ public class SplunkinsNotifier extends Notifier{
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
 
         try {
-            token = connector.createHttpinput(httpinputName);
-            LOGGER.info("TOKEN is: " + token);
-            
+            token = connector.createHttpinput(httpinputName);            
             hostInfo = connector.getSplunkHostInfo();
-            LOGGER.info("HOST: " + hostInfo.host);
-            LOGGER.info("SCHEME " + hostInfo.scheme);
         } catch (Exception e) {
-            StringWriter sw = new StringWriter();
-            e.printStackTrace(new PrintWriter(sw));
-            String exceptionAsString = sw.toString();
-            LOGGER.info(exceptionAsString);
+            e.printStackTrace();
         }
 
         HashMap<String, String> userInputs = new HashMap<>();
