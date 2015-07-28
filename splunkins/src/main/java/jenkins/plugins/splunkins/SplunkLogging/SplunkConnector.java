@@ -34,8 +34,8 @@ public class SplunkConnector {
      * Enables the logging endpoint, creates an httpinput, and returns the token.
      *
      * @param httpinputName
-     * @return
-     * @throws Exception, com.splunk.HttpException
+     * @return token
+     * @throws IOException, com.splunk.HttpException
      */
     public String createHttpinput(String httpinputName) throws IOException, com.splunk.HttpException {
         Service service = connectToSplunk();
@@ -56,6 +56,19 @@ public class SplunkConnector {
         args = new HashMap<>();
         ResponseMessage response = service.get(Constants.httpInputTokenEndpointPath + "/" + httpinputName, args);
         BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent(), "UTF-8"));
+
+        return parseToken(reader);
+    }
+
+
+    /**
+     * Parses a response from a Splunk instance in order to get the token.
+     *
+     * @param reader
+     * @return token
+     * @throws IOException
+     */
+    public static String parseToken(BufferedReader reader) throws IOException {
         String token = "";
         while (true) {
             String line = reader.readLine();
@@ -70,10 +83,11 @@ public class SplunkConnector {
         }
         reader.close();
 
-        if (token.isEmpty()) {   // TODO: improve condition handling
-            System.out.println("No");
+        if (token.isEmpty()) {
+            LOGGER.warning("Cannot find token for connecting to Splunk!");
         }
         return token;
+
     }
 
     public Service connectToSplunk() throws IOException {
