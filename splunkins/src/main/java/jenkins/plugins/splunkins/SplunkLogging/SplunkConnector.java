@@ -34,7 +34,7 @@ public class SplunkConnector {
      *
      * @param httpinputName
      * @return
-     * @throws Exception, com.splunk.HttpException
+     * @throws IOException
      */
     public String createHttpinput(String httpinputName) throws IOException {
         String token = "";
@@ -46,14 +46,14 @@ public class SplunkConnector {
         args.put("name", httpinputName);
         args.put("description", "test http input");
         
-        if (checkIfHttpInputExists(httpinputName, args, service)) {
-            token = getHttpInputToken(httpinputName, args, service);
+        if (this.checkIfHttpInputExists(httpinputName, args, service)) {
+            token = this.getHttpInputToken(httpinputName, args, service);
         } else {
             ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
             assert msg.getStatus() == 201;
             args = new HashMap<>();
 
-            token = getHttpInputToken(httpinputName, args, service);
+            token = this.getHttpInputToken(httpinputName, args, service);
         }
       
         return token;
@@ -130,9 +130,8 @@ public class SplunkConnector {
         
         boolean httpInputExists = false;
         try {
-            ResponseMessage response = service.get(
-                    Constants.httpInputTokenEndpointPath + "/" + httpinputName,
-                    args);
+            service.get(Constants.httpInputTokenEndpointPath + "/"
+                    + httpinputName, args);
             httpInputExists = true;
         }catch(HttpException e){
             httpInputExists = false;
