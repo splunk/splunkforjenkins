@@ -69,6 +69,7 @@ public class SplunkConnector {
             }
         }
         reader.close();
+        LOGGER.info("Inside SplunkConnector: " + token);
 
         if (token.isEmpty()) {   // TODO: improve condition handling
             System.out.println("No");

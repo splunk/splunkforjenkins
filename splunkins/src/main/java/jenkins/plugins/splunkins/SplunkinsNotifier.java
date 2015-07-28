@@ -1,6 +1,7 @@
 package jenkins.plugins.splunkins;
 
 import com.splunk.ServiceArgs;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -16,11 +17,15 @@ import jenkins.plugins.splunkins.SplunkLogging.Constants;
 import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
+
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -29,6 +34,8 @@ import java.util.logging.Logger;
  */
 public class SplunkinsNotifier extends Notifier{
     public String filesToSend;
+    public String token;
+    public ServiceArgs hostInfo;
     
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
@@ -48,20 +55,26 @@ public class SplunkinsNotifier extends Notifier{
         // Get the httpinput name
         String httpinputName;
         if (descriptor.source == null || descriptor.source.isEmpty()){
-            httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+            httpinputName = envVars.get("JOB_NAME").replace("/", "_") + "_" + envVars.get("BUILD_NUMBER");
         } else {
             httpinputName = descriptor.source;
         }
 
         // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
-        String token = null;
-        ServiceArgs hostInfo = null;
+
         try {
             token = connector.createHttpinput(httpinputName);
+            LOGGER.info("TOKEN is: " + token);
+            
             hostInfo = connector.getSplunkHostInfo();
+            LOGGER.info("HOST: " + hostInfo.host);
+            LOGGER.info("SCHEME " + hostInfo.scheme);
         } catch (Exception e) {
-            e.printStackTrace();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            LOGGER.info(exceptionAsString);
         }
 
         HashMap<String, String> userInputs = new HashMap<>();
@@ -108,8 +121,8 @@ public class SplunkinsNotifier extends Notifier{
         // Setup connection for sending to build data to Splunk
         
         if (null != hostInfo && null != token && null != descriptor) {
-            if ((("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
-                if(("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
+            if ((!("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (!("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
+                if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
                         HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
                                 Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
                                 descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
