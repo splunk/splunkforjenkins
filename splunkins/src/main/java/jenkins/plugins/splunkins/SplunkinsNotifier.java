@@ -1,6 +1,7 @@
 package jenkins.plugins.splunkins;
 
 import com.splunk.ServiceArgs;
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -8,8 +9,6 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.remoting.Callable;
-import hudson.remoting.Channel;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
@@ -18,13 +17,15 @@ import jenkins.plugins.splunkins.SplunkLogging.Constants;
 import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
 import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
-import org.jenkinsci.remoting.RoleChecker;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -33,13 +34,16 @@ import java.util.logging.Logger;
  */
 public class SplunkinsNotifier extends Notifier{
     public String filesToSend;
+    public String token;
+    public ServiceArgs hostInfo;
     
     private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
 
     @DataBoundConstructor
     public SplunkinsNotifier(String filesToSend){
         this.filesToSend = filesToSend;
-    }
+    }    
+    
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
     public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
@@ -51,20 +55,26 @@ public class SplunkinsNotifier extends Notifier{
         // Get the httpinput name
         String httpinputName;
         if (descriptor.source == null || descriptor.source.isEmpty()){
-            httpinputName = envVars.get("JOB_NAME") + "_" + envVars.get("BUILD_NUMBER");
+            httpinputName = envVars.get("JOB_NAME").replace("/", "_") + "_" + envVars.get("BUILD_NUMBER");
         } else {
             httpinputName = descriptor.source;
         }
 
         // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
-        String token = null;
-        ServiceArgs hostInfo = null;
+
         try {
             token = connector.createHttpinput(httpinputName);
+            LOGGER.info("TOKEN is: " + token);
+            
             hostInfo = connector.getSplunkHostInfo();
+            LOGGER.info("HOST: " + hostInfo.host);
+            LOGGER.info("SCHEME " + hostInfo.scheme);
         } catch (Exception e) {
-            e.printStackTrace();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            LOGGER.info(exceptionAsString);
         }
 
         HashMap<String, String> userInputs = new HashMap<>();
@@ -109,20 +119,37 @@ public class SplunkinsNotifier extends Notifier{
         }
 
         // Setup connection for sending to build data to Splunk
-        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
-                Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
-                descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
+        
+        if (null != hostInfo && null != token && null != descriptor) {
+            if ((!("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (!("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
+                if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
+                        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
+                                Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
+                                descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
-        sender.disableCertificateValidation();
+                        sender.disableCertificateValidation();
+        
+        
 
-        // Send data to splunk
-        for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
-            for (JSONObject json : toSplunkFile){
-                sender.send("INFO", json.toString());
-            }
+                        // Send data to splunk
+                        for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
+                            for (JSONObject json : toSplunkFile){
+                                sender.send("INFO", json.toString());
+                            }
+                        }
+
+                        sender.close();
+                    }else{
+                        LOGGER.info("Value of sendMode is: " + descriptor.sendMode);
+                    }
+                }else{
+                    LOGGER.info("Value of hostInfo Details is: " + hostInfo.scheme  + "://" + hostInfo.host + ":" + Constants.HTTPINPUTPORT);
+                }
+        }else{
+            LOGGER.info("Is hostInfo null: " + (hostInfo != null?false:true));
+            LOGGER.info("Is token null: " + (token!= null?false:true));
+            LOGGER.info("Is descriptor null: " + (descriptor != null?false:true));
         }
-
-        sender.close();
 
         return true;
     }
