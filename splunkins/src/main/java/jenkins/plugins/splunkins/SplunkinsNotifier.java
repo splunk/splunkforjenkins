@@ -161,7 +161,7 @@ public class SplunkinsNotifier extends Notifier{
     public FilePath[] collectXmlFiles(String filenamesExpression, AbstractBuild<?, ?> build, PrintStream buildLogStream) throws IOException, InterruptedException{
         FilePath[] xmlFiles = null;
         String buildLogMsg;
-        FilePath workspacePath = build.getWorkspace();   // collect junit xml fil
+        FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         if (workspacePath.isRemote()){
             LOGGER.info("Collecting files on remote Jenkins slave...");
         }else{
