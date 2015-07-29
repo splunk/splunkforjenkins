@@ -1,16 +1,15 @@
 package test.jenkins.plugins.splunkins.SplunkLogging; 
 
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
-
 import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test; 
 import org.junit.Before; 
-import org.junit.After; 
-import org.mockito.Mockito;
+import org.junit.After;
 
 /** 
 * XmlParser Tester. 
@@ -97,14 +96,17 @@ public void testMerge() throws Exception {
 */ 
 @Test
 public void testValidateXMLSchema(){ 
-//TODO: Test goes here... 
-
     XmlParser parser = new XmlParser();
     String xmlStringPass = "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuite errors=\"0\" failures=\"0\" name=\"pytest\" skips=\"0\" tests=\"1\" time=\"0.008\"><testcase classname=\"test_me\" name=\"test_me\" time=\"0.000116109848022\"/></testsuite>";
-    boolean parsePass = parser.validateXMLSchema("/Users/kjotwani/Desktop/SplunkStuff/qti_stuff/splunkins/src/main/webapp/junit.xsd", xmlStringPass);
+
+    // Get junit schema file
+    URL url = this.getClass().getResource(File.separator+"junit.xsd");
+    File schemaFile = new File(url.getFile());
+
+    // Test string against junit xml file
+    boolean parsePass = parser.validateXMLSchema(schemaFile.getPath(), xmlStringPass);
     assert parsePass;
-    
-} 
+}
 
 /** 
 * 

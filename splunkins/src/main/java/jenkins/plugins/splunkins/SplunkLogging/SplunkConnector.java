@@ -52,11 +52,12 @@ public class SplunkConnector {
             ResponseMessage msg = service.post(Constants.httpInputTokenEndpointPath, args);
             assert msg.getStatus() == 201;
             args = new HashMap<>();
-
             token = this.getHttpInputToken(httpinputName, args, service);
+
         }
       
         return token;
+
     }
 
     public Service connectToSplunk() throws IOException {

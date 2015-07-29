@@ -43,9 +43,12 @@ public class SplunkinsNotifier extends Notifier{
     @DataBoundConstructor
     public SplunkinsNotifier(String filesToSend){
         this.filesToSend = filesToSend;
-    }    
-    
+    }
 
+
+    /**
+     * This is the main driver of the plugin's flow
+     */
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
     public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException {
         final PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
