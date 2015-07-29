@@ -1,5 +1,6 @@
-package jenkins.plugins.splunkins;
+package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.Messages;
 import hudson.Plugin;
 import java.util.logging.Logger;
 

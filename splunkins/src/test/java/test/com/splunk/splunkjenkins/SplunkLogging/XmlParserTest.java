@@ -1,22 +1,15 @@
-package test.jenkins.plugins.splunkins.SplunkLogging; 
+package test.com.splunk.splunkjenkins.SplunkLogging;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
 
-import jenkins.model.Jenkins;
-import jenkins.plugins.splunkins.SplunkLogging.Constants;
-import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
 
-import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.junit.Test; 
 import org.junit.Before; 
-import org.junit.After; 
-import org.mockito.Mockito;
+import org.junit.After;
 
 /** 
 * XmlParser Tester. 

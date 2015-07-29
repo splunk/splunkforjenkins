@@ -1,15 +1,11 @@
-package test.jenkins.plugins.splunkins.SplunkLogging; 
+package test.com.splunk.splunkjenkins.SplunkLogging;
 
-import hudson.model.AbstractBuild;
-import hudson.model.Result;
-import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
+import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
 import org.junit.Test;
 import org.junit.Before; 
 import org.junit.After;
 import org.mockito.Mockito;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 /** 

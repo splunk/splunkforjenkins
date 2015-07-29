@@ -1,7 +1,11 @@
-package jenkins.plugins.splunkins;
+package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.SplunkLogging.Constants;
+import com.splunk.splunkjenkins.SplunkLogging.HttpInputsEventSender;
+import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
+import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
+import com.splunk.splunkjenkins.Messages;
 import com.splunk.ServiceArgs;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -13,10 +17,6 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
-import jenkins.plugins.splunkins.SplunkLogging.Constants;
-import jenkins.plugins.splunkins.SplunkLogging.HttpInputsEventSender;
-import jenkins.plugins.splunkins.SplunkLogging.SplunkConnector;
-import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,15 +33,15 @@ import java.util.logging.Logger;
 /**
  * Created by djenkins on 6/18/15.
  */
-public class SplunkinsNotifier extends Notifier{
+public class SplunkJenkinsNotifier extends Notifier{
     public String filesToSend;
     public String token;
     public ServiceArgs hostInfo;
     
-    private final static Logger LOGGER = Logger.getLogger(SplunkinsNotifier.class.getName());
+    private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsNotifier.class.getName());
 
     @DataBoundConstructor
-    public SplunkinsNotifier(String filesToSend){
+    public SplunkJenkinsNotifier(String filesToSend){
         this.filesToSend = filesToSend;
     }
 
@@ -54,7 +54,7 @@ public class SplunkinsNotifier extends Notifier{
         final PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
         final EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
 
-        SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
+        SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
         // Set the httpinput name to the hostname
         String httpinputName = InetAddress.getLocalHost().getHostName();
@@ -177,13 +177,13 @@ public class SplunkinsNotifier extends Notifier{
         }
         assert xmlFiles != null;
         if (xmlFiles.length == 0){
-            buildLogMsg = "Splunkins cannot find any files in " + workspacePath.toString() + " matching the expression: " + filenamesExpression+"\n";
+            buildLogMsg = "Splunk cannot find any files in " + workspacePath.toString() + " matching the expression: " + filenamesExpression+"\n";
         }else{
             ArrayList<String> filenames = new ArrayList<>();
             for(FilePath file : xmlFiles){
                 filenames.add(file.getName());
             }
-            buildLogMsg = "Splunkins collected these files to send to Splunk: "+filenames.toString()+"\n";
+            buildLogMsg = Messages.DisplayName()+" collected these files to send to Splunk: "+filenames.toString()+"\n";
         }
         LOGGER.info(buildLogMsg);
         // Attempt to write to build's console log

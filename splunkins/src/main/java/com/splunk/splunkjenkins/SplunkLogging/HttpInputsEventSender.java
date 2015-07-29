@@ -1,4 +1,4 @@
-package jenkins.plugins.splunkins.SplunkLogging;
+package com.splunk.splunkjenkins.SplunkLogging;
 
 
 /**

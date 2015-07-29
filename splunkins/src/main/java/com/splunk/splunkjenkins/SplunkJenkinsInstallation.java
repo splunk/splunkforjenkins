@@ -1,5 +1,6 @@
-package jenkins.plugins.splunkins;
+package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.Messages;
 import hudson.Extension;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
@@ -14,19 +15,19 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.util.List;
 
-public class SplunkinsInstallation extends ToolInstallation {
+public class SplunkJenkinsInstallation extends ToolInstallation {
 
     @DataBoundConstructor
-    public SplunkinsInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
+    public SplunkJenkinsInstallation(String name, String home, List<? extends ToolProperty<?>> properties) {
         super(name, home, properties);
     }
 
-    public static Descriptor getSplunkinsDescriptor() {
-        return (Descriptor) Jenkins.getInstance().getDescriptor(SplunkinsInstallation.class);
+    public static Descriptor getSplunkDescriptor() {
+        return (Descriptor) Jenkins.getInstance().getDescriptor(SplunkJenkinsInstallation.class);
     }
 
     @Extension
-    public static final class Descriptor extends ToolDescriptor<SplunkinsInstallation> {
+    public static final class Descriptor extends ToolDescriptor<SplunkJenkinsInstallation> {
         public String globalConfigTitle = Messages.GlobalConfigTitle();
 
         // Defaults plugin global config values:
@@ -50,14 +51,14 @@ public class SplunkinsInstallation extends ToolInstallation {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindJSON(this, formData.getJSONObject("splunkins"));
+            req.bindJSON(this, formData.getJSONObject("Splunk-Jenkins"));
             save();
             return super.configure(req, formData);
         }
 
         @Override
         public ToolInstallation newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindJSON(this, formData.getJSONObject("splunkins"));
+            req.bindJSON(this, formData.getJSONObject("Splunk-Jenkins"));
             save();
             return super.newInstance(req, formData);
         }

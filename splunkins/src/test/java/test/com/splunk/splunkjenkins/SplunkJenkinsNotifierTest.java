@@ -1,4 +1,4 @@
-package test.jenkins.plugins.splunkins;
+package test.com.splunk.splunkjenkins;
 
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
@@ -14,7 +14,7 @@ import static org.junit.Assert.*;
 /**
  * Created by djenkins on 7/23/15.
  */
-public class SplunkinsNotifierTest extends JenkinsRule {
+public class SplunkJenkinsNotifierTest extends JenkinsRule {
 
     @Before
     public void setUp() throws Exception {
