@@ -50,16 +50,16 @@ public void testCreateHttpinput() throws Exception {
 * Method: createHttpinput(String httpinputName)
  * Tests the parse token method by mocking the BufferedReader it receives.
 *
-*/
-@Test
-public void testParseToken() throws Exception {
-    BufferedReader reader = Mockito.mock(BufferedReader.class);
-    Mockito.when(reader.readLine()).thenReturn("<?xml-stylesheet type=\"text/xml\" href=\"/static/atom.xsl\"?>",
-                                               "        </s:key",
-                                               "<s:key name=\"token\">BF0C84FA-9D40-487C-8624-7EDD9B8EE33A</s:key>");
-    String token = SplunkConnector.parseToken(reader);
-    assert token.equalsIgnoreCase("BF0C84FA-9D40-487C-8624-7EDD9B8EE33A");
-}
+*
+//@Test
+//public void testParseToken() throws Exception {
+//    BufferedReader reader = Mockito.mock(BufferedReader.class);
+//    Mockito.when(reader.readLine()).thenReturn("<?xml-stylesheet type=\"text/xml\" href=\"/static/atom.xsl\"?>",
+//                                               "        </s:key",
+//                                               "<s:key name=\"token\">BF0C84FA-9D40-487C-8624-7EDD9B8EE33A</s:key>");
+//    String token = SplunkConnector.parseToken(reader);
+//    assert token.equalsIgnoreCase("BF0C84FA-9D40-487C-8624-7EDD9B8EE33A");
+//}
 
 
 /**
