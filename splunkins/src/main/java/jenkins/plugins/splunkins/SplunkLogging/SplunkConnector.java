@@ -64,7 +64,6 @@ public class SplunkConnector {
         HttpService.setSslSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         serviceArgs = getSplunkHostInfo();
         String connectDebugMsg = "Connecting to Splunk with: " + serviceArgs.toString();
-        LOGGER.info(connectDebugMsg);
         buildLogStream.write((connectDebugMsg+"\n").getBytes());
 
         // get splunk service and login
@@ -151,7 +150,7 @@ public class SplunkConnector {
      * @return token
      * @throws IOException
      */
-    private String getHttpInputToken(String httpinputName, Map args, Service service) throws IOException{
+    public String getHttpInputToken(String httpinputName, Map args, Service service) throws IOException{
         
         ResponseMessage response = service.get(
                 Constants.httpInputTokenEndpointPath + "/" + httpinputName,

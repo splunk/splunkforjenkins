@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -46,19 +47,14 @@ public class SplunkinsNotifier extends Notifier{
     
 
     @SuppressWarnings({ "unchecked", "rawtypes", "deprecation" })
-    public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
+    public boolean perform(final AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException {
         final PrintStream buildLogStream = listener.getLogger();  // used for printing to the build log
         final EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
 
         SplunkinsInstallation.Descriptor descriptor = SplunkinsInstallation.getSplunkinsDescriptor();
 
-        // Get the httpinput name
-        String httpinputName;
-        if (descriptor.source == null || descriptor.source.isEmpty()){
-            httpinputName = envVars.get("JOB_NAME").replace("/", "_") + "_" + envVars.get("BUILD_NUMBER");
-        } else {
-            httpinputName = descriptor.source;
-        }
+        // Set the httpinput name to the hostname
+        String httpinputName = InetAddress.getLocalHost().getHostName();
 
         // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
@@ -67,7 +63,10 @@ public class SplunkinsNotifier extends Notifier{
             token = connector.createHttpinput(httpinputName);            
             hostInfo = connector.getSplunkHostInfo();
         } catch (Exception e) {
-            e.printStackTrace();
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            buildLogStream.write(exceptionAsString.getBytes());
         }
 
         HashMap<String, String> userInputs = new HashMap<>();
@@ -122,8 +121,6 @@ public class SplunkinsNotifier extends Notifier{
 
                         sender.disableCertificateValidation();
         
-        
-
                         // Send data to splunk
                         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
                             for (JSONObject json : toSplunkFile){

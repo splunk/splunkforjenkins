@@ -1,8 +1,14 @@
 package test.jenkins.plugins.splunkins.SplunkLogging; 
 
+import java.util.ArrayList;
+
+import jenkins.plugins.splunkins.SplunkLogging.XmlParser;
+
+import org.json.JSONObject;
 import org.junit.Test; 
 import org.junit.Before; 
 import org.junit.After; 
+import org.mockito.Mockito;
 
 /** 
 * XmlParser Tester. 
@@ -59,17 +65,18 @@ try {
 */ 
 @Test
 public void testMerge() throws Exception { 
-//TODO: Test goes here... 
-/* 
-try { 
-   Method method = XmlParser.getClass().getMethod("merge", JSONObject.class, ArrayList<JSONObject>.class); 
-   method.setAccessible(true); 
-   method.invoke(<Object>, <Parameters>); 
-} catch(NoSuchMethodException e) { 
-} catch(IllegalAccessException e) { 
-} catch(InvocationTargetException e) { 
-} 
-*/ 
+    
+    XmlParser parser = new XmlParser();
+    JSONObject jsonObj1 = new JSONObject("{\"time\":1.16109848022E-4,\"classname\":\"test_me\",\"name\":\"test_me\"}");
+    JSONObject jsonObj2 = new JSONObject("{\"failures\":0,\"time\":0.008,\"errors\":0,\"tests\":1,\"name\":\"pytest\",\"skips\":0}");
+
+    ArrayList<JSONObject> jsonObjList = new ArrayList<JSONObject>();
+    jsonObjList.add(jsonObj2);
+    
+    
+    System.out.println(parser.merge(jsonObj1, jsonObjList));
+    
+
 } 
 
 /** 
@@ -78,18 +85,14 @@ try {
 * 
 */ 
 @Test
-public void testValidateXMLSchema() throws Exception { 
+public void testValidateXMLSchema(){ 
 //TODO: Test goes here... 
-/* 
-try { 
-   Method method = XmlParser.getClass().getMethod("validateXMLSchema", String.class, String.class); 
-   method.setAccessible(true); 
-   method.invoke(<Object>, <Parameters>); 
-} catch(NoSuchMethodException e) { 
-} catch(IllegalAccessException e) { 
-} catch(InvocationTargetException e) { 
-} 
-*/ 
+
+    XmlParser parser = new XmlParser();
+    String xmlStringPass = "<?xml version=\"1.0\" encoding=\"utf-8\"?><testsuite errors=\"0\" failures=\"0\" name=\"pytest\" skips=\"0\" tests=\"1\" time=\"0.008\"><testcase classname=\"test_me\" name=\"test_me\" time=\"0.000116109848022\"/></testsuite>";
+    boolean parsePass = parser.validateXMLSchema("/Users/kjotwani/Desktop/SplunkStuff/qti_stuff/splunkins/src/main/webapp/junit.xsd", xmlStringPass);
+    assert parsePass;
+    
 } 
 
 /** 
