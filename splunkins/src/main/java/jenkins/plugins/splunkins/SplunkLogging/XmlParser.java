@@ -68,8 +68,7 @@ public class XmlParser {
             Iterator<String> originalKeys = json.keys();
             while (originalKeys.hasNext()) {
                 String key = originalKeys.next();
-                transformedJSON = customJSONObject(json.getJSONObject(key
-                        .toString()));
+                transformedJSON = customJSONObject(json.getJSONObject(key));
                 entryOnce = true;
             }
 
@@ -114,7 +113,7 @@ public class XmlParser {
      */
     public ArrayList<JSONObject> merge(JSONObject jsonObj1,
             ArrayList<JSONObject> jsonObjList) throws JSONException {
-        ArrayList<JSONObject> arr = new ArrayList<JSONObject>();
+        ArrayList<JSONObject> arr = new ArrayList<>();
 
         for (JSONObject jsonObj2 : jsonObjList) {
             JSONObject json = new JSONObject();
@@ -168,9 +167,9 @@ public class XmlParser {
                 String key = keys.next();
 
                 JSONObject originalJSON = json.getJSONObject(key);
-                if (Constants.TESTCASE.equalsIgnoreCase(key.toString())) {
+                if (Constants.TESTCASE.equalsIgnoreCase(key)) {
                     JSONArray jsonArray = new JSONArray();
-                    Object testCaseObject = json.get(key.toString());
+                    Object testCaseObject = json.get(key);
 
                     if (!(testCaseObject instanceof JSONArray)) {
                         jsonArray.put(testCaseObject);
