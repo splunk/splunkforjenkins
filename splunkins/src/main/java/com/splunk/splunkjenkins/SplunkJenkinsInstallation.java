@@ -51,14 +51,14 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindJSON(this, formData.getJSONObject("Splunk-Jenkins"));
+            req.bindJSON(this, formData.getJSONObject("splunkjenkins"));
             save();
             return super.configure(req, formData);
         }
 
         @Override
         public ToolInstallation newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            req.bindJSON(this, formData.getJSONObject("Splunk-Jenkins"));
+            req.bindJSON(this, formData.getJSONObject("splunkjenkins"));
             save();
             return super.newInstance(req, formData);
         }
