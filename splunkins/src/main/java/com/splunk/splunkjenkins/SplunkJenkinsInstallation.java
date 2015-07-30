@@ -32,7 +32,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
         // Defaults plugin global config values:
         public String host;
-        public Integer port = 8089;
+        public Integer managementPort = 8089;
         public String username = "admin";
         public String password;
         public String scheme;

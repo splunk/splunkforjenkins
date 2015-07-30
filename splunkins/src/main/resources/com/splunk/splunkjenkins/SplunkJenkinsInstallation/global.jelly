@@ -4,8 +4,8 @@
             <f:textbox value="${descriptor.host}"
                 checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkHost?value='+escape(this.value)" />
         </f:entry>
-        <f:entry title="${%Port}" field="port">
-            <f:textbox value="${descriptor.port}" default="${descriptor.port}"
+        <f:entry title="${%Management Port}" field="managementPort">
+            <f:textbox value="${descriptor.managementPort}" default="${descriptor.managementPort}"
                 checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkInteger?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%Username}" field="username">

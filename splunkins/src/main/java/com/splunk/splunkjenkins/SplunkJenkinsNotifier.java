@@ -60,7 +60,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         String httpinputName = InetAddress.getLocalHost().getHostName();
 
         // Create the Splunk instance connector
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.port, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
+        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.managementPort, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
 
         try {
             token = connector.createHttpinput(httpinputName);            
