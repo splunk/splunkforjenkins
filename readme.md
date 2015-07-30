@@ -1,10 +1,10 @@
-Splunkins
+SplunkJenkins
 ---------
-A Splunk-Jenkins plugin for Splunking Jenkins.
+A Jenkins plugin for Splunking Jenkins.
 
 To Install
 ----------
  - clone the repo
- - `$ splunkins/splunkins`
+ - `$ splunkjenkins/splunkjenkins`
  - `$ mvn package`
- -  That should produce `target/splunkins.hpi` which you can install into Jenkins with either the web interface or by putting it in the `JENKINS_HOME/plugins` folder.
+ -  That should produce `target/splunkjenkins.hpi` which you can install into Jenkins with either the web interface or by putting it in the `JENKINS_HOME/plugins` folder.
