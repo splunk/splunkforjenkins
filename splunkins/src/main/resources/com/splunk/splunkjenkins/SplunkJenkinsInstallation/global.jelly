@@ -21,6 +21,10 @@
                 <option value="https" selected="${descriptor.scheme == 'https'}">https</option>
             </select>
         </f:entry>
+        <f:entry title="${%HttpInput Port}" field="httpInputPort">
+            <f:textbox value="${descriptor.httpInputPort}" default="${descriptor.httpInputPort}"
+                checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkInteger?value='+escape(this.value)" />
+        </f:entry>
         <f:entry title="${%Max Events Batch Count}" field="maxEventsBatchCount">
             <f:textbox value="${descriptor.maxEventsBatchCount}" default="${descriptor.maxEventsBatchCount}"
                 checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkLong?value='+escape(this.value)" />

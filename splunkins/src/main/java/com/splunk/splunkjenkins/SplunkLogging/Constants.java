@@ -8,8 +8,6 @@ public class Constants {
     public static final String TESTCASE = "testcase";
     public static final String TESTSUITE = "testsuite";
 
-    public static String HTTPINPUTPORT = "8088";
-
     public static final String httpInputTokenEndpointPath = "/services/data/inputs/http";
     public static final String httpInputCreateEndpoint = "/servicesNS/admin/search/data/inputs/http/http";
 

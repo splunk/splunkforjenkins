@@ -119,7 +119,7 @@ public class SplunkJenkinsNotifier extends Notifier{
             if ((!("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (!("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
                 if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
                         HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
-                                Constants.HTTPINPUTPORT, token, descriptor.delay, descriptor.maxEventsBatchCount,
+                                descriptor.httpInputPort, token, descriptor.delay, descriptor.maxEventsBatchCount,
                                 descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
                         sender.disableCertificateValidation();
@@ -136,7 +136,7 @@ public class SplunkJenkinsNotifier extends Notifier{
                         LOGGER.info("Value of sendMode is: " + descriptor.sendMode);
                     }
                 }else{
-                    LOGGER.info("Value of hostInfo Details is: " + hostInfo.scheme  + "://" + hostInfo.host + ":" + Constants.HTTPINPUTPORT);
+                    LOGGER.info("Value of hostInfo Details is: " + hostInfo.scheme  + "://" + hostInfo.host + ":" + descriptor.httpInputPort);
                 }
         }else{
             LOGGER.info("Is hostInfo null: " + (hostInfo != null?false:true));
