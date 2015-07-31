@@ -115,10 +115,17 @@ public class XmlParser {
             ArrayList<JSONObject> jsonObjList) throws JSONException {
         ArrayList<JSONObject> arr = new ArrayList<>();
 
-        for (JSONObject jsonObj2 : jsonObjList) {
+        if (!jsonObjList.isEmpty()) {
+            for (int i = 0; i < jsonObjList.size(); i++) {
+                JSONObject json = new JSONObject();
+                json.append(Constants.TESTSUITE, jsonObj1);
+                json.append(Constants.TESTSUITE, jsonObjList.get(i));
+                arr.add(json);
+
+            }
+        }else{
             JSONObject json = new JSONObject();
             json.append(Constants.TESTSUITE, jsonObj1);
-            json.append(Constants.TESTSUITE, jsonObj2);
             arr.add(json);
         }
 
