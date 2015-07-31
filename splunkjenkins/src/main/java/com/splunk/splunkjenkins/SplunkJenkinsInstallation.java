@@ -113,6 +113,9 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
             if (StringUtils.isBlank(value)) {
                 return FormValidation.warning(Messages.PleaseProvideHost());
             }
+            if (value.startsWith("http")){
+                return FormValidation.warning(Messages.ProvideSchemeBelow());
+            }
 
             return FormValidation.ok();
         }
