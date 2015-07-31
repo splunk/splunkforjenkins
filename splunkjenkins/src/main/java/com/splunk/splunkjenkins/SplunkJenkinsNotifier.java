@@ -76,7 +76,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         Dictionary metadata = new Hashtable();
         metadata.put(HttpInputsEventSender.MetadataIndexTag, descriptor.indexName);
         metadata.put(HttpInputsEventSender.MetadataSourceTag, descriptor.sourceName);
-        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
+        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, descriptor.sourceTypeName);
 
         // Discover xml files to collect
         FilePath[] xmlFiles = null;
