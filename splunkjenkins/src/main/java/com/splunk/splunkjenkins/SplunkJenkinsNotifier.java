@@ -57,7 +57,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
         // Set the httpinput name to the hostname
-        String httpinputName = InetAddress.getLocalHost().getHostName();
+        String httpinputName = descriptor.sourceName;
 
         // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.managementPort, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
