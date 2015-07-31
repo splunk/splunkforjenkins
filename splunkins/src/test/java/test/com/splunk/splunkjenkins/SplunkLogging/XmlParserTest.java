@@ -3,9 +3,9 @@ package test.com.splunk.splunkjenkins.SplunkLogging;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-
+import java.util.Iterator;
 import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
-
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Test; 
 import org.junit.Before; 
@@ -68,14 +68,23 @@ try {
 public void testMerge() throws Exception { 
     
     XmlParser parser = new XmlParser();
-    JSONObject jsonObj1 = new JSONObject("{\"time\":1.16109848022E-4,\"classname\":\"test_me\",\"name\":\"test_me\"}");
+    JSONObject jsonObj1 = new JSONObject("{\"testcase\":{\"time\":0.0813760757446,\"name\":\"test_basic_alert\",\"classname\":\"test_alert.TestAlerts\"}}");
     JSONObject jsonObj2 = new JSONObject("{\"failures\":0,\"time\":0.008,\"errors\":0,\"tests\":1,\"name\":\"pytest\",\"skips\":0}");
 
     ArrayList<JSONObject> jsonObjList = new ArrayList<JSONObject>();
     jsonObjList.add(jsonObj2);
     
+    JSONObject result = new JSONObject("{\"testsuite\":[{\"testcase\":{\"time\":0.0813760757446,\"classname\":\"test_alert.TestAlerts\",\"name\":\"test_basic_alert\"}},{\"failures\":0,\"time\":0.008,\"errors\":0,\"tests\":1,\"name\":\"pytest\",\"skips\":0}]}");
     
-    System.out.println(parser.merge(jsonObj1, jsonObjList));
+        for (JSONObject jsonOutput : parser.merge(jsonObj1, jsonObjList)) {
+            Iterator<String> keys = result.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                JSONArray array1 = result.getJSONArray(key);
+                //assert (result.getJSONArray(key)..toString().equalsIgnoreCase(jsonOutput.getJSONArray(key).toString()));
+
+            }
+        }
     
 
 } 
