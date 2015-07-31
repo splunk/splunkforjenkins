@@ -15,6 +15,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class SplunkJenkinsInstallation extends ToolInstallation {
 
@@ -29,6 +30,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
     @Extension
     public static final class Descriptor extends ToolDescriptor<SplunkJenkinsInstallation> {
+        private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
         public String globalConfigTitle = Messages.GlobalConfigTitle();
 
         // Defaults plugin global config values:
@@ -79,6 +81,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
                 hostname = InetAddress.getLocalHost().getHostName();
             } catch (UnknownHostException e) {
                 e.printStackTrace();
+                LOGGER.warning(e.getMessage());
             }
             return hostname;
         }
