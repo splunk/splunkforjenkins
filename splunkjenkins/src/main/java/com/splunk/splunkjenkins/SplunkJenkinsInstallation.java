@@ -44,7 +44,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
         public String sendMode;
         public long delay = 0;
         public String indexName = "main";
-        public String source = getMasterHostname();
+        public String sourceName = getMasterHostname();
 
         public Descriptor() {
             super();

@@ -51,8 +51,8 @@
             <f:textbox value="${descriptor.indexName}" default="${descriptor.indexName}"
                 checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
-        <f:entry title="${%Event Data Source Name}" field="source">
-            <f:textbox value="${descriptor.source}" default="${descriptor.source}" />
+        <f:entry title="${%Event Data Source Name}" field="sourceName">
+            <f:textbox value="${descriptor.sourceName}" default="${descriptor.sourceName}" />
         </f:entry>
     </f:section>
 </j:jelly>
