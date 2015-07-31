@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.Messages;
 import hudson.Extension;
 import hudson.tools.ToolDescriptor;
 import hudson.tools.ToolInstallation;
@@ -13,7 +12,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class SplunkJenkinsInstallation extends ToolInstallation {
 
@@ -28,6 +30,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
     @Extension
     public static final class Descriptor extends ToolDescriptor<SplunkJenkinsInstallation> {
+        private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
         public String globalConfigTitle = Messages.GlobalConfigTitle();
 
         // Defaults plugin global config values:
@@ -43,7 +46,7 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
         public String sendMode;
         public long delay = 0;
         public String indexName = "main";
-        public String source = null;
+        public String sourceName = getMasterHostname();
 
         public Descriptor() {
             super();
@@ -67,6 +70,20 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
         @Override
         public String getDisplayName() {
             return Messages.GlobalConfigTitle();
+        }
+
+        /*
+         * Gets the master's hostname
+         */
+        private static String getMasterHostname(){
+            String hostname = null;
+            try {
+                hostname = InetAddress.getLocalHost().getHostName();
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+                LOGGER.warning(e.getMessage());
+            }
+            return hostname;
         }
 
         /*
@@ -95,6 +112,9 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
         public FormValidation doCheckHost(@QueryParameter("value") String value) {
             if (StringUtils.isBlank(value)) {
                 return FormValidation.warning(Messages.PleaseProvideHost());
+            }
+            if (value.startsWith("http")){
+                return FormValidation.warning(Messages.ProvideSchemeBelow());
             }
 
             return FormValidation.ok();
