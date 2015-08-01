@@ -6,10 +6,7 @@ import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
 import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
 import com.splunk.splunkjenkins.Messages;
 import com.splunk.ServiceArgs;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
@@ -57,7 +54,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
         // Set the httpinput name to the hostname
-        String httpinputName = InetAddress.getLocalHost().getHostName();
+        String httpinputName = descriptor.sourceName;
 
         // Create the Splunk instance connector
         SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.managementPort, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
@@ -76,12 +73,12 @@ public class SplunkJenkinsNotifier extends Notifier{
         Dictionary metadata = new Hashtable();
         metadata.put(HttpInputsEventSender.MetadataIndexTag, descriptor.indexName);
         metadata.put(HttpInputsEventSender.MetadataSourceTag, descriptor.sourceName);
-        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, "");
+        metadata.put(HttpInputsEventSender.MetadataSourceTypeTag, descriptor.sourceTypeName);
 
         // Discover xml files to collect
         FilePath[] xmlFiles = null;
         try {
-             xmlFiles = collectXmlFiles(filesToSend, build, buildLogStream);
+             xmlFiles = collectXmlFiles(filesToSend, build, buildLogStream, envVars);
         } catch (IOException | InterruptedException e1) {
             logException(e1, buildLogStream);
         }
@@ -150,9 +147,10 @@ public class SplunkJenkinsNotifier extends Notifier{
 
     // Collects all files based on ant-style filter string and returns them as an array of FilePath objects.
     // Logs errors to both the Jenkins build log and the Jenkins internal logging.
-    public FilePath[] collectXmlFiles(String filenamesExpression, AbstractBuild<?, ?> build, PrintStream buildLogStream) throws IOException, InterruptedException{
+    public FilePath[] collectXmlFiles(String filenamesExpression, AbstractBuild<?, ?> build, PrintStream buildLogStream, EnvVars envVars) throws IOException, InterruptedException{
         FilePath[] xmlFiles = null;
         String buildLogMsg;
+        String expandedFilePath = Util.replaceMacro(filenamesExpression, envVars);
         FilePath workspacePath = build.getWorkspace();   // collect junit xml file
         if (workspacePath.isRemote()){
             LOGGER.info("Collecting files on remote Jenkins slave...");
@@ -160,7 +158,7 @@ public class SplunkJenkinsNotifier extends Notifier{
             LOGGER.info("Collecting files on local Jenkins Master...");
         }
         try {
-            xmlFiles = workspacePath.list(filenamesExpression);
+            xmlFiles = workspacePath.list(expandedFilePath);
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
