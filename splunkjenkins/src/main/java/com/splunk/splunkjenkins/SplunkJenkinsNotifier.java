@@ -6,6 +6,7 @@ import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
 import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
 import com.splunk.splunkjenkins.Messages;
 import com.splunk.ServiceArgs;
+
 import hudson.*;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
@@ -23,7 +24,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.InetAddress;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -95,7 +95,7 @@ public class SplunkJenkinsNotifier extends Notifier{
             }
             logLevel = Constants.INFO;
         }else{
-            toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), envVars.get("aggregate_report_name"), envVars.get("aggregate_report_name"),envVars.get("generic_job_name"), envVars.get("BUILD_NUMBER")), envVars, buildLogStream));
+            toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), envVars.get(Constants.buildURL)), envVars, buildLogStream));
             logLevel = Constants.CRITICAL;
         }
         
@@ -184,7 +184,7 @@ public class SplunkJenkinsNotifier extends Notifier{
     }
 
     public BuildStepMonitor getRequiredMonitorService() {
-        return BuildStepMonitor.BUILD;
+        return BuildStepMonitor.NONE;
     }
 
     @Override
