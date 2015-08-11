@@ -39,12 +39,14 @@ public class SplunkConnector {
     public String createHttpinput(String httpinputName) throws IOException {
         String token = "";
         Service service = connectToSplunk();
-
-        this.enableHttpinput(service);
+        
+        if (!checkIfHttpInputsIsEnabled(service)){
+            this.enableHttpinput(service);
+        }
 
         Map args = new HashMap();
         args.put("name", httpinputName);
-        args.put("description", "test http input");
+        args.put("description", "Http Input for Sending Data To Splunk");
         
         if (this.checkIfHttpInputExists(httpinputName, args, service)) {
             token = this.getHttpInputToken(httpinputName, args, service);
@@ -139,6 +141,46 @@ public class SplunkConnector {
 
         return httpInputExists;
         
+    }
+    
+    /**
+     * Checks if the global HttpInput setting is enabled
+     * @param service
+     * @return
+     * @throws IOException
+     */
+    private boolean checkIfHttpInputsIsEnabled(Service service) throws IOException {
+        
+        boolean httpInputIsEnabled = false;
+        
+            ResponseMessage response = service.get(Constants.httpInputCreateEndpoint);
+            BufferedReader reader = null;
+
+            reader = new BufferedReader(new InputStreamReader(
+                    response.getContent(), "UTF-8"));
+            String disabled = "";
+            while (true) {
+                String line = null;
+                line = reader.readLine();
+                if (line == null)
+                    break;
+
+                if (line.contains("name=\"disabled\"")) {
+                    disabled = line.split(">")[1];
+                    disabled = disabled.split("<")[0];
+                    break;
+                }
+            }
+            reader.close();
+            
+            if (Integer.parseInt(disabled.toString().trim())==0){
+                httpInputIsEnabled = true;
+            }else{
+                httpInputIsEnabled = false;
+            }
+            
+            return httpInputIsEnabled;
+                   
     }
     
     /**
