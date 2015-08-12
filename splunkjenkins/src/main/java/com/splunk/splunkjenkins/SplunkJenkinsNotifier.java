@@ -54,17 +54,11 @@ public class SplunkJenkinsNotifier extends Notifier{
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
         // Set the httpinput name to the hostname
-        String httpinputName = descriptor.sourceName;
+        //String httpinputName = descriptor.sourceName;
 
         // Create the Splunk instance connector
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.managementPort, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
 
-        try {
-            token = connector.createHttpinput(httpinputName);            
-            hostInfo = connector.getSplunkHostInfo();
-        } catch (Exception e) {
-            logException(e, buildLogStream);      
-        }
+        token = descriptor.token;            
 
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
@@ -102,9 +96,9 @@ public class SplunkJenkinsNotifier extends Notifier{
         // Setup connection for sending to build data to Splunk
         
         if (null != hostInfo && null != token && null != descriptor) {
-            if ((!("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (!("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
+            if ((!("").equalsIgnoreCase(descriptor.scheme) && null != descriptor.scheme) && (!("").equalsIgnoreCase(descriptor.host) && null != descriptor.host)){
                 if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
-                        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
+                        HttpInputsEventSender sender = new HttpInputsEventSender(descriptor.scheme + "://" + descriptor.host + ":" +
                                 descriptor.httpInputPort, token, descriptor.delay, descriptor.maxEventsBatchCount,
                                 descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
