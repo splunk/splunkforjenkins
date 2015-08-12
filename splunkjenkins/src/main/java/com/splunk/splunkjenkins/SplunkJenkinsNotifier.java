@@ -2,7 +2,6 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.SplunkLogging.Constants;
 import com.splunk.splunkjenkins.SplunkLogging.HttpInputsEventSender;
-import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
 import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
 import com.splunk.splunkjenkins.Messages;
 import com.splunk.ServiceArgs;
@@ -58,7 +57,7 @@ public class SplunkJenkinsNotifier extends Notifier{
 
         // Create the Splunk instance connector
 
-        token = descriptor.token;            
+        token = descriptor.httpInputToken;
 
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
