@@ -34,9 +34,12 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import javax.net.ssl.SSLContext;
+
 import java.io.IOException;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.logging.Logger;
 
 
@@ -270,7 +273,7 @@ public class HttpInputsEventSender extends TimerTask{
         entity.setContentType(HttpContentType);
         httpPost.setEntity(entity);
         // post request
-        httpClient.execute(httpPost, new FutureCallback<HttpResponse>() {
+        Future<HttpResponse> future = httpClient.execute(httpPost, new FutureCallback<HttpResponse>() {
             long retriesCount = 0;
 
             public void completed(final HttpResponse response) {
@@ -297,6 +300,15 @@ public class HttpInputsEventSender extends TimerTask{
 
             public void cancelled() {}
         });
+        
+        try {
+            HttpResponse response = future.get();
+            if (response.getStatusLine().getStatusCode() == (200)) {
+                stopHttpClient();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     private Object stringOrJSON(String message) {

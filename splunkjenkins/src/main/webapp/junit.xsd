@@ -77,7 +77,8 @@
             <xs:attribute name="errors" type="xs:string" use="optional"/>
             <xs:attribute name="time" type="xs:string" use="optional"/>
             <xs:attribute name="disabled" type="xs:string" use="optional"/>
-            <xs:attribute name="skips" type="xs:string" use="optional"/>
+            <xs:attribute name="skipped" type="xs:string" use="optional"/>
+			<xs:attribute name="skips" type="xs:string" use="optional" /> <!-- Forced to add a redundant "skips" attributed due to pytest not following the most common junit schema. -->
             <xs:attribute name="timestamp" type="xs:string" use="optional"/>
             <xs:attribute name="hostname" type="xs:string" use="optional"/>
             <xs:attribute name="id" type="xs:string" use="optional"/>

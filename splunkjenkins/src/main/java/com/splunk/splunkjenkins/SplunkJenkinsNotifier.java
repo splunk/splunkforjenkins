@@ -2,7 +2,6 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.SplunkLogging.Constants;
 import com.splunk.splunkjenkins.SplunkLogging.HttpInputsEventSender;
-import com.splunk.splunkjenkins.SplunkLogging.SplunkConnector;
 import com.splunk.splunkjenkins.SplunkLogging.XmlParser;
 import com.splunk.splunkjenkins.Messages;
 import com.splunk.ServiceArgs;
@@ -33,7 +32,6 @@ import java.util.logging.Logger;
 public class SplunkJenkinsNotifier extends Notifier{
     public String filesToSend;
     public String token;
-    public ServiceArgs hostInfo;
     
     private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsNotifier.class.getName());
     private String logLevel;
@@ -54,17 +52,11 @@ public class SplunkJenkinsNotifier extends Notifier{
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
         // Set the httpinput name to the hostname
-        String httpinputName = descriptor.sourceName;
+        //String httpinputName = descriptor.sourceName;
 
         // Create the Splunk instance connector
-        SplunkConnector connector = new SplunkConnector(descriptor.host, descriptor.managementPort, descriptor.username, descriptor.password, descriptor.scheme, buildLogStream);
 
-        try {
-            token = connector.createHttpinput(httpinputName);            
-            hostInfo = connector.getSplunkHostInfo();
-        } catch (Exception e) {
-            logException(e, buildLogStream);      
-        }
+        token = descriptor.httpInputToken;
 
         HashMap<String, String> userInputs = new HashMap<>();
         userInputs.put("user_httpinput_token", token);
@@ -101,10 +93,10 @@ public class SplunkJenkinsNotifier extends Notifier{
         
         // Setup connection for sending to build data to Splunk
         
-        if (null != hostInfo && null != token && null != descriptor) {
-            if ((!("").equalsIgnoreCase(hostInfo.scheme) && null != hostInfo.scheme) && (!("").equalsIgnoreCase(hostInfo.host) && null != hostInfo.host)){
+        if (null != token && null != descriptor) {
+            if ((!("").equalsIgnoreCase(descriptor.scheme) && null != descriptor.scheme) && (!("").equalsIgnoreCase(descriptor.host) && null != descriptor.host)){
                 if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
-                        HttpInputsEventSender sender = new HttpInputsEventSender(hostInfo.scheme + "://" + hostInfo.host + ":" +
+                        HttpInputsEventSender sender = new HttpInputsEventSender(descriptor.scheme + "://" + descriptor.host + ":" +
                                 descriptor.httpInputPort, token, descriptor.delay, descriptor.maxEventsBatchCount,
                                 descriptor.maxEventsBatchSize, descriptor.retriesOnError, descriptor.sendMode, metadata);
 
@@ -122,10 +114,9 @@ public class SplunkJenkinsNotifier extends Notifier{
                         LOGGER.info("Value of sendMode is: " + descriptor.sendMode);
                     }
                 }else{
-                    LOGGER.info("Value of hostInfo Details is: " + hostInfo.scheme  + "://" + hostInfo.host + ":" + descriptor.httpInputPort);
+                    LOGGER.info("Value of hostInfo Details is: " + descriptor.scheme  + "://" + descriptor.host + ":" + descriptor.httpInputPort);
                 }
         }else{
-            LOGGER.info("Is hostInfo null: " + (hostInfo != null?false:true));
             LOGGER.info("Is token null: " + (token!= null?false:true));
             LOGGER.info("Is descriptor null: " + (descriptor != null?false:true));
         }

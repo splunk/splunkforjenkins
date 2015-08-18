@@ -4,22 +4,14 @@
             <f:textbox value="${descriptor.host}"
                 checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkHost?value='+escape(this.value)" />
         </f:entry>
-        <f:entry title="${%Management Port}" field="managementPort">
-            <f:textbox value="${descriptor.managementPort}" default="${descriptor.managementPort}"
-                checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkInteger?value='+escape(this.value)" />
-        </f:entry>
-        <f:entry title="${%Username}" field="username">
-            <f:textbox value="${descriptor.username}" default="${descriptor.username}"
-                checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkString?value='+escape(this.value)" />
-        </f:entry>
-        <f:entry title="${%Password}" field="password">
-            <f:password value="${descriptor.password}"
-                checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkString?value='+escape(this.value)" />
-        </f:entry>
         <f:entry name="scheme" title="${%Scheme}" field="scheme">
             <select name="scheme">
                 <option value="https" selected="${descriptor.scheme == 'https'}">https</option>
             </select>
+        </f:entry>
+        <f:entry title="${%HttpInput Token}" field="httpInputToken">
+            <f:textbox value="${descriptor.httpInputToken}" default="${descriptor.httpInputToken}"
+                checkUrl="'descriptorByName/SplunkJenkinsInstallation/checkString?value='+escape(this.value)" />
         </f:entry>
         <f:entry title="${%HttpInput Port}" field="httpInputPort">
             <f:textbox value="${descriptor.httpInputPort}" default="${descriptor.httpInputPort}"

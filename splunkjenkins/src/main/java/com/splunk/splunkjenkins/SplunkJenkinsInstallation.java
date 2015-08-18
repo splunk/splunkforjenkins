@@ -35,10 +35,8 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
         // Defaults plugin global config values:
         public String host;
-        public Integer managementPort = 8089;
-        public String username = "admin";
-        public String password;
         public String scheme;
+        public String httpInputToken;
         public Integer httpInputPort = 8088;
         public long maxEventsBatchCount = 3;
         public long maxEventsBatchSize = Long.MAX_VALUE;
