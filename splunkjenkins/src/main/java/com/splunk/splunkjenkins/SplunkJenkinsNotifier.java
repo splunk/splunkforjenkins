@@ -80,15 +80,13 @@ public class SplunkJenkinsNotifier extends Notifier{
         if (null != xmlFiles) {
             for (FilePath xmlFile : xmlFiles) {
                 try {
-                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(), envVars, buildLogStream));                   
+                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(), envVars, buildLogStream, Constants.INFO));                   
                 } catch (InterruptedException e) {
                     logException(e, buildLogStream);
                 }
             }
-            logLevel = Constants.INFO;
         }else{
-            toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), envVars.get(Constants.buildURL)), envVars, buildLogStream));
-            logLevel = Constants.CRITICAL;
+            toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend, envVars.get(Constants.buildURL), filesToSend), envVars, buildLogStream, Constants.CRITICAL));
         }
         
         // Setup connection for sending to build data to Splunk
@@ -105,7 +103,7 @@ public class SplunkJenkinsNotifier extends Notifier{
                         // Send data to splunk
                         for (ArrayList<JSONObject> toSplunkFile : toSplunkList) {
                             for (JSONObject json : toSplunkFile){
-                                sender.send(logLevel, json.toString());
+                                sender.send("", json.toString());
                             }
                         }
 
@@ -206,20 +204,22 @@ public class SplunkJenkinsNotifier extends Notifier{
         buildLogStream.write(exceptionAsString.getBytes());
     }
     
-    private ArrayList<JSONObject> createDataForSplunk(String xmlFileData, EnvVars envVars, PrintStream buildLogStream) throws IOException {
+    private ArrayList<JSONObject> createDataForSplunk(String xmlFileData, EnvVars envVars, PrintStream buildLogStream, String splunkEventLogLevel) throws IOException {
             try {
                 XmlParser parser = new XmlParser();
                 ArrayList<JSONObject> testRun = parser.xmlParser(xmlFileData);
 
                 // Add envVars to each testcase
                 for (JSONObject testcase : testRun) {
+                    testcase.put(Constants.SEVERITY, splunkEventLogLevel);
+
                     JSONObject envVarsJSON = new JSONObject();
 
                     Set keys = envVars.keySet();
                     for (Object key : keys) {
-                        envVarsJSON.append(key.toString(), envVars.get(key));
+                        envVarsJSON.put(key.toString(), envVars.get(key));
                     }
-                    testcase.append(Constants.ENVVARS, envVarsJSON);
+                    testcase.put(Constants.ENVVARS, envVarsJSON);
                 }
                 return testRun;
             } catch (JSONException e) {
