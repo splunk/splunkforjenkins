@@ -31,14 +31,16 @@ import java.util.logging.Logger;
  */
 public class SplunkJenkinsNotifier extends Notifier{
     public String filesToSend;
+    public String filesToAppend;
     public String token;
     public FilePath metadataJSON;
     
     private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsNotifier.class.getName());
     private String logLevel;
     @DataBoundConstructor
-    public SplunkJenkinsNotifier(String filesToSend){
+    public SplunkJenkinsNotifier(String filesToSend, String filesToAppend){
         this.filesToSend = filesToSend;
+        this.filesToAppend = filesToAppend;
     }
 
 
@@ -76,22 +78,34 @@ public class SplunkJenkinsNotifier extends Notifier{
             logException(e1, buildLogStream);
         }
 
-        ArrayList<FilePath> fileForSplunk = filterMetadataFile(allFiles);
+        ArrayList<FilePath> fileForSplunk = filesToAppend(filesToAppend, build, buildLogStream, envVars);
         ArrayList<JSONObject> toSplunkList = new ArrayList<>();
         // Read and parse xml files
         try {
             if (!fileForSplunk.isEmpty()) {
-                for (FilePath xmlFile : fileForSplunk) {
+                metadataJSON = fileForSplunk.get(0);
 
-                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON.readToString(), buildLogStream,Constants.INFO));
+                if (allFiles != null) {
+                    for (FilePath xmlFile : allFiles) {
+                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON.readToString(), buildLogStream,Constants.INFO));
+                    }
+                } else {
+                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON.readToString(), buildLogStream,Constants.CRITICAL));
                 }
             } else {
-                toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON.readToString(), buildLogStream,Constants.CRITICAL));
+                if (allFiles != null) {
+                    for (FilePath xmlFile : allFiles) {
+                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),null, buildLogStream,Constants.INFO));
+                    }
+                } else {
+                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),null, buildLogStream,Constants.CRITICAL));
+                }
             }
-        } catch (InterruptedException e) {
+        }
+            catch (InterruptedException e) {
                 logException(e, buildLogStream);
-            }            
-        
+
+        }
         
         // Setup connection for sending to build data to Splunk
         
@@ -188,6 +202,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         public String configBuildStepSendLog = Messages.ConfigBuildStepSendLog();
         public String configBuildStepSendEnvVars = Messages.ConfigBuildStepSendEnvVars();
         public String configBuildStepSendFiles = Messages.ConfigBuildStepSendFiles();
+        public String configBuildFileToAppend = Messages.ConfigBuildFileToAppend();
 
         @Override
         public boolean isApplicable(@SuppressWarnings("rawtypes") Class<? extends AbstractProject> jobType) {
@@ -210,12 +225,15 @@ public class SplunkJenkinsNotifier extends Notifier{
             try {
                 XmlParser parser = new XmlParser();
                 JSONObject splunkEvent = parser.xmlParser(xmlFileData);
-                JSONObject metadataValues = new JSONObject(metadata.toString());
+                
+                if (null != metadata && !("").equalsIgnoreCase(metadata)){
+                    JSONObject metadataValues = new JSONObject(metadata.toString());
+                    splunkEvent.put(Constants.METADATA, metadataValues);
+                }
 
                 // Add envVars to each testcase
 //                for (JSONObject testcase : testRun) {
                     splunkEvent.put(Constants.SEVERITY, splunkEventLogLevel);                
-                    splunkEvent.put(Constants.METADATA, metadataValues);
 //                }
                 return splunkEvent;
             } catch (JSONException e) {
@@ -225,16 +243,43 @@ public class SplunkJenkinsNotifier extends Notifier{
         
     }
     
-    private ArrayList<FilePath> filterMetadataFile(FilePath[] listOfFiles){
-        ArrayList<FilePath> filesForSplunk = new ArrayList<FilePath>();
-        for(FilePath file: listOfFiles){
-            if (!file.getName().equalsIgnoreCase("metadata.json")){
-                filesForSplunk.add(file);
-            }else{
-                metadataJSON = file;
-            }
-            
+    private ArrayList<FilePath> filesToAppend(String filesToAppend, AbstractBuild<?, ?> build, PrintStream buildLogStream, EnvVars envVars){
+        FilePath[] files = null;
+        String buildLogMsg;
+        ArrayList<FilePath> filesToAppendList= new ArrayList<FilePath>();
+        String expandedFilePath = Util.replaceMacro(filesToAppend, envVars);
+        FilePath workspacePath = build.getWorkspace();   // collect metadata file to append
+        
+        try {
+            files = workspacePath.list(expandedFilePath);
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
-        return filesForSplunk;
+        assert files != null;
+        if (files.length == 0){
+            buildLogMsg = "Splunk cannot find any files in " + workspacePath.toString() + " matching the expression: " + filesToAppend+"\n";
+            files = null;
+        }else{
+            ArrayList<String> filenames = new ArrayList<>();
+            for(FilePath file : files){
+                filenames.add(file.getName());
+                filesToAppendList.add(file);
+            }
+            buildLogMsg = Messages.DisplayName()+" collected these files to send to Splunk: "+filenames.toString()+"\n";
+        }
+        LOGGER.info(buildLogMsg);
+        // Attempt to write to build's console log
+        try {
+            buildLogStream.write(buildLogMsg.getBytes());
+        } catch (IOException e) {
+            try {
+                logException(e, buildLogStream);
+            } catch (IOException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+        }
+        return filesToAppendList;
+        
     }
 }
