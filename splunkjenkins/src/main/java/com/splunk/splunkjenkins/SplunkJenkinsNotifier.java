@@ -265,7 +265,7 @@ public class SplunkJenkinsNotifier extends Notifier{
                 filenames.add(file.getName());
                 filesToAppendList.add(file);
             }
-            buildLogMsg = Messages.DisplayName()+" collected these files to send to Splunk: "+filenames.toString()+"\n";
+            buildLogMsg = Messages.DisplayName()+" collected these files to append to Splunk Events: "+filenames.toString()+"\n";
         }
         LOGGER.info(buildLogMsg);
         // Attempt to write to build's console log
