@@ -21,7 +21,6 @@ import java.util.Iterator;
 
 public class XmlParser {
     private ArrayList<JSONObject> jsonObjects = new ArrayList<JSONObject>();
-    private JSONObject finalJSON = new JSONObject();
     private boolean entryOnce;
 
     /**
@@ -30,9 +29,9 @@ public class XmlParser {
      * @param logs
      * @return
      */
-    public ArrayList<JSONObject> xmlParser(String logs) {
+    public JSONObject xmlParser(String logs) {
         Object xmlJSONObj = null;
-        ArrayList<JSONObject> jsonObjs = null;
+        JSONObject splunkJSON = null;
 
         try {
             if (validateXMLSchema(Constants.xsdPath, logs)){
@@ -42,14 +41,14 @@ public class XmlParser {
                 //TODO: Add parsing for other files
             }
             if (xmlJSONObj instanceof JSONObject) {
-                jsonObjs = parse((JSONObject) xmlJSONObj);
-                return jsonObjs;
+                splunkJSON = parse((JSONObject) xmlJSONObj);
+                return splunkJSON;
 
             }
         } catch (JSONException | ParseException e) {
             e.printStackTrace();
         }
-        return jsonObjs;
+        return splunkJSON;
     }
 
     /**
@@ -60,47 +59,21 @@ public class XmlParser {
      * @throws JSONException
      * @throws ParseException
      */
-    private ArrayList<JSONObject> parse(JSONObject json) throws JSONException,
+    private JSONObject parse(JSONObject json) throws JSONException,
             ParseException {
 
-        if (!entryOnce) {
-            JSONObject transformedJSON = null;
-            Iterator<String> originalKeys = json.keys();
-            while (originalKeys.hasNext()) {
-                String key = originalKeys.next();
-                transformedJSON = customJSONObject(json.getJSONObject(key));
-                entryOnce = true;
-            }
+        JSONObject finalJSON = new JSONObject();
 
-            finalJSON.put(Constants.TESTSUITE, transformedJSON);
+        JSONObject transformedJSON = null;
+        Iterator<String> originalKeys = json.keys();
+        while (originalKeys.hasNext()) {
+            String key = originalKeys.next();
+            transformedJSON = customJSONObject(json.getJSONObject(key));
         }
 
-        Iterator<String> keys = finalJSON.keys();
-        JSONObject commonElements = new JSONObject();
+        finalJSON.put(Constants.TESTSUITE, transformedJSON);
 
-        while (keys.hasNext()) {
-            String key = keys.next();
-            try {
-                JSONObject originalJSON = finalJSON.getJSONObject(key);
-                finalJSON = originalJSON;
-                parse(finalJSON);
-                commonElements = originalJSON;
-            } catch (JSONException e) {
-                if (Constants.TESTCASE.equalsIgnoreCase(key)) {
-                    JSONArray jsonarr = finalJSON.getJSONArray(key);
-                    for (int n = 0; n < jsonarr.length(); n++) {
-                        JSONObject object = jsonarr.getJSONObject(n);
-
-                        JSONObject jsonFinal = new JSONObject();
-                        jsonFinal.put(key, object);
-
-                        jsonObjects.add(jsonFinal);
-                    }
-                }
-            }
-        }
-        commonElements.remove(Constants.TESTCASE);
-        return merge(commonElements, jsonObjects);
+        return finalJSON;
     }
 
     /**
