@@ -73,32 +73,6 @@ public class XmlParser {
 
         finalJSON.put(Constants.TESTSUITE, transformedJSON);
 
-        // Iterator<String> keys = finalJSON.keys();
-        // JSONObject commonElements = new JSONObject();
-
-        // while (keys.hasNext()) {
-        // String key = keys.next();
-        // try {
-        // JSONObject originalJSON = finalJSON.getJSONObject(key);
-        // finalJSON = originalJSON;
-        // parse(finalJSON);
-        // commonElements = originalJSON;
-        // } catch (JSONException e) {
-        // if (Constants.TESTCASE.equalsIgnoreCase(key)) {
-        // JSONArray jsonarr = finalJSON.getJSONArray(key);
-        // for (int n = 0; n < jsonarr.length(); n++) {
-        // JSONObject object = jsonarr.getJSONObject(n);
-        //
-        // JSONObject jsonFinal = new JSONObject();
-        // jsonFinal.put(key, object);
-        //
-        // jsonObjects.add(jsonFinal);
-        // }
-        // }
-        // }
-        // }
-        // commonElements.remove(Constants.TESTCASE);
-        // return merge(commonElements, jsonObjects);
         return finalJSON;
     }
 
