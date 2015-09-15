@@ -200,14 +200,14 @@ public class HttpInputsEventSender extends TimerTask{
             event.put(MetadataSourceTag, source);
         if (sourceType  != null && sourceType.length() > 0)
             event.put(MetadataSourceTypeTag, sourceType);
+        
         // event body
-        JSONObject body = new JSONObject();
-        body.put("severity", eventInfo.getSeverity());
-        body.put("message", stringOrJSON(eventInfo.getMessage()));
-        //body.put("message", (eventInfo.getMessage()));
+        //JSONObject body = new JSONObject();
+        //body.put("severity", eventInfo.getSeverity());
+        //body.put("message", stringOrJSON(eventInfo.getMessage()));
 
         // join event and body
-        event.put("event", body);
+        event.put("event", stringOrJSON(eventInfo.getMessage()));
         return event.toString();
     }
 
@@ -246,8 +246,6 @@ public class HttpInputsEventSender extends TimerTask{
         httpClient.start();
     }
 
-    // Currently we never close http client. This method is added for symmetry
-    // with startHttpClient.
     private void stopHttpClient() throws SecurityException {
         if (httpClient != null) {
             try {

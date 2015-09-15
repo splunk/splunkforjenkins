@@ -4,4 +4,9 @@
             <f:textbox default='*.xml' value="${instance.filesToSend}" />
         </f:entry>
     </f:block>
+    <f:block>
+        <f:entry title="${descriptor.configBuildFileToAppend}" field="filesToAppend">
+            <f:textbox default='metadata.json' value="${instance.filesToAppend}" />
+        </f:entry>
+    </f:block>
 </j:jelly>
