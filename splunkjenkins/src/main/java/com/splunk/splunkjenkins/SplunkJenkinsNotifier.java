@@ -88,10 +88,10 @@ public class SplunkJenkinsNotifier extends Notifier{
 
             if (allFiles != null) { // If there's xml files collected,
                 for (FilePath xmlFile : allFiles) {  // create a separate event for each xml file.
-                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON, buildLogStream,Constants.INFO));
+                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(), metadataJSON, buildLogStream, null, null));
                 }
             } else { // Otherwise, send event with an error
-                toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML, filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON, buildLogStream,Constants.CRITICAL));
+                toSplunkList.add(createDataForSplunk(null, metadataJSON, buildLogStream, "junit-not-found", String.format("%s not found", filesToSend)));
             }
         } catch (InterruptedException e) {
             logException(e, buildLogStream);
@@ -210,7 +210,7 @@ public class SplunkJenkinsNotifier extends Notifier{
         buildLogStream.write(exceptionAsString.getBytes());
     }
     
-    private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String splunkEventLogLevel) throws IOException {
+    private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String errorType, String errorMsg) throws IOException {
         try {
             XmlParser parser = new XmlParser();
             JSONObject splunkEvent = parser.xmlParser(xmlFileData);
@@ -220,14 +220,19 @@ public class SplunkJenkinsNotifier extends Notifier{
                 splunkEvent.put(Constants.METADATA, metadataValues);
             }
 
-            splunkEvent.put(Constants.SEVERITY, splunkEventLogLevel);
-            
+            JSONObject buildError = null;
+            if(errorType != null){
+                buildError = new JSONObject();
+                buildError.put("type", errorType);
+                buildError.put("message", errorMsg);
+            }
+            splunkEvent.put(Constants.ERROR, buildError);
+
             return splunkEvent;
         } catch (JSONException e) {
             logException(e, buildLogStream);
         }
         return null;
-
     }
     
     private ArrayList<FilePath> filesToAppend(String filesToAppend, AbstractBuild<?, ?> build, PrintStream buildLogStream, EnvVars envVars){
