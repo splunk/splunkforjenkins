@@ -108,7 +108,6 @@ public class SplunkJenkinsNotifier extends Notifier{
         }
         
         // Setup connection for sending to build data to Splunk
-        
         if (null != token && null != descriptor) {
             if ((!("").equalsIgnoreCase(descriptor.scheme) && null != descriptor.scheme) && (!("").equalsIgnoreCase(descriptor.host) && null != descriptor.host)){
                 if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
@@ -222,25 +221,23 @@ public class SplunkJenkinsNotifier extends Notifier{
     }
     
     private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String splunkEventLogLevel) throws IOException {
-            try {
-                XmlParser parser = new XmlParser();
-                JSONObject splunkEvent = parser.xmlParser(xmlFileData);
-                
-                if (null != metadata && !("").equalsIgnoreCase(metadata)){
-                    JSONObject metadataValues = new JSONObject(metadata.toString());
-                    splunkEvent.put(Constants.METADATA, metadataValues);
-                }
+        try {
+            XmlParser parser = new XmlParser();
+            JSONObject splunkEvent = parser.xmlParser(xmlFileData);
 
-                // Add envVars to each testcase
-//                for (JSONObject testcase : testRun) {
-                    splunkEvent.put(Constants.SEVERITY, splunkEventLogLevel);                
-//                }
-                return splunkEvent;
-            } catch (JSONException e) {
-                logException(e, buildLogStream);
+            if (null != metadata && !("").equalsIgnoreCase(metadata)){
+                JSONObject metadataValues = new JSONObject(metadata.toString());
+                splunkEvent.put(Constants.METADATA, metadataValues);
             }
-            return null;
-        
+
+            splunkEvent.put(Constants.SEVERITY, splunkEventLogLevel);
+            
+            return splunkEvent;
+        } catch (JSONException e) {
+            logException(e, buildLogStream);
+        }
+        return null;
+
     }
     
     private ArrayList<FilePath> filesToAppend(String filesToAppend, AbstractBuild<?, ?> build, PrintStream buildLogStream, EnvVars envVars){
