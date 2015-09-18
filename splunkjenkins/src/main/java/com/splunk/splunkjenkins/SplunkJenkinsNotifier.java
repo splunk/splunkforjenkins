@@ -33,8 +33,7 @@ public class SplunkJenkinsNotifier extends Notifier{
     public String filesToSend;
     public String filesToAppend;
     public String token;
-    public FilePath metadataJSON;
-    
+
     private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsNotifier.class.getName());
     private String logLevel;
     @DataBoundConstructor
@@ -82,29 +81,20 @@ public class SplunkJenkinsNotifier extends Notifier{
         ArrayList<JSONObject> toSplunkList = new ArrayList<>();
         // Read and parse xml files
         try {
+            String metadataJSON = null;
             if (!fileForSplunk.isEmpty()) {
-                metadataJSON = fileForSplunk.get(0);
-
-                if (allFiles != null) {
-                    for (FilePath xmlFile : allFiles) {
-                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON.readToString(), buildLogStream,Constants.INFO));
-                    }
-                } else {
-                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON.readToString(), buildLogStream,Constants.CRITICAL));
-                }
-            } else {
-                if (allFiles != null) {
-                    for (FilePath xmlFile : allFiles) {
-                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),null, buildLogStream,Constants.INFO));
-                    }
-                } else {
-                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),null, buildLogStream,Constants.CRITICAL));
-                }
+                metadataJSON = fileForSplunk.get(0).readToString();
             }
-        }
-            catch (InterruptedException e) {
-                logException(e, buildLogStream);
 
+            if (allFiles != null) { // If there's xml files collected,
+                for (FilePath xmlFile : allFiles) {  // create a separate event for each xml file.
+                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON, buildLogStream,Constants.INFO));
+                }
+            } else { // Otherwise, send event with an error
+                toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML, filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON, buildLogStream,Constants.CRITICAL));
+            }
+        } catch (InterruptedException e) {
+            logException(e, buildLogStream);
         }
         
         // Setup connection for sending to build data to Splunk
