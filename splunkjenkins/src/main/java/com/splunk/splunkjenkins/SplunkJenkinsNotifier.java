@@ -33,8 +33,7 @@ public class SplunkJenkinsNotifier extends Notifier{
     public String filesToSend;
     public String filesToAppend;
     public String token;
-    public FilePath metadataJSON;
-    
+
     private final static Logger LOGGER = Logger.getLogger(SplunkJenkinsNotifier.class.getName());
     private String logLevel;
     @DataBoundConstructor
@@ -53,9 +52,6 @@ public class SplunkJenkinsNotifier extends Notifier{
         final EnvVars envVars = getBuildEnvVars(build, listener); // Get environment variables
 
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
-
-        // Set the httpinput name to the hostname
-        //String httpinputName = descriptor.sourceName;
 
         // Create the Splunk instance connector
 
@@ -82,33 +78,23 @@ public class SplunkJenkinsNotifier extends Notifier{
         ArrayList<JSONObject> toSplunkList = new ArrayList<>();
         // Read and parse xml files
         try {
+            String metadataJSON = null;
             if (!fileForSplunk.isEmpty()) {
-                metadataJSON = fileForSplunk.get(0);
-
-                if (allFiles != null) {
-                    for (FilePath xmlFile : allFiles) {
-                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),metadataJSON.readToString(), buildLogStream,Constants.INFO));
-                    }
-                } else {
-                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),metadataJSON.readToString(), buildLogStream,Constants.CRITICAL));
-                }
-            } else {
-                if (allFiles != null) {
-                    for (FilePath xmlFile : allFiles) {
-                        toSplunkList.add(createDataForSplunk(xmlFile.readToString(),null, buildLogStream,Constants.INFO));
-                    }
-                } else {
-                    toSplunkList.add(createDataForSplunk(String.format(Constants.errorXML.toString(), filesToSend,envVars.get(Constants.buildURL), filesToSend),null, buildLogStream,Constants.CRITICAL));
-                }
+                metadataJSON = fileForSplunk.get(0).readToString();
             }
-        }
-            catch (InterruptedException e) {
-                logException(e, buildLogStream);
 
+            if (allFiles != null) { // If there's xml files collected,
+                for (FilePath xmlFile : allFiles) {  // create a separate event for each xml file.
+                    toSplunkList.add(createDataForSplunk(xmlFile.readToString(), metadataJSON, buildLogStream, null, null));
+                }
+            } else { // Otherwise, send event with an error
+                toSplunkList.add(createDataForSplunk(null, metadataJSON, buildLogStream, "file-not-found", String.format("%s not found", filesToSend)));
+            }
+        } catch (InterruptedException e) {
+            logException(e, buildLogStream);
         }
         
         // Setup connection for sending to build data to Splunk
-        
         if (null != token && null != descriptor) {
             if ((!("").equalsIgnoreCase(descriptor.scheme) && null != descriptor.scheme) && (!("").equalsIgnoreCase(descriptor.host) && null != descriptor.host)){
                 if(!("").equalsIgnoreCase(descriptor.sendMode) && null != descriptor.sendMode ){
@@ -221,26 +207,40 @@ public class SplunkJenkinsNotifier extends Notifier{
         buildLogStream.write(exceptionAsString.getBytes());
     }
     
-    private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String splunkEventLogLevel) throws IOException {
-            try {
-                XmlParser parser = new XmlParser();
-                JSONObject splunkEvent = parser.xmlParser(xmlFileData);
-                
-                if (null != metadata && !("").equalsIgnoreCase(metadata)){
-                    JSONObject metadataValues = new JSONObject(metadata.toString());
-                    splunkEvent.put(Constants.METADATA, metadataValues);
-                }
+    private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String errorType, String errorMsg) throws IOException {
+        try {
+            
+            JSONObject splunkEvent = new JSONObject();
 
-                // Add envVars to each testcase
-//                for (JSONObject testcase : testRun) {
-                    splunkEvent.put(Constants.SEVERITY, splunkEventLogLevel);                
-//                }
-                return splunkEvent;
-            } catch (JSONException e) {
-                logException(e, buildLogStream);
+            if (null != xmlFileData){
+                XmlParser parser = new XmlParser();
+                JSONObject jsonEvent = parser.xmlParser(xmlFileData);
+                splunkEvent.put(Constants.TESTSUITE, jsonEvent);
+            }else{
+                splunkEvent.put(Constants.TESTSUITE, JSONObject.NULL);
             }
-            return null;
-        
+
+            if (null != metadata && !("").equalsIgnoreCase(metadata)){
+                JSONObject metadataValues = new JSONObject(metadata.toString());
+                splunkEvent.put(Constants.METADATA, metadataValues);
+            }
+
+            JSONObject buildError = null;
+            
+            if(errorType != null){
+                buildError = new JSONObject();
+                buildError.put("type", errorType);
+                buildError.put("message", errorMsg);
+                splunkEvent.put(Constants.ERROR, buildError);
+            }else{
+                splunkEvent.put(Constants.ERROR, JSONObject.NULL);
+            }
+
+            return splunkEvent;
+        } catch (JSONException e) {
+            logException(e, buildLogStream);
+        }
+        return null;
     }
     
     private ArrayList<FilePath> filesToAppend(String filesToAppend, AbstractBuild<?, ?> build, PrintStream buildLogStream, EnvVars envVars){
