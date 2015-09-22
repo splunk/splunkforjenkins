@@ -62,8 +62,6 @@ public class XmlParser {
     private JSONObject parse(JSONObject json) throws JSONException,
             ParseException {
 
-        JSONObject finalJSON = new JSONObject();
-
         JSONObject transformedJSON = null;
         Iterator<String> originalKeys = json.keys();
         while (originalKeys.hasNext()) {
@@ -71,9 +69,7 @@ public class XmlParser {
             transformedJSON = customJSONObject(json.getJSONObject(key));
         }
 
-        finalJSON.put(Constants.TESTSUITE, transformedJSON);
-
-        return finalJSON;
+        return transformedJSON;
     }
 
     /**

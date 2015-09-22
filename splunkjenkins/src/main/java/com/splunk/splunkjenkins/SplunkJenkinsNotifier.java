@@ -53,9 +53,6 @@ public class SplunkJenkinsNotifier extends Notifier{
 
         SplunkJenkinsInstallation.Descriptor descriptor = SplunkJenkinsInstallation.getSplunkDescriptor();
 
-        // Set the httpinput name to the hostname
-        //String httpinputName = descriptor.sourceName;
-
         // Create the Splunk instance connector
 
         token = descriptor.httpInputToken;
@@ -91,7 +88,7 @@ public class SplunkJenkinsNotifier extends Notifier{
                     toSplunkList.add(createDataForSplunk(xmlFile.readToString(), metadataJSON, buildLogStream, null, null));
                 }
             } else { // Otherwise, send event with an error
-                toSplunkList.add(createDataForSplunk(null, metadataJSON, buildLogStream, "junit-not-found", String.format("%s not found", filesToSend)));
+                toSplunkList.add(createDataForSplunk(null, metadataJSON, buildLogStream, "file-not-found", String.format("%s not found", filesToSend)));
             }
         } catch (InterruptedException e) {
             logException(e, buildLogStream);
@@ -212,8 +209,16 @@ public class SplunkJenkinsNotifier extends Notifier{
     
     private JSONObject createDataForSplunk(String xmlFileData, String metadata, PrintStream buildLogStream, String errorType, String errorMsg) throws IOException {
         try {
-            XmlParser parser = new XmlParser();
-            JSONObject splunkEvent = parser.xmlParser(xmlFileData);
+            
+            JSONObject splunkEvent = new JSONObject();
+            JSONObject jsonEvent = new JSONObject();
+
+            if (null != xmlFileData){
+                XmlParser parser = new XmlParser();
+                jsonEvent = parser.xmlParser(xmlFileData);
+            }
+
+            splunkEvent.put(Constants.TESTSUITE, jsonEvent);
 
             if (null != metadata && !("").equalsIgnoreCase(metadata)){
                 JSONObject metadataValues = new JSONObject(metadata.toString());
