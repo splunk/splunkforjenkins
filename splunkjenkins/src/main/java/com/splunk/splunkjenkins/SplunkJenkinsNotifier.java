@@ -211,14 +211,14 @@ public class SplunkJenkinsNotifier extends Notifier{
         try {
             
             JSONObject splunkEvent = new JSONObject();
-            JSONObject jsonEvent = new JSONObject();
 
             if (null != xmlFileData){
                 XmlParser parser = new XmlParser();
-                jsonEvent = parser.xmlParser(xmlFileData);
+                JSONObject jsonEvent = parser.xmlParser(xmlFileData);
+                splunkEvent.put(Constants.TESTSUITE, jsonEvent);
+            }else{
+                splunkEvent.put(Constants.TESTSUITE, JSONObject.NULL);
             }
-
-            splunkEvent.put(Constants.TESTSUITE, jsonEvent);
 
             if (null != metadata && !("").equalsIgnoreCase(metadata)){
                 JSONObject metadataValues = new JSONObject(metadata.toString());
@@ -226,12 +226,15 @@ public class SplunkJenkinsNotifier extends Notifier{
             }
 
             JSONObject buildError = null;
+            
             if(errorType != null){
                 buildError = new JSONObject();
                 buildError.put("type", errorType);
                 buildError.put("message", errorMsg);
+                splunkEvent.put(Constants.ERROR, buildError);
+            }else{
+                splunkEvent.put(Constants.ERROR, JSONObject.NULL);
             }
-            splunkEvent.put(Constants.ERROR, buildError);
 
             return splunkEvent;
         } catch (JSONException e) {
