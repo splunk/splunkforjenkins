@@ -1,0 +1,21 @@
+<div>
+    <div><h3>Provide a groovy script to customize Junit result process</h3>
+        
+    </div>
+    <div>
+        You can sent events to splunk by call:
+        <pre>
+    def event=[]
+    event["build_url"]=build.url
+    event["result"]=testResult
+    event["metadat"]=env
+    send(event)
+        </pre>
+        Below variables are pre-defined
+        <pre> 
+    AbstractBuild build;
+    Map env;
+    TestResult testResult;
+          </pre>
+    </div>
+</div>

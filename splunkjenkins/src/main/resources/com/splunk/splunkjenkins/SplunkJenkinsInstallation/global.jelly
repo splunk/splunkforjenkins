@@ -7,6 +7,7 @@
         <f:entry name="scheme" title="${%Scheme}" field="scheme">
             <select name="scheme">
                 <option value="https" selected="${descriptor.scheme == 'https'}">https</option>
+                <option value="http">http</option>
             </select>
         </f:entry>
         <f:entry title="${%HttpInput Token}" field="httpInputToken">
@@ -48,6 +49,9 @@
         </f:entry>
          <f:entry title="${%Event Data Source Type}" field="sourceTypeName">
              <f:textbox value="${descriptor.sourceTypeName}" default="${descriptor.sourceTypeName}" />
+         </f:entry>
+         <f:entry title="${%Groovy postbuild script path}" field="scriptPath">
+             <f:textbox value="${descriptor.scriptPath}" default="${descriptor.scriptPath}" />
          </f:entry>
     </f:section>
 </j:jelly>

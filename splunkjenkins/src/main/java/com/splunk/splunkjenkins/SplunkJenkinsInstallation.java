@@ -35,26 +35,35 @@ public class SplunkJenkinsInstallation extends ToolInstallation {
 
         // Defaults plugin global config values:
         public String host;
-        public String scheme;
+        public String scheme="https";
         public String httpInputToken;
         public Integer httpInputPort = 8088;
+        //default cache for 3 events
         public long maxEventsBatchCount = 3;
-        public long maxEventsBatchSize = Long.MAX_VALUE;
+        //default cache size for 2MB
+        public long maxEventsBatchSize = 2*1024*1024;
         public long retriesOnError = 3;
         public String sendMode;
-        public long delay = 0;
+        //flush cache every 3 seconds
+        public long delay = 3000;
         public String indexName = "main";
         public String sourceName = getMasterHostname();
         public String sourceTypeName = "";
+        //groovy script path
+        public String scriptPath;
 
         public Descriptor() {
             super();
             load();
+            if(host!=null){
+                SplunkLogService.update(this);
+            }
         }
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             req.bindJSON(this, formData.getJSONObject("splunkjenkins"));
+            SplunkLogService.update(this);
             save();
             return super.configure(req, formData);
         }
