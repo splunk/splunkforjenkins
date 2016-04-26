@@ -1,0 +1,126 @@
+package com.splunk.splunkjenkins.utils;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.util.EntityUtils;
+
+import javax.net.ssl.SSLException;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import static com.splunk.splunkjenkins.utils.LogEventHelper.buildPost;
+
+public class LogConsumer implements Runnable {
+    private static final Logger LOG = Logger.getLogger(LogConsumer.class.getName());
+
+    private HttpClient client;
+    private BlockingQueue<EventRecord> queue;
+    private boolean acceptingTask = true;
+    private AtomicLong outgoingCounter;
+    private int errorCount;
+    private List<Class<? extends IOException>> nonretryExceptions = Arrays.asList(
+            UnknownHostException.class,
+            ConnectException.class,
+            SSLException.class);
+
+    public LogConsumer(HttpClient client, BlockingQueue<EventRecord> queue, AtomicLong counter) {
+        this.client = client;
+        this.queue = queue;
+        this.errorCount = 0;
+        this.outgoingCounter = counter;
+    }
+
+    // Create a custom response handler
+    private ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
+        @Override
+        public String handleResponse(
+                final HttpResponse response) throws IOException {
+            int status = response.getStatusLine().getStatusCode();
+            if (status == 200) {
+                outgoingCounter.incrementAndGet();
+                HttpEntity entity = response.getEntity();
+                //need consume entity so underlying connection can be released to pool
+                return entity != null ? EntityUtils.toString(entity) : null;
+            } else { //see also http://docs.splunk.com/Documentation/Splunk/6.3.0/RESTREF/RESTinput#services.2Fcollector
+                SplunkClientError error = null;
+                if (status == 403 || status == 401) {
+                    //Token disabled or Invalid authorization
+                    error = new SplunkClientError("splunk token is invalid", status);
+                } else if (status == 400) {
+                    //Invalid data format or incorrect index, will discard
+                    error = new SplunkClientError("incorrect index or invalid data format", status);
+                }
+                throw new IOException("failed to send data", error);
+            }
+        }
+    };
+
+    @Override
+    public void run() {
+        while (acceptingTask) {
+            try {
+                EventRecord record = queue.take();
+                if (!record.discard()) {
+                    HttpPost post = buildPost(record);
+                    try {
+                        client.execute(post, responseHandler);
+                    } catch (Exception ex) {
+                        LOG.log(Level.WARNING, "failed to call http input", ex);
+                        if (nonretryExceptions.contains(ex)) {
+                            LOG.log(Level.SEVERE, "remote server error, will not retry");
+                            return;
+                        }
+                        Throwable cause = ex.getCause();
+                        if (cause != null && cause instanceof SplunkClientError) {
+                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry" + record.getMessage());
+                        } else {
+                            //other errors
+                            retry(record);
+                        }
+                    }
+                } else {
+                    LOG.log(Level.SEVERE, "Failed to send " + record.getMessage());
+                }
+            } catch (InterruptedException e) {
+                errorCount++;
+                //thread interrupted, just ignore
+            }
+        }
+    }
+
+    public void stopTask() {
+        this.acceptingTask = false;
+    }
+
+    /**
+     * @param record
+     * @throws InterruptedException
+     */
+    private void retry(EventRecord record) throws InterruptedException {
+        record.increase();
+        this.queue.add(record);
+        if (acceptingTask) {
+            Thread.sleep(100);
+        }
+    }
+
+
+    public static class SplunkClientError extends Throwable {
+        int status;
+
+        public SplunkClientError(String message, int status) {
+            super(message);
+            this.status = status;
+        }
+    }
+}

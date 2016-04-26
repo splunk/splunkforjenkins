@@ -1,6 +1,6 @@
 package com.splunk.splunkjenkins
 
-import com.splunk.logging.utils.LogHelper
+import com.splunk.splunkjenkins.utils.LogEventHelper
 import hudson.EnvVars
 import hudson.model.AbstractBuild
 import hudson.model.TaskListener
@@ -8,12 +8,11 @@ import hudson.tasks.junit.TestResult
 import hudson.tasks.junit.TestResultAction
 import hudson.util.spring.ClosureScript
 import jenkins.model.Jenkins
-import java.util.HashMap
-import java.util.Map
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
-import static com.splunk.logging.Constants.BUILD_ID;
-import static com.splunk.logging.Constants.METADATA;
+import static com.splunk.splunkjenkins.Constants.BUILD_ID;
+import static com.splunk.splunkjenkins.Constants.METADATA
+import static com.splunk.splunkjenkins.Constants.CATEGORY;
 
 public class UserActionDSL {
 
@@ -29,13 +28,14 @@ public class UserActionDSL {
                 CompilerConfiguration cc = new CompilerConfiguration();
                 cc.scriptBaseClass = ClosureScript.class.name;
                 ImportCustomizer ic = new ImportCustomizer()
-                ic.addStaticStars(LogHelper.class.name)
+                ic.addStaticStars(LogEventHelper.class.name)
                 cc.addCompilationCustomizers(ic)
                 ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader, new Binding(), cc).parse(SplunkLogService.script)
                 dslScript.setDelegate(delegate);
             } else {//user not provide post action, use default
                 String url = build.getUrl();
                 Map event=new HashMap();
+                event.put(CATEGORY, "test_result")
                 event.put("job_result", url + "_" + build.getTimestamp());
                 event.put(BUILD_ID, url);
                 event.put(METADATA, enVars);
@@ -46,14 +46,11 @@ public class UserActionDSL {
                     event.put("pass_count", testResult.getPassCount());
                     event.put("fail_count", testResult.getFailCount());
                     event.put("skip_count", testResult.getSkipCount())
-                    //TODO send raw xml files?
                 } else {
                     event.put("junit_result", "unknown");
                 }
-                SplunkLogService.send(event);
+                SplunkLogService.getInstance().send(event);
             }
-            //flush the cache to send remain events
-            SplunkLogService.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -77,7 +74,7 @@ public class RunDelegate {
     }
 
     def send(def message) {
-        SplunkLogService.send(message);
+        SplunkLogService.getInstance().send(message);
     }
 
     @Override

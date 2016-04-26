@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins;
 
-import com.google.gson.Gson;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractBuild;
@@ -12,8 +11,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 
-import static com.splunk.logging.Constants.BUILD_ID;
-import static com.splunk.logging.utils.LogHelper.decodeConsoleBase64Text;
+import static com.splunk.splunkjenkins.Constants.BUILD_ID;
+import static com.splunk.splunkjenkins.Constants.CATEGORY;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -80,10 +80,11 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
                 //send to splunk
                 lineCounter++;
                 Map eventInfo=new HashMap();
+                eventInfo.put(CATEGORY,"consoleLog");
                 eventInfo.put("line_number",lineCounter);
                 eventInfo.put(BUILD_ID,this.buildUrl);
                 eventInfo.put("text",lineContent);
-                SplunkLogService.send(eventInfo);
+                SplunkLogService.getInstance().send(eventInfo);
             }
             // reuse the buffer under normal circumstances
             branch.reset();

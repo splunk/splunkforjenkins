@@ -7,7 +7,8 @@ import hudson.model.listeners.RunListener;
 
 import javax.annotation.Nonnull;
 
-import static com.splunk.logging.Constants.BUILD_ID;
+import com.splunk.splunkjenkins.Constants;
+
 import hudson.Extension;
 import java.util.Map;
 
@@ -18,10 +19,13 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        Map event=ImmutableMap.of(BUILD_ID,run.getUrl(),
-                "trigger_by",getBuildCause(run),
-                "build_event","started");
-        SplunkLogService.send(event);
+
+        Map event = ImmutableMap.builder()
+                .put(Constants.CATEGORY, "job_event")
+                .put(Constants.BUILD_ID, run.getUrl())
+                .put("trigger_by", getBuildCause(run))
+                .put("build_event", "started").build();
+        SplunkLogService.getInstance().send(event);
     }
 
     private String getBuildCause(Run run) {
@@ -48,15 +52,17 @@ public class LoggingRunListener extends RunListener<Run> {
         AbstractBuild build = (AbstractBuild) run;
         String jenkinsNode = (build.getBuiltOn() == null ? "unknown" : build.getBuiltOn().getDisplayName());
         //other messages no need to escape quote
-        Map event=ImmutableMap.builder().put(BUILD_ID,run.getUrl())
+        Map event = ImmutableMap.builder()
+                .put(Constants.CATEGORY, "job_event")
+                .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCause(run))
-                .put("job_result",build.getResult())
-                .put("job_started_at",build.getTimestampString2())
-                .put("job_duration",build.getDuration() + "ms")
-                .put("node",jenkinsNode)
-                .put("build_event","completed")
+                .put("job_result", build.getResult())
+                .put("job_started_at", build.getTimestampString2())
+                .put("job_duration", build.getDuration() + "ms")
+                .put("node", jenkinsNode)
+                .put("build_event", "completed")
                 .build();
-        SplunkLogService.send(event);
+        SplunkLogService.getInstance().send(event);
         postJobAction.perform(build);
     }
 }

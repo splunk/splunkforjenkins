@@ -1,106 +1,129 @@
 package com.splunk.splunkjenkins;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.util.ContextInitializer;
-import ch.qos.logback.core.joran.spi.JoranException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.splunk.logging.RemoteAppender;
-import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.splunk.splunkjenkins.utils.EventRecord;
+import com.splunk.splunkjenkins.utils.LogConsumer;
+import com.splunk.splunkjenkins.utils.SplunkConfig;
+import hudson.model.Computer;
+import org.apache.http.client.HttpClient;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.HttpClientConnectionManager;
+import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContexts;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import javax.net.ssl.SSLContext;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
-import org.slf4j.helpers.Util;
-
 public class SplunkLogService {
+    public static SplunkConfig config = null;
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
+    int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
+    private AtomicLong incomingCounter = new AtomicLong();
+    private AtomicLong outgoingCounter = new AtomicLong();
+    BlockingQueue<EventRecord> logQueue;
+    List<LogConsumer> workers;
+    HttpClient client;
+    HttpClientConnectionManager connMgr;
 
-    public final static String APPENDER_NAME = "jenkins2slunk";
-    private final static InstanceHolder instanceHolder = new InstanceHolder();
-    private final static Gson gson = new GsonBuilder().serializeNulls().create();
-
-    protected static org.slf4j.Logger getLogger() {
-        return instanceHolder.logger;
+    private SplunkLogService() {
+        this.logQueue = new LinkedBlockingQueue<EventRecord>();
+        this.workers = new ArrayList<LogConsumer>();
+        this.connMgr = buildConnectionManager();
+        this.client = HttpClients.custom().setConnectionManager(this.connMgr).build();
     }
 
-    protected static void flush() {
-        ch.qos.logback.classic.Logger lbkLogger = (ch.qos.logback.classic.Logger) getLogger();
-        RemoteAppender appender = (RemoteAppender) lbkLogger.getAppender(APPENDER_NAME);
-        appender.flush();
+    private HttpClientConnectionManager buildConnectionManager() {
+        SSLContext sslContext = null;
+        try {
+            TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
+                public boolean isTrusted(X509Certificate[] certificate,
+                                         String type) {
+                    return true;
+                }
+            };
+            sslContext = SSLContexts.custom().loadTrustMaterial(
+                    null, acceptingTrustStrategy).build();
+        } catch (Exception e) {
+            sslContext = SSLContexts.createDefault();
+        }
+        SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext,
+                new NoopHostnameVerifier());
+        Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", sslConnectionSocketFactory)
+                .build();
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
+        // Increase max total connection to 200
+        cm.setMaxTotal(200);
+        // Increase default max connection per route to 20
+        cm.setDefaultMaxPerRoute(20);
+        return cm;
     }
 
-    public static void send(Object obj) {
-        String message = gson.toJson(obj);
-        getLogger().info(message);
-    }
-
-    public static boolean update(SplunkJenkinsInstallation.Descriptor config) {
-        boolean isValid=instanceHolder.updateSettings(config);
-        Util.report("splunk config is valid:"+isValid);
-        return isValid;
-    }
-
-    protected static String getScript() {
-        return instanceHolder.postActionScript;
-    }
-
-    /**
-     * @return InstanceHolder
-     */
-    protected static InstanceHolder getInstance() {
-        return instanceHolder;
-    }
-
-    public static class InstanceHolder {
-
-        private LoggerContext defaultLoggerContext = new LoggerContext();
-        Logger logger = LoggerFactory.getLogger(SplunkLogService.class.getName());
-        private String postActionScript;
-
-        private void initLoggerContext() {
-            if (!(logger instanceof ch.qos.logback.classic.Logger)) {
-                try {
-                    new ContextInitializer(defaultLoggerContext).autoConfig();
-                    logger = defaultLoggerContext.getLogger(SplunkLogService.class.getName());
-                } catch (JoranException je) {
-                    Util.report("Failed to auto configure default logger context", je);
+    public void send(Object message) {
+        if (config == null || config.isInvalid()) {
+            LOG.log(Level.SEVERE, "splunk httpinput has not been configured yet, can not send " + message);
+            return;
+        }
+        EventRecord record = new EventRecord(message);
+        boolean added = logQueue.offer(record);
+        if (!added) {
+            LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");
+            return;
+        }
+        if (workers.size() < MAX_WORKER_COUNT) {
+            synchronized (workers) {
+                //need double check
+                if (workers.size() < MAX_WORKER_COUNT) {
+                    LogConsumer runnable = new LogConsumer(client, logQueue, outgoingCounter);
+                    workers.add(runnable);
+                    Computer.threadPoolForRemoting.submit(runnable);
                 }
             }
         }
-
-        public synchronized boolean updateSettings(SplunkJenkinsInstallation.Descriptor config) {
-            String urlStr = config.scheme + "://" + config.host + ":" + config.httpInputPort;
-            //validate config
-            try {
-                URL url = new URL(urlStr);
-            } catch (MalformedURLException ex) {
-                LOG.log(Level.SEVERE, "invalid splunk http input config " + urlStr, ex);
-                //not a valid url, no action
-                return false;
+        long sent = incomingCounter.incrementAndGet();
+        if (sent % 2000 == 0) {
+            synchronized (InstanceHolder.service) {
+                connMgr.closeIdleConnections(60, TimeUnit.SECONDS);
             }
-            if (config.scriptPath != null) {
-                try {
-                    postActionScript = IOUtils.toString(new URL(config.scriptPath));
-                } catch (IOException e) {
-                    LOG.log(Level.SEVERE, "can not read file " + config.scriptPath);
-                    //file was removed from jenkins, just ignore
-                }
-            } else {
-                postActionScript = null;
-            }
-            initLoggerContext();
-            ch.qos.logback.classic.Logger lbkLogger = (ch.qos.logback.classic.Logger) logger;
-            RemoteAppender appender = (RemoteAppender) lbkLogger.getAppender(APPENDER_NAME);
-            appender.setRetry(config.retriesOnError);
-            appender.updateIndex(config.indexName, config.sourceName, config.sourceTypeName);
-            return appender.updateSender(urlStr, config.httpInputToken, config.delay, config.maxEventsBatchCount,
-                    config.maxEventsBatchSize, config.sendMode);
         }
+    }
 
-        private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
+    public void kill() {
+        synchronized (workers) {
+            for (LogConsumer consumer : workers) {
+                consumer.stopTask();
+            }
+            workers.clear();
+        }
+    }
+
+    public long getSentCount() {
+        return outgoingCounter.get();
+    }
+
+    public static SplunkLogService getInstance() {
+        return InstanceHolder.service;
+    }
+
+    public static void updateCache(SplunkJenkinsInstallation.Descriptor descriptor) {
+        config = new SplunkConfig(descriptor);
+    }
+
+    private static class InstanceHolder {
+        static SplunkLogService service = new SplunkLogService();
     }
 }
