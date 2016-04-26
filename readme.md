@@ -12,11 +12,13 @@ To Install
 To Setup
 --------
 #### Configure plugin
- - Go to https://<jenkins-url>:8080/configure
+ - Go to `https://<jenkins-url>/configure`
  - Enter the necessary configuration data to connect to your Splunk server and save.
 
 #### Send job data to Splunk
- - Create a new job.
+ - Create/edit a job/trigger.
      - Add a "post-build action" called "Send data to Splunk".
      - Enter an ant-style pattern matching string for your junit xml collection.
+     - (Optional) You can add a json file which will be appended to the event. This useful for event metadata.
      - Run the job.
+     - Verify that the events were sent to your Splunk instance.
