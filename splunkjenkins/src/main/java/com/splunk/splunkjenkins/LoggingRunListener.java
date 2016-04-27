@@ -2,15 +2,17 @@ package com.splunk.splunkjenkins;
 
 
 import com.google.common.collect.ImmutableMap;
+import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
 
 import javax.annotation.Nonnull;
 
-import com.splunk.splunkjenkins.Constants;
-
 import hudson.Extension;
+
 import java.util.Map;
+
+import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
 
 @SuppressWarnings("unused")
 @Extension
@@ -30,16 +32,14 @@ public class LoggingRunListener extends RunListener<Run> {
 
     private String getBuildCause(Run run) {
         StringBuilder buf = new StringBuilder(100);
-        boolean blank = false;
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
                 if (buf.length() > 0) buf.append(", ");
                 buf.append(cause.getShortDescription());
             }
-            blank = blank || true;
         }
-        if (blank) {
-            buf.append("unknown");
+        if (buf.length() == 0) {
+            buf.append("system");
         }
         return buf.toString();
     }
@@ -56,13 +56,12 @@ public class LoggingRunListener extends RunListener<Run> {
                 .put(Constants.CATEGORY, "job_event")
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCause(run))
-                .put("job_result", build.getResult())
+                .put(JOB_RESULT, build.getResult().toString())
                 .put("job_started_at", build.getTimestampString2())
                 .put("job_duration", build.getDuration() + "ms")
                 .put("node", jenkinsNode)
-                .put("build_event", "completed")
                 .build();
         SplunkLogService.getInstance().send(event);
-        postJobAction.perform(build);
+        postJobAction.perform(build, listener);
     }
 }

@@ -1,51 +1,63 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.AbstractBuild;
 import hudson.util.ByteArrayOutputStream2;
-import org.apache.commons.lang.StringUtils;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 
-import static com.splunk.splunkjenkins.Constants.BUILD_ID;
-import static com.splunk.splunkjenkins.Constants.CATEGORY;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
-import java.util.HashMap;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /**
  * work like unix tee, one end is splunk http output, the other is console out
  * only need to tee the write(int b) method, leave write(byte b[], int off, int len)
  * and public void write(byte b[]) alone since they will call write(int b)
- * the filter applicate order is determined by descent ordinal order
+ * the filter apply order is determined by descent ordinal order
  */
 @Extension(ordinal = 1)
 @SuppressWarnings("nouse")
 public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializable {
+    private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilter.class.getName());
 
     @Override
-    public OutputStream decorateLogger(AbstractBuild build, OutputStream logger) throws IOException, InterruptedException {
-        return new TeeOutputStrem(logger, build.getUrl());
+    public OutputStream decorateLogger(AbstractBuild build, OutputStream output) throws IOException, InterruptedException {
+        if (SplunkJenkinsInstallation.get().isValid()) {
+            return new TeeOutputStrem(output, build.getUrl());
+        } else {
+            if (SplunkJenkinsInstallation.get().enabled) {
+                LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUpUrl());
+            }
+            return output;
+        }
     }
 
     private static class TeeOutputStrem extends FilterOutputStream {
 
-        private static Logger logger = LoggerFactory.getLogger(TeeOutputStrem.class);
+
         private static final int LF = 0x0A;
         String buildUrl;
         long lineCounter = 0;
+        //holds data received, will be cleared when \n received
         private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2();
+        //holds decoded console text with timestamp and line number
+        private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();
 
         public TeeOutputStrem(OutputStream out, String buildUrl) {
             super(out);
             this.buildUrl = buildUrl;
-            logger.debug("created splunk output tee for {} {}", out, buildUrl);
+            LOG.log(Level.FINE, "created splunk output tee for " + buildUrl);
         }
 
         @Override
@@ -58,15 +70,18 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         public void flush() throws IOException {
             super.flush();
             eol();
+            if (logText.size() > 0) {
+                SplunkLogService.getInstance().send(logText.toByteArray());
+                logText.reset();
+            }
         }
 
         @Override
         public void write(int b) throws IOException {
             super.write(b);
+            branch.write(b);
             if (b == LF) {
                 eol();
-            } else {
-                branch.write(b);
             }
         }
 
@@ -74,17 +89,15 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             if (branch.size() == 0) {
                 return;
             }
-            String lineContent = decodeConsoleBase64Text(branch.getBuffer(),branch.size());
-            //check blank lines? only check if the length <81
-            if (!(lineContent.length() < 81 && StringUtils.isBlank(lineContent))) {
-                //send to splunk
-                lineCounter++;
-                Map eventInfo=new HashMap();
-                eventInfo.put(CATEGORY,"consoleLog");
-                eventInfo.put("line_number",lineCounter);
-                eventInfo.put(BUILD_ID,this.buildUrl);
-                eventInfo.put("text",lineContent);
-                SplunkLogService.getInstance().send(eventInfo);
+            lineCounter++;
+            //ISO 8601 datetime, and build url and line number
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
+            String prefix = sdf.format(new Date()) + "    " + this.buildUrl + "  line:" + lineCounter + "  ";
+            logText.write(prefix.getBytes());
+            decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
+            if (logText.size() > SplunkJenkinsInstallation.get().maxEventsBatchSize) {
+                SplunkLogService.getInstance().send(logText.toByteArray());
+                logText.reset();
             }
             // reuse the buffer under normal circumstances
             branch.reset();

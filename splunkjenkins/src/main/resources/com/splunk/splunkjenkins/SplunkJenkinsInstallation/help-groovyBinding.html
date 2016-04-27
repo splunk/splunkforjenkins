@@ -1,6 +1,7 @@
 <div>
-    <div><h3>Provide a groovy script to customize Junit result process</h3>
-        
+    <div><h3>Provide a groovy script to customize event process,
+        will be executed after junit report is published</h3>
+
     </div>
     <div>
         You can sent events to splunk by call:
@@ -11,7 +12,7 @@
     event["metadat"]=env
     send(event)
         </pre>
-        Below variables are pre-defined
+        you can reference below variables
         <pre> 
     AbstractBuild build;
     Map env;

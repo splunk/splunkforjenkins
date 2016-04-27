@@ -1,4 +1,0 @@
-<!--QTI-1710-->
-<testsuite name="" errors="0" failures="0" skipped="0" tests="1" time="44.971" >
-    <testcase classname="customWS.test.tests.framework.test_startup_warnings.TestStartupWarning" name="test_startup_warning" time="19.2610001564"></testcase>
-</testsuite>

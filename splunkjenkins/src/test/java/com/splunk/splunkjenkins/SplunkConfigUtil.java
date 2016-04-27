@@ -1,27 +1,42 @@
 package com.splunk.splunkjenkins;
 
-public class SplunkConfigUtil {
+import jenkins.model.GlobalConfiguration;
 
-    public boolean setupSender(String host, String token) {
-        SplunkJenkinsInstallation.Descriptor config = new SplunkJenkinsInstallation.Descriptor();
-        config.sourceName = "jenkins";
-        config.sourceTypeName = "_json";
-        config.indexName = "main";
-        config.host = host;
-        config.scheme = "https";
-        config.httpInputToken = token;
-        config.sendMode = "parallel";
-        config.delay = 300;
-        config.sourceName = "debug";
-        config.indexName = "main";
-        SplunkLogService.updateCache(config);
-        return !SplunkLogService.config.isInvalid();
+public class SplunkConfigUtil {
+    public static boolean checkTokenAvailable() {
+        String token = System.getProperty("splunk-token");
+        if (token == null) {
+            System.err.println("please use mvn -Dsplunk-token=eventcollctor-token -Dsplunk-host=ip-address to run the test\n" +
+                    "and you can also add this to global vm settings in IDE");
+            return false;
+        }
+        setupSender();
+        return true;
     }
 
-    public boolean setupSender() {
-        String host = System.getProperty("splunk.host", "127.0.0.1");
-        String token = System.getProperty("splunk.token", "215D1911-C019-41BE-9980-09E260A24D65");
-        System.out.println("use mvn -Dsplunk.token=xx -Dsplunk.host=yy to overwrite default settings");
+    public static boolean setupSender(String host, String token) {
+        SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
+        if (config == null) {
+            System.out.println("new config");
+            config = new SplunkJenkinsInstallation();
+            GlobalConfiguration.all().add(config);
+        }
+        config.sourceName = "jenkins";
+        config.jsonType = "_json";
+        config.indexName = "main";
+        config.host = host;
+        config.useSSL = true;
+        config.token = token;
+        config.sourceName = "unit_test";
+        config.rawEventEnabled = false;
+        config.updateCache();
+        return config.isValid();
+    }
+
+    public static boolean setupSender() {
+        String host = System.getProperty("splunk-host", "127.0.0.1");
+        String token = System.getProperty("splunk-token");
+        System.out.println("host:" + host + " token:" + token);
         return setupSender(host, token);
     }
 }

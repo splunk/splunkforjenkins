@@ -1,0 +1,71 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="${%ConfigTitle}">
+        <f:entry title="${%Enable}" field="enabled">
+            <f:checkbox/>
+        </f:entry>
+        <f:entry title="${%Hostname}" field="host">
+            <f:textbox clazz="required"/>
+        </f:entry>
+        <f:entry title="${%HttpInput Port}" field="port">
+            <f:number clazz="positive-number" max="65535" default="8088"/>
+        </f:entry>
+        <f:entry title="${%HttpInput Token}" field="token">
+            <f:textbox clazz="required"/>
+        </f:entry>
+        <f:entry title="${%SSL enabled}" field="useSSL">
+            <f:checkbox default="true"/>
+        </f:entry>
+        <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
+                          with="host,port,token,useSSL"/>
+        <f:advanced>
+            <f:entry title="${%Max Events Batch Size}" field="maxEventsBatchSize">
+                <f:number clazz="positive-number"/>
+            </f:entry>
+            <f:entry title="${%Retries on Error}" field="retriesOnError">
+                <f:textbox/>
+            </f:entry>
+
+            <f:entry title="${%Event Data Index Name}" field="indexName">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="${%Event Data Source Name}" field="sourceName">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="${%Event Data Host Name}" field="sourceHost">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="${%JSON SourceType}" field="jsonType">
+                <f:textbox/>
+            </f:entry>
+            <f:entry title="${%Rawdata Enabled}" field="rawEventEnabled">
+                <f:checkbox/>
+            </f:entry>
+            <f:entry title="${%Rawdata SourceType}" field="rawType">
+                <f:textbox/>
+            </f:entry>
+            <f:radioBlock name="commandsOrFileInSplunkins" value="file"
+                          title="${%Run Script File to Process Test Result}"
+                          checked="${instance.scriptPath !=null}" inline="true">
+                <f:entry field="scriptPath" help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
+                    <f:textbox/>
+                </f:entry>
+            </f:radioBlock>
+            <f:radioBlock name="commandsOrFileInSplunkins" value="content"
+                          title="${%Run Commands to Process Test Result}"
+                          checked="${instance.scriptContent!=null }" inline="true">
+                <f:entry field="scriptContent" help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
+                    <f:textarea class="fixed-width splunkins" codemirror-mode="clike"
+                                codemirror-config="mode: 'text/x-groovy', lineNumbers: true, matchBrackets: true, onBlur: function(editor){editor.save()}"
+                                checkMethod="POST"/>
+                </f:entry>
+            </f:radioBlock>
+        </f:advanced>
+
+    </f:section>
+    <style>
+        div.CodeMirror-scroll.cm-s-default {
+        min-height: 200px;
+        }
+    </style>
+</j:jelly>

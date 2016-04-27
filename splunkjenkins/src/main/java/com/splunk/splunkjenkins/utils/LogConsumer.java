@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -46,6 +47,7 @@ public class LogConsumer implements Runnable {
         public String handleResponse(
                 final HttpResponse response) throws IOException {
             int status = response.getStatusLine().getStatusCode();
+            String reason = response.getStatusLine().getReasonPhrase();
             if (status == 200) {
                 outgoingCounter.incrementAndGet();
                 HttpEntity entity = response.getEntity();
@@ -55,12 +57,12 @@ public class LogConsumer implements Runnable {
                 SplunkClientError error = null;
                 if (status == 403 || status == 401) {
                     //Token disabled or Invalid authorization
-                    error = new SplunkClientError("splunk token is invalid", status);
+                    error = new SplunkClientError("splunk token is invalid," + reason, status);
                 } else if (status == 400) {
                     //Invalid data format or incorrect index, will discard
-                    error = new SplunkClientError("incorrect index or invalid data format", status);
+                    error = new SplunkClientError("incorrect index or invalid data format," + reason, status);
                 }
-                throw new IOException("failed to send data", error);
+                throw new IOException("failed to send data," + reason, error);
             }
         }
     };
@@ -71,11 +73,11 @@ public class LogConsumer implements Runnable {
             try {
                 EventRecord record = queue.take();
                 if (!record.discard()) {
-                    HttpPost post = buildPost(record);
+                    HttpPost post = buildPost(record, SplunkJenkinsInstallation.get());
                     try {
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
-                        LOG.log(Level.WARNING, "failed to call http input", ex);
+                        LOG.log(Level.WARNING, "failed to call http input with message " + record.getMessage(), ex);
                         if (nonretryExceptions.contains(ex)) {
                             LOG.log(Level.SEVERE, "remote server error, will not retry");
                             return;

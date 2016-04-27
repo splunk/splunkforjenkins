@@ -6,15 +6,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.splunk.splunkjenkins.utils.SplunkLogService;
+import org.junit.*;
 
+import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static org.junit.Assert.*;
 
-import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SplunkLogServiceTest {
@@ -33,6 +30,11 @@ public class SplunkLogServiceTest {
     public static void tearDownClass() {
     }
 
+    @Before
+    public void setUp() {
+        org.junit.Assume.assumeTrue(checkTokenAvailable());
+    }
+
     @After
     public void tearDown() {
     }
@@ -46,13 +48,15 @@ public class SplunkLogServiceTest {
         SplunkConfigUtil configUtil = new SplunkConfigUtil();
         boolean valid = configUtil.setupSender();
         Assert.assertTrue("config is valid", valid);
-        int eventNumber = 20000;
+        String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
+        SplunkLogService.getInstance().send(line.getBytes());
+        int eventNumber = 1;
         long batchId = System.currentTimeMillis();
-        System.out.println("Batch ID:" + batchId);
+        System.err.println("index=main |spath batch |search batch=" + batchId);
         long initNumber = SplunkLogService.getInstance().getSentCount();
         for (int i = 0; i < eventNumber; i++) {
             Map data = new HashMap();
-            data.put("id", UUID.randomUUID());
+            data.put("id", UUID.randomUUID().toString());
             data.put("batch", batchId);
             data.put("number", i);
             SplunkLogService.getInstance().send(data);
@@ -65,20 +69,6 @@ public class SplunkLogServiceTest {
                 fail("can not send events in time, sent out " + (SplunkLogService.getInstance().getSentCount() - initNumber));
             }
         }
-        System.out.println("index=main |spath batch |search batch=" + batchId);
-    }
 
-    /**
-     * Test of getScript method, of class SplunkLogService.
-     */
-    //@Test
-    public void testGetScript() {
-        System.out.println("getScript");
-        String expResult = "";
-        String result = SplunkLogService.config.getScript();
-        assertEquals(expResult, result);
-        // TODO review the generated test code and remove the default call to fail.
-        fail("The test case is a prototype.");
     }
-
 }

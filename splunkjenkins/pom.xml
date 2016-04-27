@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
     <artifactId>splunkjenkins</artifactId>
-    <version>0.5.0</version>
+    <version>0.6.0</version>
     <packaging>hpi</packaging>
 
     <name>splunkjenkins</name>
@@ -100,7 +100,6 @@
     <!-- If you want to depend on other plugins: -->
     <dependencies>
         <!--right now splunk logging did not support send complex json object, only string is supported
-          https://github.com/splunk/splunk-library-javalogging/pull/31
         <dependency>
             <groupId>com.splunk.logging</groupId>
             <artifactId>splunk-library-javalogging</artifactId>
@@ -137,19 +136,14 @@
             <optional>true</optional><!-- from jenkins-core -->
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
-        </dependency>
-        <dependency>
             <groupId>org.jenkins-ci.main</groupId>
             <artifactId>jenkins-test-harness</artifactId>
             <version>1.621</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-jdk14</artifactId>
+                    <groupId>org.jenkins-ci</groupId>
+                    <artifactId>SECURITY-144-compat</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

@@ -1,8 +1,6 @@
-package com.splunk.splunkjenkins;
+package com.splunk.splunkjenkins.utils;
 
-import com.splunk.splunkjenkins.utils.EventRecord;
-import com.splunk.splunkjenkins.utils.LogConsumer;
-import com.splunk.splunkjenkins.utils.SplunkConfig;
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.model.Computer;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
@@ -28,7 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
 public class SplunkLogService {
-    public static SplunkConfig config = null;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     private AtomicLong incomingCounter = new AtomicLong();
@@ -74,11 +71,22 @@ public class SplunkLogService {
     }
 
     public void send(Object message) {
-        if (config == null || config.isInvalid()) {
-            LOG.log(Level.SEVERE, "splunk httpinput has not been configured yet, can not send " + message);
+        if (message == null) {
+            LOG.warning("null message discarded");
+            return;
+        }
+        if (!SplunkJenkinsInstallation.get().enabled) {
+            return;
+        }
+        if (!SplunkJenkinsInstallation.get().isValid()) {
+            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + message);
             return;
         }
         EventRecord record = new EventRecord(message);
+        enqueue(record);
+    }
+
+    public void enqueue(EventRecord record) {
         boolean added = logQueue.offer(record);
         if (!added) {
             LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");
@@ -119,8 +127,8 @@ public class SplunkLogService {
         return InstanceHolder.service;
     }
 
-    public static void updateCache(SplunkJenkinsInstallation.Descriptor descriptor) {
-        config = new SplunkConfig(descriptor);
+    public HttpClient getClient() {
+        return client;
     }
 
     private static class InstanceHolder {
