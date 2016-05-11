@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Serializable;
 
+import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 
 import java.text.SimpleDateFormat;
@@ -91,7 +92,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             }
             lineCounter++;
             //ISO 8601 datetime, and build url and line number
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
+            SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
             String prefix = sdf.format(new Date()) + "    " + this.buildUrl + "  line:" + lineCounter + "  ";
             logText.write(prefix.getBytes());
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
