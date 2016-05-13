@@ -43,7 +43,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient final static Logger LOGGER = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
 
     // Defaults plugin global config values:
-    public boolean enabled = true;
+    public boolean enabled = false;
     public String host;
     public String token;
     public boolean useSSL = true;
@@ -89,6 +89,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                         this.token = desc.httpInputToken;
                         this.jsonType = desc.sourceTypeName;
                         this.useSSL = "https".equalsIgnoreCase(desc.scheme);
+                        this.enabled=true;
                         //overwrite with newer version
                         this.save();
                     } else {

@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins.utils;
 
-import com.google.gson.FieldNamingPolicy;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -9,6 +8,7 @@ import hudson.console.ConsoleNote;
 import hudson.model.User;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -20,16 +20,16 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Strings.emptyToNull;
+import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 
 public class LogEventHelper {
+    public static final String SEPARATOR = "    ";
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(EventRecord.class,
             new EventRecordSerializer()).disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
@@ -181,5 +181,21 @@ public class LogEventHelper {
         public String translateName(final Field f) {
             return f.getName().toLowerCase();
         }
+    }
+
+    /**
+     * @return Queue statics with timestamp
+     */
+    public static String getQueueInfo() {
+        Jenkins instance = Jenkins.getInstance();
+        int computerSize = instance.getComputers().length;
+        int totalExecutors = instance.overallLoad.computeTotalExecutors();
+        int queueLength = instance.overallLoad.computeQueueLength();
+        int idleExecutors = instance.overallLoad.computeIdleExecutors();
+        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
+        String message = sdf.format(new Date()) + SEPARATOR + "queue_length=" + queueLength + SEPARATOR
+                + "computers_count=" + computerSize + SEPARATOR
+                + "idle_executors=" + idleExecutors + SEPARATOR + " total_executors=" + totalExecutors;
+        return message;
     }
 }

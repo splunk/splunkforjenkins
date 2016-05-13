@@ -20,6 +20,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -70,35 +71,36 @@ public class SplunkLogService {
         return cm;
     }
 
-    public void send(Object message) {
+    public boolean send(Object message) {
         if (message == null) {
             LOG.warning("null message discarded");
-            return;
+            return false;
         }
         if (!SplunkJenkinsInstallation.get().enabled) {
-            return;
+            return false;
         }
         if (!SplunkJenkinsInstallation.get().isValid()) {
             LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + message);
-            return;
+            return false;
         }
         EventRecord record = new EventRecord(message);
-        enqueue(record);
+        return enqueue(record);
     }
 
-    public void enqueue(EventRecord record) {
+    public boolean enqueue(EventRecord record) {
         boolean added = logQueue.offer(record);
         if (!added) {
             LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");
-            return;
+            return false;
         }
         if (workers.size() < MAX_WORKER_COUNT) {
             synchronized (workers) {
-                //need double check
-                if (workers.size() < MAX_WORKER_COUNT) {
+                int worksToCreate = MAX_WORKER_COUNT - workers.size();
+                for (int i = 0; i < worksToCreate; i++) {
                     LogConsumer runnable = new LogConsumer(client, logQueue, outgoingCounter);
                     workers.add(runnable);
-                    Computer.threadPoolForRemoting.submit(runnable);
+                    Thread workerThread = new Thread(runnable);
+                    workerThread.start();
                 }
             }
         }
@@ -108,9 +110,10 @@ public class SplunkLogService {
                 connMgr.closeIdleConnections(60, TimeUnit.SECONDS);
             }
         }
+        return true;
     }
 
-    public void kill() {
+    public void stopWorker() {
         synchronized (workers) {
             for (LogConsumer consumer : workers) {
                 consumer.stopTask();
@@ -119,12 +122,20 @@ public class SplunkLogService {
         }
     }
 
+    public void releaseConnection() {
+        connMgr.closeIdleConnections(0, TimeUnit.SECONDS);
+    }
+
     public long getSentCount() {
         return outgoingCounter.get();
     }
 
     public static SplunkLogService getInstance() {
         return InstanceHolder.service;
+    }
+
+    public long getQueueSize() {
+        return this.logQueue.size();
     }
 
     public HttpClient getClient() {

@@ -87,8 +87,11 @@ public class LogConsumer implements Runnable {
                             LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry" + record.getMessage());
                         } else {
                             //other errors
+                            LOG.log(Level.SEVERE, "will resend the message", record.getMessage());
                             retry(record);
                         }
+                    } finally {
+                        post.releaseConnection();
                     }
                 } else {
                     LOG.log(Level.SEVERE, "Failed to send " + record.getMessage());

@@ -38,7 +38,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             return new TeeOutputStrem(output, build.getUrl());
         } else {
             if (SplunkJenkinsInstallation.get().enabled) {
-                LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUpUrl());
+                LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUrl());
             }
             return output;
         }

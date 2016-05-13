@@ -23,7 +23,7 @@ public class LoggingRunListener extends RunListener<Run> {
     public void onStarted(Run run, TaskListener listener) {
 
         Map event = ImmutableMap.builder()
-                .put(Constants.CATEGORY, "job_event")
+                .put(Constants.TAG, "job_event")
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCause(run))
                 .put("build_event", "started").build();
@@ -53,7 +53,7 @@ public class LoggingRunListener extends RunListener<Run> {
         String jenkinsNode = (build.getBuiltOn() == null ? "unknown" : build.getBuiltOn().getDisplayName());
         //other messages no need to escape quote
         Map event = ImmutableMap.builder()
-                .put(Constants.CATEGORY, "job_event")
+                .put(Constants.TAG, "job_event")
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCause(run))
                 .put(JOB_RESULT, build.getResult().toString())

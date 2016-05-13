@@ -1,11 +1,12 @@
 package com.splunk.splunkjenkins;
 
 import hudson.util.XStream2;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class MigrationTest {
-    
-@Test
+
+    @Test
     public void testMigration() {
         String xml = "<?xml version='1.0' encoding='UTF-8'?>\n" +
                 "<com.splunk.splunkjenkins.SplunkJenkinsInstallation_-Descriptor plugin=\"splunkjenkins@0.5.0\">\n" +
@@ -18,7 +19,7 @@ public class MigrationTest {
                 "  <maxEventsBatchCount>3</maxEventsBatchCount>" +
                 "</com.splunk.splunkjenkins.SplunkJenkinsInstallation_-Descriptor>";
         XStream2 xStream2 = new XStream2();
-        Object obj = xStream2.fromXML(xml);
-        System.out.println(obj);
+        SplunkJenkinsInstallation.Descriptor desc = (SplunkJenkinsInstallation.Descriptor) xStream2.fromXML(xml);
+        Assert.assertEquals("FAAC5EB2-D313-4C76-9965-379B76DA72CE", desc.httpInputToken);
     }
 }

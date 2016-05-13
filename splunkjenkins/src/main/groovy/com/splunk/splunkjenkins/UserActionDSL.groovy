@@ -25,6 +25,7 @@ public class UserActionDSL {
         try {
             EnvVars enVars = build.getEnvironment(TaskListener.NULL);
             SplunkJenkinsInstallation splunkConfig = SplunkJenkinsInstallation.get();
+            //TODO generic test result
             // parse junit test result, right now we only care junit test result,
             // will ignore aggregated test results (hudson.tasks.test.AggregatedTestResultAction)
             TestResultAction resultAction = build.getAction(TestResultAction.class);

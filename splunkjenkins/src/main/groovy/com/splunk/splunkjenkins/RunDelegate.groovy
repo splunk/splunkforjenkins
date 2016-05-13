@@ -7,11 +7,10 @@ import hudson.model.TaskListener
 import hudson.tasks.junit.TestResult
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
-import static com.splunk.splunkjenkins.Constants.CATEGORY
+import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.METADATA
 import static com.splunk.splunkjenkins.Constants.TESTCASE
-import static com.splunk.splunkjenkins.Constants.TESTSUITE
 import static com.splunk.splunkjenkins.Constants.TESTSUITE
 
 public class RunDelegate {
@@ -79,7 +78,7 @@ public class RunDelegate {
     public static Map genTestEvent(AbstractBuild build, EnvVars enVars, TestResult testResult, boolean reportMissing) {
         String url = build.getUrl();
         Map event = new HashMap();
-        event.put(CATEGORY, "test_result")
+        event.put(TAG, "test_result")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put(METADATA, enVars);

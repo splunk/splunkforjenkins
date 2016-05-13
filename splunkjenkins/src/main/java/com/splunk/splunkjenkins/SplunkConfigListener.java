@@ -10,7 +10,7 @@ import jenkins.model.GlobalConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.splunk.splunkjenkins.Constants.CATEGORY;
+import static com.splunk.splunkjenkins.Constants.TAG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 
 import java.util.regex.Pattern;
@@ -36,7 +36,7 @@ public class SplunkConfigListener extends SaveableListener {
             return;
         }
         Map logInfo = new HashMap<>();
-        logInfo.put(CATEGORY, "xmlconfig");
+        logInfo.put(TAG, "xmlconfig");
         logInfo.put("file", file.getFile().getAbsolutePath());
         logInfo.put("user", getUserName());
         logInfo.put("config", o);
