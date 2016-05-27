@@ -1,10 +1,13 @@
 package com.splunk.splunkjenkins
 
+import com.splunk.splunkjenkins.utils.EventType
 import com.splunk.splunkjenkins.utils.SplunkLogService
 import hudson.EnvVars
 import hudson.model.AbstractBuild
+import hudson.model.Action
 import hudson.model.TaskListener
 import hudson.tasks.junit.TestResult
+import hudson.tasks.junit.TestResultAction
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
@@ -16,34 +19,42 @@ import static com.splunk.splunkjenkins.Constants.TESTSUITE
 public class RunDelegate {
     AbstractBuild build;
     Map env;
-    TestResult testResult
     TaskListener listener
-    //user defined test action but failed to generate test result due to slave issue
-    Boolean reportMissing;
 
-    public RunDelegate(AbstractBuild build, EnvVars enVars,
-                       TestResult testResult, TaskListener listener, reportMissing) {
+    public RunDelegate(AbstractBuild build, EnvVars enVars, TaskListener listener) {
         this.build = build;
         if (enVars != null) {
             this.env = enVars;
         } else {
             this.env = new HashMap();
         }
-        this.testResult = testResult;
         this.listener = listener;
-        this.reportMissing = reportMissing;
     }
 
     def send(def message) {
-        SplunkLogService.getInstance().send(message);
+        SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT);
+    }
+
+    /**
+     *
+     * @param message
+     * @param eventSourceName @see EventType
+     * @return
+     */
+    def send(def message, String eventSourceName) {
+        SplunkLogService.getInstance().send(message, EventType.valueOf(eventSourceName));
     }
 
     def getJunitReport() {
+        TestResultAction resultAction = build.getAction(TestResultAction.class);
+        if (resultAction == null) {
+            return null;
+        }
+        TestResult testResult = resultAction.result;
+        if (testResult == null) {
+            return ["error": "junit report is missing"];
+        }
         return getJunitXmlCompatibleResult(testResult);
-    }
-
-    def getDefaultTestEvent() {
-        return genTestEvent(build, env, testResult, reportMissing)
     }
 
     def getOut() {
@@ -54,10 +65,6 @@ public class RunDelegate {
         out.print(s)
     }
 
-    def getTestResult() {
-        return testResult
-    }
-
     def getEnv() {
         return env
     }
@@ -66,8 +73,33 @@ public class RunDelegate {
         return build
     }
 
-    Boolean isTestReportMissing() {
-        return reportMissing
+
+    /**
+     * get specified actionName that contributed to build object.
+     *
+     * refer to
+     * https://wiki.jenkins-ci.org/display/JENKINS/Plugins#Plugins-Buildreports
+     * https://wiki.jenkins-ci.org/display/JENKINS/Plugins#Plugins-Otherpostbuildactions
+     * @param className
+     * @return
+     */
+    public Action getActionByClassName(String className) {
+        for (Action action : build.getAllActions()) {
+            if(action.getClass().getName().equals(className)){
+                return action;
+            }
+        }
+        return null;
+    }
+    /**
+     * Gets the action (first instance to be found) of a specified type that contributed to this build.
+     *
+     * @param type
+     * @return The action or <code>null</code> if no such actions exist.
+     *
+     */
+    public Action getAction(Class<? extends Action> type){
+        return build.getActions(type);
     }
 
     @Override
@@ -75,17 +107,25 @@ public class RunDelegate {
         return "RunDelegate on build:" + this.build;
     }
 
-    public static Map genTestEvent(AbstractBuild build, EnvVars enVars, TestResult testResult, boolean reportMissing) {
+    public static Map genJunitTestReportWithEnv(AbstractBuild build, EnvVars enVars) {
         String url = build.getUrl();
         Map event = new HashMap();
         event.put(TAG, "test_result")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put(METADATA, enVars);
-        if (reportMissing) {
-            event.put("error", "failed to retrieve test report")
+        TestResultAction resultAction = build.getAction(TestResultAction.class);
+        TestResult testResult;
+        if (resultAction != null) {
+            testResult = resultAction?.result;
+            //only mark result not found if user defined test result action but failed to generate test report
+            boolean reportMissing = testResult == null;
+            if (reportMissing) {
+                event.put("error", "failed to retrieve test report")
+            }else{
+                event.put(TESTSUITE, getJunitXmlCompatibleResult(testResult))
+            }
         }
-        event.put(TESTSUITE, getJunitXmlCompatibleResult(testResult))
         return event
     }
 

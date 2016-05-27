@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.utils.EventRecord;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
@@ -12,6 +13,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
+import static com.splunk.splunkjenkins.utils.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 
 import java.text.SimpleDateFormat;
@@ -70,11 +72,10 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         @Override
         public void flush() throws IOException {
             super.flush();
-            eol();
             if (logText.size() > 0) {
-                SplunkLogService.getInstance().send(logText.toByteArray());
-                logText.reset();
+                flushLog();
             }
+            branch.reset();
         }
 
         @Override
@@ -93,15 +94,21 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             lineCounter++;
             //ISO 8601 datetime, and build url and line number
             SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-            String prefix = sdf.format(new Date()) + "    " + this.buildUrl + "  line:" + lineCounter + "  ";
+            String prefix = sdf.format(new Date()) + "  line:" + lineCounter + "  ";
             logText.write(prefix.getBytes());
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
             if (logText.size() > SplunkJenkinsInstallation.get().maxEventsBatchSize) {
-                SplunkLogService.getInstance().send(logText.toByteArray());
-                logText.reset();
+                flushLog();
             }
             // reuse the buffer under normal circumstances
             branch.reset();
+        }
+
+        private void flushLog(){
+            EventRecord record=new EventRecord(logText.toString(),CONSOLE_LOG);
+            record.setSource(this.buildUrl+"console");
+            SplunkLogService.getInstance().enqueue(record);
+            logText.reset();
         }
     }
 }

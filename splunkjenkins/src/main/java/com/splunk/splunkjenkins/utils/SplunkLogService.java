@@ -1,7 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
-import hudson.model.Computer;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -20,7 +19,6 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -72,22 +70,29 @@ public class SplunkLogService {
     }
 
     public boolean send(Object message) {
+        return send(message, EventType.GENERIC_TEXT);
+    }
+
+    public boolean send(Object message, EventType eventType) {
         if (message == null) {
             LOG.warning("null message discarded");
             return false;
-        }
-        if (!SplunkJenkinsInstallation.get().enabled) {
+        }else if(message instanceof String && "".equals(message)){
+            LOG.warning("empty message discarded");
             return false;
         }
-        if (!SplunkJenkinsInstallation.get().isValid()) {
-            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + message);
-            return false;
-        }
-        EventRecord record = new EventRecord(message);
+        EventRecord record = new EventRecord(message, eventType);
         return enqueue(record);
     }
 
     public boolean enqueue(EventRecord record) {
+        if (!SplunkJenkinsInstallation.get().enabled) {
+            return false;
+        }
+        if (!SplunkJenkinsInstallation.get().isValid()) {
+            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + record.getMessageString());
+            return false;
+        }
         boolean added = logQueue.offer(record);
         if (!added) {
             LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");

@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.TAG;
+import static com.splunk.splunkjenkins.utils.EventType.XML_CONFIG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 
 import java.util.regex.Pattern;
@@ -40,6 +41,6 @@ public class SplunkConfigListener extends SaveableListener {
         logInfo.put("file", file.getFile().getAbsolutePath());
         logInfo.put("user", getUserName());
         logInfo.put("config", o);
-        SplunkLogService.getInstance().send(logInfo);
+        SplunkLogService.getInstance().send(logInfo,XML_CONFIG);
     }
 }

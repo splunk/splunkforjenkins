@@ -13,6 +13,7 @@ import hudson.Extension;
 import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
+import static com.splunk.splunkjenkins.utils.EventType.BUILD_EVENT;
 
 @SuppressWarnings("unused")
 @Extension
@@ -27,7 +28,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCause(run))
                 .put("build_event", "started").build();
-        SplunkLogService.getInstance().send(event);
+        SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
     private String getBuildCause(Run run) {
@@ -61,7 +62,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 .put("job_duration", build.getDuration() + "ms")
                 .put("node", jenkinsNode)
                 .build();
-        SplunkLogService.getInstance().send(event);
+        SplunkLogService.getInstance().send(event, BUILD_EVENT);
         postJobAction.perform(build, listener);
     }
 }

@@ -6,6 +6,7 @@ import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 
 import static com.splunk.splunkjenkins.Constants.TAG;
+import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 
@@ -31,14 +32,14 @@ public class LoggingQueueListener extends QueueListener {
     public void onEnterWaiting(Queue.WaitingItem wi) {
         String name = getTaskName(wi.task);
         String message = getQueueInfo() + SEPARATOR + "action=enqueue" + SEPARATOR + "item=" + name + TAG_SUFFIX;
-        SplunkLogService.getInstance().send(message.getBytes());
+        SplunkLogService.getInstance().send(message, QUEUE_INFO);
     }
 
     @Override
     public void onLeft(Queue.LeftItem li) {
         String name = getTaskName(li.task);
         String message = getQueueInfo() + SEPARATOR + "action=dequeue" + SEPARATOR + "item=" + name + TAG_SUFFIX;
-        SplunkLogService.getInstance().send(message.getBytes());
+        SplunkLogService.getInstance().send(message, QUEUE_INFO);
     }
 
     /**

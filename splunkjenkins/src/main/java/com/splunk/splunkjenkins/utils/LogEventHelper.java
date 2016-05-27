@@ -35,19 +35,23 @@ public class LogEventHelper {
             new EventRecordSerializer()).disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
-        HttpPost postMethod;
-        if (!(record.isRaw() && config.isRawEventEnabled())) {
-            postMethod = new HttpPost(config.getJsonUrl());
+        HttpPost postMethod=new HttpPost(record.getEndpoint());
+        if (config.isRawEventEnabled()) {
+            postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
+        } else {
+            //http event collector does not support raw event, need split records and append metadata to message body
             String jsonRecord;
-            if (record.isRaw()) {
-                postMethod = new HttpPost(config.getJsonUrl());
+            if (record.getEventType().needSplit()) {
                 StringWriter stout = new StringWriter();
-                String[] values = new String(record.getData()).split("\n");
+                String[] values = record.getMessageString().split("\n");
                 for (String line : values) {
-                    EventRecord lineRecord = new EventRecord(line.getBytes());
-                    lineRecord.setTime(record.getTime());
-                    stout.write(gson.toJson(lineRecord));
-                    stout.write("\n");
+                    if (line != "") {
+                        EventRecord lineRecord = new EventRecord(line, record.getEventType());
+                        lineRecord.setSource(record.getSource());
+                        lineRecord.setTime(record.getTime());
+                        stout.write(gson.toJson(lineRecord));
+                        stout.write("\n");
+                    }
                 }
                 jsonRecord = stout.toString();
             } else {
@@ -56,9 +60,6 @@ public class LogEventHelper {
             StringEntity entity = new StringEntity(jsonRecord, "utf-8");
             entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
             postMethod.setEntity(entity);
-        } else {
-            postMethod = new HttpPost(config.getRawUrl());
-            postMethod.setEntity(new StringEntity(new String(record.getData()), "utf-8"));
         }
         postMethod.setHeader("x-splunk-request-channel", channel);
         postMethod.setHeader("Authorization", "Splunk " + config.getToken());
@@ -66,18 +67,22 @@ public class LogEventHelper {
     }
 
     public static FormValidation verifyHttpInput(SplunkJenkinsInstallation config) {
-        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin"), config);
+        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin", EventType.GENERIC_TEXT), config);
         HttpClient client = SplunkLogService.getInstance().getClient();
         try {
             HttpResponse response = client.execute(post);
             if (response.getStatusLine().getStatusCode() != 200) {
                 String reason = response.getStatusLine().getReasonPhrase();
-                return FormValidation.error(config.getJsonUrl() + " token:" + config.getToken() + " response:" + reason);
+                if(response.getStatusLine().getStatusCode()==400){
+                    return FormValidation.error("incorrect index, please check advance section to update index");
+                }else{
+                    return FormValidation.error("token:" + config.getToken() + " response:" + reason);
+                }
             }
             EntityUtils.consume(response.getEntity());
             //check if raw events is supported
             config.rawEventEnabled = true;
-            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping".getBytes()), config);
+            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.GENERIC_TEXT), config);
             response = client.execute(post);
             SplunkJenkinsInstallation globalConfig = SplunkJenkinsInstallation.get();
             if (response.getStatusLine().getStatusCode() != 200 && globalConfig != null) {
@@ -150,9 +155,13 @@ public class LogEventHelper {
     public static class UrlQueryBuilder {
         private Map<String, String> query = new HashMap();
 
-        public UrlQueryBuilder add(String key, String value) {
-            if (nonEmpty(value)) {
-                query.put(key, value);
+        public UrlQueryBuilder putIfAbsent(String key, String value) {
+            if (nonEmpty(value) && !"null".equals(value)) {
+                //Map.putIfAbsent was @since 1.8, use get and check null to check
+                Object existValue = query.get(key);
+                if (existValue == null) {
+                    query.put(key, value);
+                }
             }
             return this;
         }
@@ -160,13 +169,15 @@ public class LogEventHelper {
         public Map getQueryMap() {
             return Collections.unmodifiableMap(query);
         }
-
-        public String build() {
+        public String build(){
+            return UrlQueryBuilder.toString(this.query);
+        }
+        public static String toString(Map<String,String> queryParameters) {
             StringBuilder stringBuilder = new StringBuilder();
-            for (String key : query.keySet()) {
+            for (String key : queryParameters.keySet()) {
                 stringBuilder.append(key)
                         .append("=")
-                        .append(query.get(key))
+                        .append(queryParameters.get(key))
                         .append("&");
             }
             if (stringBuilder.length() == 0) {

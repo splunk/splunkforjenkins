@@ -10,6 +10,7 @@ import org.apache.commons.io.IOUtils;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Logger;
 
 public class SplunkConfigUtil {
@@ -73,14 +74,14 @@ public class SplunkConfigUtil {
         }
         if (token == null) {
             System.err.println("please use mvn -Dsplunk-token=eventcollctor-token -Dsplunk-host=ip-address to run the test\n" +
-                    "and you can also add this to global vm settings in IDE");
+                    "and you can also putIfAbsent this to global vm settings in IDE");
             return false;
         }
         TOKEN = token;
         return setupSender(jenkins, host, token);
     }
 
-    public static boolean setupSender(Jenkins jenkins, String host, String token) {
+    public static boolean setupSender(Jenkins jenkins, String host, String token){
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = jenkins.getExtensionList(GlobalConfiguration.class).get(SplunkJenkinsInstallation.class);
         if (config == null) {
@@ -88,16 +89,20 @@ public class SplunkConfigUtil {
             config = new SplunkJenkinsInstallation();
             jenkins.getExtensionList(GlobalConfiguration.class).add(0, config);
         }
-        config.sourceName = "jenkins";
-        config.jsonType = "_json";
-        config.indexName = INDEX_NAME;
+        Properties properties=new Properties();
+        try {
+            properties.load(SplunkConfigUtil.class.getClassLoader().getResourceAsStream("splunk_metadata.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        properties.put("index",INDEX_NAME);
         config.host = host;
         config.useSSL = true;
         config.token = token;
-        config.sourceName = "unit_test";
         config.rawEventEnabled = false;
         config.enabled = true;
         config.updateCache();
+        config.metaDataProperties=properties;
         config.save();
         return config.isValid();
     }

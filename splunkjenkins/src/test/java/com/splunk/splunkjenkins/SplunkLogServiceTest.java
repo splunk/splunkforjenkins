@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.splunk.splunkjenkins.utils.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.junit.*;
 
@@ -47,7 +48,7 @@ public class SplunkLogServiceTest {
     public void testSend() throws IOException, InterruptedException {
         System.out.println("testSend, config is valid?"+SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
-        SplunkLogService.getInstance().send(line.getBytes());
+        SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
         long batchId = System.currentTimeMillis();
         LOG.info("index=" + SplunkConfigUtil.INDEX_NAME + " |spath batch |search batch=" + batchId);
         long initNumber = SplunkLogService.getInstance().getSentCount();
