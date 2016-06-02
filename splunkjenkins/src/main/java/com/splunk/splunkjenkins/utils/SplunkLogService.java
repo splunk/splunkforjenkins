@@ -27,18 +27,22 @@ import java.util.logging.Level;
 public class SplunkLogService {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
-    private AtomicLong incomingCounter = new AtomicLong();
-    private AtomicLong outgoingCounter = new AtomicLong();
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
     HttpClient client;
     HttpClientConnectionManager connMgr;
+    private AtomicLong incomingCounter = new AtomicLong();
+    private AtomicLong outgoingCounter = new AtomicLong();
 
     private SplunkLogService() {
         this.logQueue = new LinkedBlockingQueue<EventRecord>();
         this.workers = new ArrayList<LogConsumer>();
         this.connMgr = buildConnectionManager();
         this.client = HttpClients.custom().setConnectionManager(this.connMgr).build();
+    }
+
+    public static SplunkLogService getInstance() {
+        return InstanceHolder.service;
     }
 
     private HttpClientConnectionManager buildConnectionManager() {
@@ -77,7 +81,7 @@ public class SplunkLogService {
         if (message == null) {
             LOG.warning("null message discarded");
             return false;
-        }else if(message instanceof String && "".equals(message)){
+        } else if (message instanceof String && "".equals(message)) {
             LOG.warning("empty message discarded");
             return false;
         }
@@ -133,10 +137,6 @@ public class SplunkLogService {
 
     public long getSentCount() {
         return outgoingCounter.get();
-    }
-
-    public static SplunkLogService getInstance() {
-        return InstanceHolder.service;
     }
 
     public long getQueueSize() {

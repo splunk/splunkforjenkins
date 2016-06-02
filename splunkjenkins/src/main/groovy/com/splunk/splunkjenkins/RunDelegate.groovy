@@ -15,6 +15,7 @@ import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.METADATA
 import static com.splunk.splunkjenkins.Constants.TESTCASE
 import static com.splunk.splunkjenkins.Constants.TESTSUITE
+import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
 
 public class RunDelegate {
     AbstractBuild build;
@@ -45,6 +46,21 @@ public class RunDelegate {
         SplunkLogService.getInstance().send(message, EventType.valueOf(eventSourceName));
     }
 
+    /**
+     * Archive all configured artifacts from a build, using ant patterns defined in
+     * @see <a href="http://ant.apache.org/manual/Types/fileset.html">the Ant glob syntax</a>
+     * such as  {@code *&#42;&#47;build/*.log }
+     * @param includes ant glob pattern
+     * @param excludes ant glob pattern
+     * @param uploadFromSlave <code>true</code> if need upload directly from the slave
+     * @return
+     */
+
+    def archive(String includes, String excludes, boolean uploadFromSlave) {
+        getOut().println("sending files using glob pattern include:" + includes + " excludes:" + excludes)
+        return sendFiles(build, env, listener, includes, excludes, uploadFromSlave);
+    }
+
     def getJunitReport() {
         TestResultAction resultAction = build.getAction(TestResultAction.class);
         if (resultAction == null) {
@@ -62,7 +78,7 @@ public class RunDelegate {
     }
 
     def println(String s) {
-        out.print(s)
+        getOut().println(s)
     }
 
     def getEnv() {
@@ -72,7 +88,6 @@ public class RunDelegate {
     def getBuild() {
         return build
     }
-
 
     /**
      * get specified actionName that contributed to build object.
@@ -85,7 +100,7 @@ public class RunDelegate {
      */
     public Action getActionByClassName(String className) {
         for (Action action : build.getAllActions()) {
-            if(action.getClass().getName().equals(className)){
+            if (action.getClass().getName().equals(className)) {
                 return action;
             }
         }
@@ -98,7 +113,7 @@ public class RunDelegate {
      * @return The action or <code>null</code> if no such actions exist.
      *
      */
-    public Action getAction(Class<? extends Action> type){
+    public Action getAction(Class<? extends Action> type) {
         return build.getActions(type);
     }
 
@@ -122,7 +137,7 @@ public class RunDelegate {
             boolean reportMissing = testResult == null;
             if (reportMissing) {
                 event.put("error", "failed to retrieve test report")
-            }else{
+            } else {
                 event.put(TESTSUITE, getJunitXmlCompatibleResult(testResult))
             }
         }

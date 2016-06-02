@@ -1,0 +1,70 @@
+package com.splunk.splunkjenkins;
+
+import com.splunk.splunkjenkins.utils.SplunkLogService;
+import hudson.model.FreeStyleBuild;
+import hudson.model.FreeStyleProject;
+import hudson.model.Label;
+import hudson.tasks.Shell;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
+import org.jvnet.hudson.test.JenkinsRule;
+
+import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+
+public class ArchiveFileTest {
+    public static Object result = null;
+    @Rule
+    public JenkinsRule r = new JenkinsRule();
+
+    @Before
+    public void setUp() throws Exception {
+        org.junit.Assume.assumeTrue(checkTokenAvailable(r.getInstance()));
+    }
+
+    @After
+    public void tearDown() {
+        SplunkLogService.getInstance().stopWorker();
+        SplunkLogService.getInstance().releaseConnection();
+    }
+
+    public void buildWithScript(String groovyScript) throws Exception {
+        Label label = r.jenkins.getLabel("filetest");
+        r.createOnlineSlave(label);
+        FreeStyleProject project = r.createFreeStyleProject("verify_archive");
+        CaptureEnvironmentBuilder captureEnvironment = new CaptureEnvironmentBuilder();
+        project.getBuildersList().add(captureEnvironment);
+        project.getBuildersList().add(new Shell("ps -ef >process_list.txt"));
+        project.setAssignedLabel(label);
+        SplunkJenkinsInstallation.get().scriptContent = groovyScript;
+        SplunkJenkinsInstallation.get().updateCache();
+        FreeStyleBuild build = r.buildAndAssertSuccess(project);
+    }
+
+    @Test
+    public void testUploadFromSlave() {
+        String script = "println \"uploading files\"\n" +
+                "archive(\"*.txt\",\"\",true)";
+        try {
+            buildWithScript(script);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("upload failed");
+        }
+    }
+
+    @Test
+    public void testUploadFromMaster() throws Exception {
+        result = null;
+        String script = "println \"uploading files\"\n" +
+                "def sentCount=archive(\"*.txt\",\"\",false);" +
+                "com.splunk.splunkjenkins.ArchiveFileTest.result=sentCount;" +
+                "println \"send \"+sentCount";
+        buildWithScript(script);
+        assertNotNull("archive file completed", result);
+    }
+}

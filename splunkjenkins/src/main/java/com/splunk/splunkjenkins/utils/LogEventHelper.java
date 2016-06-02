@@ -4,7 +4,11 @@ import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import hudson.FilePath;
+import hudson.Util;
 import hudson.console.ConsoleNote;
+import hudson.model.AbstractBuild;
+import hudson.model.TaskListener;
 import hudson.model.User;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
@@ -15,10 +19,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -30,12 +31,13 @@ import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 
 public class LogEventHelper {
     public static final String SEPARATOR = "    ";
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(EventRecord.class,
             new EventRecordSerializer()).disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
-        HttpPost postMethod=new HttpPost(record.getEndpoint());
+        HttpPost postMethod = new HttpPost(record.getEndpoint());
         if (config.isRawEventEnabled()) {
             postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
         } else {
@@ -73,9 +75,9 @@ public class LogEventHelper {
             HttpResponse response = client.execute(post);
             if (response.getStatusLine().getStatusCode() != 200) {
                 String reason = response.getStatusLine().getReasonPhrase();
-                if(response.getStatusLine().getStatusCode()==400){
+                if (response.getStatusLine().getStatusCode() == 400) {
                     return FormValidation.error("incorrect index, please check advance section to update index");
-                }else{
+                } else {
                     return FormValidation.error("token:" + config.getToken() + " response:" + reason);
                 }
             }
@@ -152,8 +154,77 @@ public class LogEventHelper {
         }
     }
 
+    /**
+     * @return Queue statics with timestamp
+     */
+    public static String getQueueInfo() {
+        Jenkins instance = Jenkins.getInstance();
+        int computerSize = instance.getComputers().length;
+        int totalExecutors = instance.overallLoad.computeTotalExecutors();
+        int queueLength = instance.overallLoad.computeQueueLength();
+        int idleExecutors = instance.overallLoad.computeIdleExecutors();
+        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
+        String message = sdf.format(new Date()) + SEPARATOR + "queue_length=" + queueLength + SEPARATOR
+                + "computers_count=" + computerSize + SEPARATOR
+                + "idle_executors=" + idleExecutors + SEPARATOR + " total_executors=" + totalExecutors;
+        return message;
+    }
+
+    public static int sendFiles(AbstractBuild build, Map<String, String> envVars, TaskListener listener,
+                                String includes, String excludes, boolean uploadFromSlave) {
+        FilePath ws = build.getWorkspace();
+        int eventCount = 0;
+        final String expanded = Util.replaceMacro(includes, envVars);
+        final String exclude = Util.replaceMacro(excludes, envVars);
+        try {
+            final FilePath[] paths = ws.list(expanded, exclude);
+            if (paths.length == 0) {
+                LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getName());
+                return eventCount;
+            }
+
+            Map configMap = SplunkJenkinsInstallation.get().toMap();
+            LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap);
+            for (FilePath path : paths) {
+                if (!path.isDirectory()) {
+                    if (uploadFromSlave) {
+                        listener.getLogger().println("uploading from slave:" + path.getName());
+                        eventCount += path.act(fileCallable);
+                    } else {
+                        InputStream in = path.read();
+                        try {
+                            listener.getLogger().println("uploading from master:" + path.getName());
+                            eventCount += fileCallable.send(path.getRemote(), in);
+                        } finally {
+                            in.close();
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            LOG.log(Level.SEVERE, "failed to archive files", e);
+        } catch (InterruptedException e) {
+            LOG.log(Level.SEVERE, "interrupted while archiving file", e);
+        }
+        return eventCount;
+    }
+
     public static class UrlQueryBuilder {
         private Map<String, String> query = new HashMap();
+
+        public static String toString(Map<String, String> queryParameters) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String key : queryParameters.keySet()) {
+                stringBuilder.append(key)
+                        .append("=")
+                        .append(queryParameters.get(key))
+                        .append("&");
+            }
+            if (stringBuilder.length() == 0) {
+                return "";
+            }
+            return stringBuilder.substring(0, stringBuilder.length() - 1);
+        }
 
         public UrlQueryBuilder putIfAbsent(String key, String value) {
             if (nonEmpty(value) && !"null".equals(value)) {
@@ -169,21 +240,9 @@ public class LogEventHelper {
         public Map getQueryMap() {
             return Collections.unmodifiableMap(query);
         }
-        public String build(){
+
+        public String build() {
             return UrlQueryBuilder.toString(this.query);
-        }
-        public static String toString(Map<String,String> queryParameters) {
-            StringBuilder stringBuilder = new StringBuilder();
-            for (String key : queryParameters.keySet()) {
-                stringBuilder.append(key)
-                        .append("=")
-                        .append(queryParameters.get(key))
-                        .append("&");
-            }
-            if (stringBuilder.length() == 0) {
-                return "";
-            }
-            return stringBuilder.substring(0, stringBuilder.length() - 1);
         }
     }
 
@@ -192,21 +251,5 @@ public class LogEventHelper {
         public String translateName(final Field f) {
             return f.getName().toLowerCase();
         }
-    }
-
-    /**
-     * @return Queue statics with timestamp
-     */
-    public static String getQueueInfo() {
-        Jenkins instance = Jenkins.getInstance();
-        int computerSize = instance.getComputers().length;
-        int totalExecutors = instance.overallLoad.computeTotalExecutors();
-        int queueLength = instance.overallLoad.computeQueueLength();
-        int idleExecutors = instance.overallLoad.computeIdleExecutors();
-        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-        String message = sdf.format(new Date()) + SEPARATOR + "queue_length=" + queueLength + SEPARATOR
-                + "computers_count=" + computerSize + SEPARATOR
-                + "idle_executors=" + idleExecutors + SEPARATOR + " total_executors=" + totalExecutors;
-        return message;
     }
 }

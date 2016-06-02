@@ -18,9 +18,9 @@ public class EventRecord {
 
     public EventRecord(Object message, EventType eventType) {
         this.retryCount = 0;
-        if(eventType==null){
-            this.eventType=EventType.GENERIC_TEXT;
-        }else{
+        if (eventType == null) {
+            this.eventType = EventType.GENERIC_TEXT;
+        } else {
             this.eventType = eventType;
         }
         this.time = System.currentTimeMillis();
@@ -39,6 +39,10 @@ public class EventRecord {
         return time;
     }
 
+    public void setTime(long time) {
+        this.time = time;
+    }
+
     public Object getMessage() {
         return message;
     }
@@ -49,10 +53,6 @@ public class EventRecord {
         } else {
             return message.toString();
         }
-    }
-
-    public void setTime(long time) {
-        this.time = time;
     }
 
     public String getTimestamp() {

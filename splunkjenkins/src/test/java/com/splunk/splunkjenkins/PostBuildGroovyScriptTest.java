@@ -14,11 +14,11 @@ import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static org.junit.Assert.assertNotNull;
 
 public class PostBuildGroovyScriptTest {
-    private static final Logger LOG=Logger.getLogger(PostBuildGroovyScriptTest.class.getName());
-    private FreeStyleProject project;
+    private static final Logger LOG = Logger.getLogger(PostBuildGroovyScriptTest.class.getName());
+    public static Map buildEvent = null;
     @Rule
     public JenkinsRule j = new JenkinsRule();
-    public static Map buildEvent = null;
+    private FreeStyleProject project;
 
     @Before
     public void setUp() throws Exception {
@@ -37,11 +37,13 @@ public class PostBuildGroovyScriptTest {
         project = j.createFreeStyleProject("simple");
         project.getBuildersList().add(new TouchBuilder());
     }
+
     @After
     public void tearDown() {
         SplunkLogService.getInstance().stopWorker();
         SplunkLogService.getInstance().releaseConnection();
     }
+
     /**
      * We have a PostBuildGroovyScriptTest.zip contains a junit result file
      */

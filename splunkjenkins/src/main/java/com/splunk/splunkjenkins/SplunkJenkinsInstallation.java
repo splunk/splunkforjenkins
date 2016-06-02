@@ -1,7 +1,5 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.utils.EventType;
-import com.splunk.splunkjenkins.utils.LogEventHelper;
 import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -38,15 +36,9 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
-
-    public static SplunkJenkinsInstallation get() {
-        return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
-    }
-
-    private transient final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
     private transient final static Logger LOGGER = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
-
-
+    private transient static SplunkJenkinsInstallation config;
+    private transient final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
     // Defaults plugin global config values:
     public boolean enabled = false;
     public String host;
@@ -56,13 +48,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     //for console log default cache size for 512KB
     public long maxEventsBatchSize = 512 * 1024 * 1024;
     public long retriesOnError = 3;
-
     public boolean rawEventEnabled = false;
     //groovy script path
     public String scriptPath;
     public String metaDataConfig;
     //groovy content if file path not set
     public String scriptContent;
+    public transient Properties metaDataProperties;
     private boolean monitoringConfig = false;
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
@@ -70,8 +62,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient File scriptFile;
     private transient long scriptTimestamp;
     private transient String postActionScript;
-    public transient Properties metaDataProperties;
-
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
             XmlFile file = getConfigFile();
@@ -86,14 +76,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                         this.token = desc.httpInputToken;
                         this.useSSL = "https".equalsIgnoreCase(desc.scheme);
                         this.enabled = true;
-                        this.metaDataConfig="source="+desc.sourceName+"\n"
-                                +"console_log.source="+desc.sourceName+":console"+"\n"
-                                +"host="+getHostName();
-                        if(nonEmpty(desc.indexName)){
-                            this.metaDataConfig=this.metaDataConfig+"\nindex="+desc.indexName;
+                        this.metaDataConfig = "source=" + desc.sourceName + "\n"
+                                + "console_log.source=" + desc.sourceName + ":console" + "\n"
+                                + "host=" + getHostName();
+                        if (nonEmpty(desc.indexName)) {
+                            this.metaDataConfig = this.metaDataConfig + "\nindex=" + desc.indexName;
                         }
-                        if(nonEmpty(desc.sourceTypeName)){
-                            this.metaDataConfig=this.metaDataConfig+"\nsourcetype="+desc.sourceTypeName;
+                        if (nonEmpty(desc.sourceTypeName)) {
+                            this.metaDataConfig = this.metaDataConfig + "\nsourcetype=" + desc.sourceTypeName;
                         }
                         //overwrite with newer version
                         this.save();
@@ -112,20 +102,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         this(true);
     }
 
-    @Override
-    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-        req.bindJSON(this, formData);
-        //handle choice
-        if ("file".equals(formData.get("commandsOrFileInSplunkins"))) {
-            this.scriptContent = null;
-        } else {
-            this.scriptPath = null;
+    public static SplunkJenkinsInstallation get() {
+        if (config == null) {
+            config = GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
         }
-        updateCache();
-        save();
-        return true;
+        return config;
     }
-
 
     /*
      * Gets the jenkins's hostname
@@ -138,6 +120,30 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             e1.printStackTrace();
         }
         return hostname;
+    }
+
+    /**
+     * Warnig: thie is method is meant be called on slave only!
+     *
+     * @param config
+     */
+    public static void setConfig(SplunkJenkinsInstallation config) {
+        SplunkJenkinsInstallation.config = config;
+        config.updateCache();
+    }
+
+    @Override
+    public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        req.bindJSON(this, formData);
+        //handle choice
+        if ("file".equals(formData.get("commandsOrFileInSplunkins"))) {
+            this.scriptContent = null;
+        } else {
+            this.scriptPath = null;
+        }
+        updateCache();
+        save();
+        return true;
     }
 
     /*
@@ -168,7 +174,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         config.port = port;
         config.token = token;
         config.useSSL = useSSL;
-        config.metaDataConfig=metaDataConfig;
+        config.metaDataConfig = metaDataConfig;
         config.updateCache();
         return verifyHttpInput(config);
     }
@@ -193,10 +199,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
         try {
             String scheme = useSSL ? "https" : "http";
-            jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT,null,null).toString();
-            rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT,null,null).toString();
-            metaDataProperties=new Properties();
-            if(metaDataConfig!=null){
+            jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT, null, null).toString();
+            rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
+            metaDataProperties = new Properties();
+            if (metaDataConfig != null) {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
         } catch (Exception e) {
@@ -246,7 +252,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return this.postActionScript;
     }
 
-
     public boolean isRawEventEnabled() {
         return rawEventEnabled;
     }
@@ -273,11 +278,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     /**
-     *
      * @param keyName such as host,source,index
      * @return the configured metadata
      */
-    public String getMetaData(String keyName){
+    public String getMetaData(String keyName) {
         return metaDataProperties.getProperty(keyName);
     }
 
@@ -287,6 +291,17 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public String getRawUrl() {
         return rawUrl;
+    }
+
+    public Map toMap() {
+        HashMap map = new HashMap();
+        map.put("token", this.token);
+        map.put("rawEventEnabled", this.rawEventEnabled);
+        map.put("host", host);
+        map.put("port", port);
+        map.put("useSSL", useSSL);
+        map.put("metaDataConfig", metaDataConfig);
+        return map;
     }
 
     /**

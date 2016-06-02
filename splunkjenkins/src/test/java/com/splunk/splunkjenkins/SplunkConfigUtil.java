@@ -14,12 +14,12 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class SplunkConfigUtil {
-    private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
-    public static String TOKEN = null;
-    private static Gson gson = new Gson();
     public static final String INDEX_NAME = System.getProperty("splunk-index", "plugin_sandbox");
+    private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
     private static final String COLLECTOR_NAME = "splunkins_unittest";
     private static final String ENDPOINT = "/servicesNS/admin/search/data/inputs/http/";
+    public static String TOKEN = null;
+    private static Gson gson = new Gson();
 
     public static synchronized boolean checkTokenAvailable(Jenkins jenkins) {
         boolean useAutoConfig = Boolean.getBoolean("splunk-token-setup");
@@ -81,7 +81,7 @@ public class SplunkConfigUtil {
         return setupSender(jenkins, host, token);
     }
 
-    public static boolean setupSender(Jenkins jenkins, String host, String token){
+    public static boolean setupSender(Jenkins jenkins, String host, String token) {
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = jenkins.getExtensionList(GlobalConfiguration.class).get(SplunkJenkinsInstallation.class);
         if (config == null) {
@@ -89,20 +89,20 @@ public class SplunkConfigUtil {
             config = new SplunkJenkinsInstallation();
             jenkins.getExtensionList(GlobalConfiguration.class).add(0, config);
         }
-        Properties properties=new Properties();
+        Properties properties = new Properties();
         try {
             properties.load(SplunkConfigUtil.class.getClassLoader().getResourceAsStream("splunk_metadata.properties"));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        properties.put("index",INDEX_NAME);
+        properties.put("index", INDEX_NAME);
         config.host = host;
         config.useSSL = true;
         config.token = token;
         config.rawEventEnabled = false;
         config.enabled = true;
         config.updateCache();
-        config.metaDataProperties=properties;
+        config.metaDataProperties = properties;
         config.save();
         return config.isValid();
     }

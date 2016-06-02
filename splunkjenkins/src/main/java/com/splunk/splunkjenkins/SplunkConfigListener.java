@@ -41,6 +41,6 @@ public class SplunkConfigListener extends SaveableListener {
         logInfo.put("file", file.getFile().getAbsolutePath());
         logInfo.put("user", getUserName());
         logInfo.put("config", o);
-        SplunkLogService.getInstance().send(logInfo,XML_CONFIG);
+        SplunkLogService.getInstance().send(logInfo, XML_CONFIG);
     }
 }

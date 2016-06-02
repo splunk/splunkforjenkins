@@ -17,8 +17,8 @@ import static org.junit.Assert.*;
 import org.jvnet.hudson.test.JenkinsRule;
 
 public class SplunkLogServiceTest {
-    private static final Logger LOG=Logger.getLogger(SplunkLogServiceTest.class.getName());
-    private static final int BATCH_COUNT=1000;
+    private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
+    private static final int BATCH_COUNT = 1000;
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
@@ -46,7 +46,7 @@ public class SplunkLogServiceTest {
      */
     @Test
     public void testSend() throws IOException, InterruptedException {
-        System.out.println("testSend, config is valid?"+SplunkJenkinsInstallation.get().isValid());
+        System.out.println("testSend, config is valid?" + SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
         SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
         long batchId = System.currentTimeMillis();
@@ -65,11 +65,11 @@ public class SplunkLogServiceTest {
         while (SplunkLogService.getInstance().getSentCount() < (BATCH_COUNT + initNumber)) {
             Thread.sleep(1000);
             long queueSize = SplunkLogService.getInstance().getQueueSize();
-            long sentCount=SplunkLogService.getInstance().getSentCount();
-            long remaining=BATCH_COUNT + initNumber-sentCount;
-            LOG.fine("queue size:"+queueSize +" sent:"+sentCount);
+            long sentCount = SplunkLogService.getInstance().getSentCount();
+            long remaining = BATCH_COUNT + initNumber - sentCount;
+            LOG.fine("queue size:" + queueSize + " sent:" + sentCount);
             if (System.currentTimeMillis() > timeToWait) {
-                fail("can not send events in time, remaining "+remaining);
+                fail("can not send events in time, remaining " + remaining);
             }
         }
 

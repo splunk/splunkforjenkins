@@ -23,7 +23,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 public class TeeConsoleLogFilterTest {
-    private static final Logger LOG=Logger.getLogger(TeeConsoleLogFilterTest.class.getName());
+    private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilterTest.class.getName());
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
@@ -31,6 +31,7 @@ public class TeeConsoleLogFilterTest {
     public void setUp() throws Exception {
         org.junit.Assume.assumeTrue(checkTokenAvailable(r.getInstance()));
     }
+
     @After
     public void tearDown() {
         SplunkLogService.getInstance().stopWorker();
@@ -52,7 +53,7 @@ public class TeeConsoleLogFilterTest {
         while (eventCount >= SplunkLogService.getInstance().getSentCount() && (p.getLastBuild() == null || p.getLastBuild().isBuilding())) {
             Thread.sleep(1000);
             if (System.currentTimeMillis() > timeToWait) {
-                LOG.fine("queue size:"+SplunkLogService.getInstance().getQueueSize());
+                LOG.fine("queue size:" + SplunkLogService.getInstance().getQueueSize());
                 fail("can not send event in time");
             }
         }

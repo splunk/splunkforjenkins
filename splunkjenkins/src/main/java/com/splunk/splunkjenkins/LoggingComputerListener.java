@@ -23,7 +23,7 @@ public class LoggingComputerListener extends ComputerListener {
 
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-        String message = getQueueInfo() + SEPARATOR + "action=online" + SEPARATOR + "item=" + c.getName()+TAG_SUFFIX;
+        String message = getQueueInfo() + SEPARATOR + "action=online" + SEPARATOR + "item=" + c.getName() + TAG_SUFFIX;
         SplunkLogService.getInstance().send(message, QUEUE_INFO);
     }
 
@@ -38,7 +38,7 @@ public class LoggingComputerListener extends ComputerListener {
 
     @Override
     public void onTemporarilyOnline(Computer c) {
-        String message = getQueueInfo() + SEPARATOR + "action=temp_offline" + SEPARATOR + "item=" + c.getName()+TAG_SUFFIX;
+        String message = getQueueInfo() + SEPARATOR + "action=temp_offline" + SEPARATOR + "item=" + c.getName() + TAG_SUFFIX;
         SplunkLogService.getInstance().send(message, QUEUE_INFO);
     }
 }

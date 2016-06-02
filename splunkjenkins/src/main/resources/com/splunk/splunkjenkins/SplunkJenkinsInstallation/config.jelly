@@ -33,14 +33,16 @@
             <f:radioBlock name="commandsOrFileInSplunkins" value="file"
                           title="${%Run Script File to Process Test Result}"
                           checked="${instance.scriptPath !=null}" inline="true">
-                <f:entry field="scriptPath" help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
+                <f:entry field="scriptPath"
+                         help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
                     <f:textbox/>
                 </f:entry>
             </f:radioBlock>
             <f:radioBlock name="commandsOrFileInSplunkins" value="content"
                           title="${%Run Commands to Process Test Result}"
                           checked="${instance.scriptContent!=null }" inline="true">
-                <f:entry field="scriptContent" help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
+                <f:entry field="scriptContent"
+                         help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
                     <f:textarea class="fixed-width splunkins" codemirror-mode="clike"
                                 codemirror-config="mode: 'text/x-groovy', lineNumbers: true, matchBrackets: true, onBlur: function(editor){editor.save()}"
                                 checkMethod="POST"/>

@@ -26,7 +26,7 @@ public class UserActionDSL {
             SplunkJenkinsInstallation splunkConfig = SplunkJenkinsInstallation.get();
 
             if (splunkConfig != null && splunkConfig.getScript() != null) {
-                RunDelegate delegate = new RunDelegate(build, enVars,listener);
+                RunDelegate delegate = new RunDelegate(build, enVars, listener);
                 CompilerConfiguration cc = new CompilerConfiguration();
                 cc.scriptBaseClass = ClosureScript.class.name;
                 ImportCustomizer ic = new ImportCustomizer()

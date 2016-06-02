@@ -104,9 +104,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             branch.reset();
         }
 
-        private void flushLog(){
-            EventRecord record=new EventRecord(logText.toString(),CONSOLE_LOG);
-            record.setSource(this.buildUrl+"console");
+        private void flushLog() {
+            EventRecord record = new EventRecord(logText.toString(), CONSOLE_LOG);
+            record.setSource(this.buildUrl + "console");
             SplunkLogService.getInstance().enqueue(record);
             logText.reset();
         }

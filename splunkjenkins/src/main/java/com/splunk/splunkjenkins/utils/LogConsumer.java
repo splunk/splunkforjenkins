@@ -34,14 +34,6 @@ public class LogConsumer implements Runnable {
             UnknownHostException.class,
             ConnectException.class,
             SSLException.class);
-
-    public LogConsumer(HttpClient client, BlockingQueue<EventRecord> queue, AtomicLong counter) {
-        this.client = client;
-        this.queue = queue;
-        this.errorCount = 0;
-        this.outgoingCounter = counter;
-    }
-
     // Create a custom response handler
     private ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
@@ -68,6 +60,13 @@ public class LogConsumer implements Runnable {
         }
     };
 
+    public LogConsumer(HttpClient client, BlockingQueue<EventRecord> queue, AtomicLong counter) {
+        this.client = client;
+        this.queue = queue;
+        this.errorCount = 0;
+        this.outgoingCounter = counter;
+    }
+
     @Override
     public void run() {
         while (acceptingTask) {
@@ -87,11 +86,11 @@ public class LogConsumer implements Runnable {
                         if (cause != null && cause instanceof SplunkClientError) {
                             String content;
                             try {
-                                content= IOUtils.toString(post.getEntity().getContent());
+                                content = IOUtils.toString(post.getEntity().getContent());
                             } catch (IOException e) {
-                                content=record.getMessageString();
+                                content = record.getMessageString();
                             }
-                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:" +content);
+                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:" + content);
                         } else {
                             //other errors
                             LOG.log(Level.SEVERE, "will resend the message:", record.getMessage());
