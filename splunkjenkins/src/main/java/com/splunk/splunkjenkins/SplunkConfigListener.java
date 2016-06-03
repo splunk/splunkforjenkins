@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 /**
  * audit config and job changes
- * <p>
  * send xml file to splunk
  */
 

@@ -1,9 +1,11 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import hudson.util.TimeUnit2;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.HttpClientConnectionManager;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
@@ -16,6 +18,7 @@ import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -70,6 +73,9 @@ public class SplunkLogService {
         cm.setMaxTotal(200);
         // Increase default max connection per route to 20
         cm.setDefaultMaxPerRoute(20);
+        //socket timeout for 5 minutes
+        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int)TimeUnit.MINUTES.toMillis(5)).build();
+        cm.setDefaultSocketConfig(defaultSocketConfig);
         return cm;
     }
 
@@ -90,11 +96,11 @@ public class SplunkLogService {
     }
 
     public boolean enqueue(EventRecord record) {
-        if (!SplunkJenkinsInstallation.get().enabled) {
+        if (!SplunkJenkinsInstallation.get().isEnabled()) {
             return false;
         }
         if (!SplunkJenkinsInstallation.get().isValid()) {
-            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + record.getMessageString());
+            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + record.getShortDescr());
             return false;
         }
         boolean added = logQueue.offer(record);

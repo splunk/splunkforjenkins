@@ -11,7 +11,8 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 
 /**
- * <pre><code>{ from jenkins javadoc
+ *
+ * <pre>{@code from jenkins javadoc
  *  (enter) --> waitingList --+--> blockedProjects
  *                            |        ^
  *                            |        |
@@ -21,7 +22,8 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
  *                                     |              |
  *                                     +---(rarely)---+
  *
- * }<code/><pre/>
+ * }</pre>
+ *
  */
 @SuppressWarnings("unused")
 @Extension
@@ -45,8 +47,8 @@ public class LoggingQueueListener extends QueueListener {
     /**
      * queue task only have project name, don't have build number
      *
-     * @param task
-     * @return
+     * @param task Queue task
+     * @return task name
      */
     public String getTaskName(Queue.Task task) {
         if (task == null) {

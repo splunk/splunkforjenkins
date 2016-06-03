@@ -96,11 +96,11 @@ public class SplunkConfigUtil {
             e.printStackTrace();
         }
         properties.put("index", INDEX_NAME);
-        config.host = host;
-        config.useSSL = true;
-        config.token = token;
-        config.rawEventEnabled = false;
-        config.enabled = true;
+        config.setHost(host);
+        config.setUseSSL(true);
+        config.setToken(token);
+        config.setRawEventEnabled(false);
+        config.setEnabled(true);
         config.updateCache();
         config.metaDataProperties = properties;
         config.save();

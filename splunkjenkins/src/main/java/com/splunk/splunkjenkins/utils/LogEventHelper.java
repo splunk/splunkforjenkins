@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -35,11 +36,22 @@ public class LogEventHelper {
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().registerTypeAdapter(EventRecord.class,
             new EventRecordSerializer()).disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
+    private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
+            .put("KB", 1024L)
+            .put("kB", 1000L)
+            .put("KiB", 1024L)
+            .put("MB", 1024 * 1024L)
+            .put("MiB", 1024 * 1024L)
+            .build();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
-        HttpPost postMethod = new HttpPost(record.getEndpoint());
+        HttpPost postMethod = new HttpPost(record.getEndpoint(config));
         if (config.isRawEventEnabled()) {
-            postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
+            if(record.getEventType().needSplit()){
+                postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
+            }else{
+                postMethod.setEntity(new StringEntity(gson.toJson(record), "utf-8"));
+            }
         } else {
             //http event collector does not support raw event, need split records and append metadata to message body
             String jsonRecord;
@@ -83,13 +95,13 @@ public class LogEventHelper {
             }
             EntityUtils.consume(response.getEntity());
             //check if raw events is supported
-            config.rawEventEnabled = true;
+            config.setRawEventEnabled(true);
             post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.GENERIC_TEXT), config);
             response = client.execute(post);
             SplunkJenkinsInstallation globalConfig = SplunkJenkinsInstallation.get();
             if (response.getStatusLine().getStatusCode() != 200 && globalConfig != null) {
                 //it is ok to use json but update global flag to turn off raw handling
-                SplunkJenkinsInstallation.get().rawEventEnabled = false;
+                SplunkJenkinsInstallation.get().setRawEventEnabled(false);
                 return FormValidation.ok("Splunk connection verified but raw event is not supported");
             }
         } catch (IOException e) {
@@ -106,7 +118,7 @@ public class LogEventHelper {
      *
      * @param in     the byte array
      * @param length how many bytes we want to read in
-     * @return
+     * @param out write max(length) to out
      * @see hudson.console.PlainTextConsoleOutputStream
      */
     public static void decodeConsoleBase64Text(byte[] in, int length, ByteArrayOutputStream2 out) {
@@ -171,7 +183,7 @@ public class LogEventHelper {
     }
 
     public static int sendFiles(AbstractBuild build, Map<String, String> envVars, TaskListener listener,
-                                String includes, String excludes, boolean uploadFromSlave) {
+                                String includes, String excludes, boolean sendFromSlave, long maxFileSize) {
         FilePath ws = build.getWorkspace();
         int eventCount = 0;
         final String expanded = Util.replaceMacro(includes, envVars);
@@ -182,31 +194,33 @@ public class LogEventHelper {
                 LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getName());
                 return eventCount;
             }
-
+            listener.getLogger().println("processing "+paths.length+" files");
             Map configMap = SplunkJenkinsInstallation.get().toMap();
-            LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap);
-            for (FilePath path : paths) {
-                if (!path.isDirectory()) {
-                    if (uploadFromSlave) {
-                        listener.getLogger().println("uploading from slave:" + path.getName());
-                        eventCount += path.act(fileCallable);
-                    } else {
-                        InputStream in = path.read();
-                        try {
-                            listener.getLogger().println("uploading from master:" + path.getName());
-                            eventCount += fileCallable.send(path.getRemote(), in);
-                        } finally {
-                            in.close();
-                        }
-                    }
-                }
-            }
+            LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap, sendFromSlave,maxFileSize);
+            eventCount=fileCallable.sendFiles(paths);
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "failed to archive files", e);
         } catch (InterruptedException e) {
             LOG.log(Level.SEVERE, "interrupted while archiving file", e);
         }
         return eventCount;
+    }
+
+    public static long parseFileSize(String size) {
+        if (emptyToNull(size) == null) {
+            return 0;
+        }
+        try {
+            for (String key : HUMAN_READABLE_SIZE.keySet()) {
+                if (size.endsWith(key)) {
+                    return Long.parseLong(size.substring(0, size.length() - key.length())) * HUMAN_READABLE_SIZE.get(key);
+                }
+            }
+            return Long.parseLong(size);
+        } catch (NumberFormatException ex) {
+            LOG.log(Level.SEVERE, "invalid number " + size);
+            return 0;
+        }
     }
 
     public static class UrlQueryBuilder {

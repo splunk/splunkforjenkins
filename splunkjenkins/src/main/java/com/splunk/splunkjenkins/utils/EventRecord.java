@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -55,6 +56,20 @@ public class EventRecord {
         }
     }
 
+    /**
+     * @return short message, to be showed in debug message
+     */
+    public String getShortDescr() {
+        if (message == null) { //should not happen
+            return "NULL message";
+        }
+        if (message instanceof String) {
+            return "{length:" + ((String) message).length() + StringUtils.substring((String) message, 0, 80)+" ...}";
+        } else {
+            return "{raw data" + StringUtils.substring("" + message, 0, 80)+" ...}";
+        }
+    }
+
     public String getTimestamp() {
         return String.format(Locale.US, "%.3f", time / 1000d);
     }
@@ -90,10 +105,11 @@ public class EventRecord {
     }
 
     /**
+     *
+     * @param config Splunk config
      * @return the http event collector endpoint
      */
-    public String getEndpoint() {
-        SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
+    public String getEndpoint(SplunkJenkinsInstallation config) {
         if (!config.isRawEventEnabled()) {
             return config.getJsonUrl();
         }

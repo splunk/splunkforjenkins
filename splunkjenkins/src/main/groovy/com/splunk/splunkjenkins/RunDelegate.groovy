@@ -15,6 +15,7 @@ import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.METADATA
 import static com.splunk.splunkjenkins.Constants.TESTCASE
 import static com.splunk.splunkjenkins.Constants.TESTSUITE
+import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
 
 public class RunDelegate {
@@ -45,6 +46,15 @@ public class RunDelegate {
     def send(def message, String eventSourceName) {
         SplunkLogService.getInstance().send(message, EventType.valueOf(eventSourceName));
     }
+    /**
+     * Archive all configured artifacts from a build, using ant patterns defined in
+     * @see <a href="http://ant.apache.org/manual/Types/fileset.html">the Ant glob syntax</a>
+     * such as  {@code *&#42;&#47;build/*.log }
+     * @param includes ant glob pattern
+     */
+    def archive(String includes) {
+        archive(includes, null, true, "10MB");
+    }
 
     /**
      * Archive all configured artifacts from a build, using ant patterns defined in
@@ -53,18 +63,25 @@ public class RunDelegate {
      * @param includes ant glob pattern
      * @param excludes ant glob pattern
      * @param uploadFromSlave <code>true</code> if need upload directly from the slave
+     * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      * @return
      */
-
-    def archive(String includes, String excludes, boolean uploadFromSlave) {
+    def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
+        if (build.getProject().getPublishersList().contains(SplunkArtifactNotifier.class)) {
+            SplunkArtifactNotifier notifier = build.getProject().getPublishersList().get(SplunkArtifactNotifier.class)
+            //already defined on job level
+            if (notifier.skipGlobalSplunkArchive) {
+                return;
+            }
+        }
         getOut().println("sending files using glob pattern include:" + includes + " excludes:" + excludes)
-        return sendFiles(build, env, listener, includes, excludes, uploadFromSlave);
+        return sendFiles(build, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 
     def getJunitReport() {
         TestResultAction resultAction = build.getAction(TestResultAction.class);
         if (resultAction == null) {
-            return null;
+            return ["message": "No TestResultAction"];
         }
         TestResult testResult = resultAction.result;
         if (testResult == null) {
@@ -159,7 +176,9 @@ public class RunDelegate {
                 testResult.getSuites().each { suite ->
                     testcase.addAll(suite.getCases());
                 }
+                testsuite.put("errors", 0);
             } catch (UnsupportedOperationException ex) {
+                testsuite.put("errors", 1);
                 //not support, just ignore
             }
         }

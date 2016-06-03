@@ -4,26 +4,64 @@ import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.FilePath;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ByteArrayOutputStream2;
+import jenkins.model.Jenkins;
+import org.apache.commons.beanutils.BeanUtils;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import static com.splunk.splunkjenkins.utils.EventType.FILE;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogFileCallable.class.getName());
     private final int WAIT_MINUTES = 5;
     private final String baseName;
     private final String buildUrl;
-    private final Map configs;
+    private final Map eventCollectorProperty;
+    private final boolean sendFromSlave;
+    private final long maxFileSize;
+    private boolean enabledSplunkConfig = false;
 
-    public LogFileCallable(String baseName, String buildUrl, Map configs) {
+    public LogFileCallable(String baseName, String buildUrl,
+                           Map eventCollectorProperty, boolean sendFromSlave, long maxFileSize) {
         this.baseName = baseName;
-        this.configs = configs;
+        this.eventCollectorProperty = eventCollectorProperty;
         this.buildUrl = buildUrl;
+        this.sendFromSlave = sendFromSlave;
+        this.maxFileSize=maxFileSize;
     }
 
+    public int sendFiles(FilePath[] paths) {
+        int eventCount = 0;
+        for (FilePath path : paths) {
+            try {
+                if (path.isDirectory()) {
+                    continue;
+                }
+                if (sendFromSlave) {
+                    LOG.log(Level.FINE, "uploading from slave:" + path.getName());
+                    eventCount += path.act(this);
+                    LOG.log(Level.FINE, "sent in " + eventCount + " batches");
+                } else {
+                    InputStream in = path.read();
+                    try {
+                        LOG.log(Level.FINE, "uploading from master:" + path.getName());
+                        eventCount += send(path.getRemote(), in);
+                    } finally {
+                        in.close();
+                    }
+                }
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "failed to archive files", e);
+            } catch (InterruptedException e) {
+                LOG.log(Level.SEVERE, "interrupted while archiving file", e);
+            }
+        }
+        return eventCount;
+    }
 
     public Integer send(String fileName, InputStream input) throws IOException, InterruptedException {
         String sourceName = fileName;
@@ -32,12 +70,19 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         }
         sourceName = buildUrl + sourceName;
         ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();
+        long totalSize=0;
         Integer count = 0;
         int c;
         while ((c = input.read()) >= 0) {
+            totalSize++;
+            if(maxFileSize!=0 && totalSize>maxFileSize){
+                logText.reset();
+                logText.write(("max file size reached:"+maxFileSize).getBytes());
+                break;
+            }
             logText.write(c);
             if (c == '\n') {
-                if (logText.size() > SplunkJenkinsInstallation.get().maxEventsBatchSize) {
+                if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
                     flushLog(sourceName, logText);
                     count++;
                 }
@@ -48,6 +93,23 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             count++;
         }
         return count;
+    }
+
+    private void initSplunkins() {
+        if (enabledSplunkConfig) {
+            return;
+        }
+        // Init SplunkJenkins global config in slave, can not reference Jenkins.getInstance(), Xtream
+        // need built from map
+        SplunkJenkinsInstallation config = new SplunkJenkinsInstallation(false);
+        try {
+            BeanUtils.populate(config, eventCollectorProperty);
+            config.setEnabled(true);
+            SplunkJenkinsInstallation.initOnSlave(config);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        enabledSplunkConfig = true;
     }
 
     private void flushLog(String source, ByteArrayOutputStream out) {
@@ -62,16 +124,10 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
      */
     @Override
     public Integer invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
-        //init splunk config in slave, can not reference Jenkins.getInstance(), Xtream
-        SplunkJenkinsInstallation config = new SplunkJenkinsInstallation(false);
-        config.token = (String) configs.get("token");
-        config.useSSL = Boolean.valueOf("" + configs.get("useSSL"));
-        config.rawEventEnabled = Boolean.valueOf("" + configs.get("rawEventEnabled"));
-        config.metaDataConfig = (String) configs.get("metaDataConfig");
-        config.host = (String) configs.get("host");
-        config.port = Integer.parseInt("" + configs.get("port"));
-        config.enabled = true;
-        SplunkJenkinsInstallation.setConfig(config);
+        if (!enabledSplunkConfig && Jenkins.getInstance() == null) {
+            //running on slave node, need init config
+            initSplunkins();
+        }
         InputStream input = new FileInputStream(f);
         try {
             int count = send(f.getAbsolutePath(), input);

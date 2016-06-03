@@ -16,7 +16,7 @@ import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class ArchiveFileTest {
+public class SplunkArchiveFileTest {
     public static Object result = null;
     @Rule
     public JenkinsRule r = new JenkinsRule();
@@ -48,7 +48,7 @@ public class ArchiveFileTest {
     @Test
     public void testUploadFromSlave() {
         String script = "println \"uploading files\"\n" +
-                "archive(\"*.txt\",\"\",true)";
+                "archive(\"*.txt\",\"\",true,\"0\")";
         try {
             buildWithScript(script);
         } catch (Exception e) {
@@ -61,8 +61,8 @@ public class ArchiveFileTest {
     public void testUploadFromMaster() throws Exception {
         result = null;
         String script = "println \"uploading files\"\n" +
-                "def sentCount=archive(\"*.txt\",\"\",false);" +
-                "com.splunk.splunkjenkins.ArchiveFileTest.result=sentCount;" +
+                "def sentCount=archive(\"*.txt\",\"\",false,\"10MB\");" +
+                "com.splunk.splunkjenkins.SplunkArchiveFileTest.result=sentCount;" +
                 "println \"send \"+sentCount";
         buildWithScript(script);
         assertNotNull("archive file completed", result);

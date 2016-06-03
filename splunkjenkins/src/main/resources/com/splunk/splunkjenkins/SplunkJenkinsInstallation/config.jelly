@@ -19,7 +19,9 @@
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
                           with="host,port,token,useSSL, metaDataConfig"/>
         <f:advanced>
-
+            <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
+                <f:checkbox default="true"/>
+            </f:entry>
             <f:entry title="${%MetaData}" field="metaDataConfig">
                 <f:textarea default="sourcetype=_json"/>
             </f:entry>

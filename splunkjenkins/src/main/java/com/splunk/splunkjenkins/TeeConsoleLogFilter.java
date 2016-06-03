@@ -39,7 +39,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         if (SplunkJenkinsInstallation.get().isValid()) {
             return new TeeOutputStrem(output, build.getUrl());
         } else {
-            if (SplunkJenkinsInstallation.get().enabled) {
+            if (SplunkJenkinsInstallation.get().isEnabled()) {
                 LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUrl());
             }
             return output;
@@ -97,7 +97,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             String prefix = sdf.format(new Date()) + "  line:" + lineCounter + "  ";
             logText.write(prefix.getBytes());
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
-            if (logText.size() > SplunkJenkinsInstallation.get().maxEventsBatchSize) {
+            if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
                 flushLog();
             }
             // reuse the buffer under normal circumstances

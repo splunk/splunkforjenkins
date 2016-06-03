@@ -77,7 +77,7 @@ public class LogConsumer implements Runnable {
                     try {
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
-                        LOG.log(Level.WARNING, "failed to call http input with message " + record.getMessage(), ex);
+                        LOG.log(Level.WARNING, "failed to call http input with message " + record.getShortDescr(), ex);
                         if (nonretryExceptions.contains(ex)) {
                             LOG.log(Level.SEVERE, "remote server error, will not retry");
                             return;
@@ -93,14 +93,14 @@ public class LogConsumer implements Runnable {
                             LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:" + content);
                         } else {
                             //other errors
-                            LOG.log(Level.SEVERE, "will resend the message:", record.getMessage());
+                            LOG.log(Level.SEVERE, "will resend the message:", record.getShortDescr());
                             retry(record);
                         }
                     } finally {
                         post.releaseConnection();
                     }
                 } else {
-                    LOG.log(Level.SEVERE, "Failed to send " + record.getMessage());
+                    LOG.log(Level.SEVERE, "Failed to send " + record.getShortDescr());
                 }
             } catch (InterruptedException e) {
                 errorCount++;
