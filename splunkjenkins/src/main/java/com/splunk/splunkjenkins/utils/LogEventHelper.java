@@ -42,6 +42,7 @@ public class LogEventHelper {
             .put("KiB", 1024L)
             .put("MB", 1024 * 1024L)
             .put("MiB", 1024 * 1024L)
+            .put("GB", 1024 * 1024*1024L)
             .build();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
@@ -213,7 +214,11 @@ public class LogEventHelper {
         try {
             for (String key : HUMAN_READABLE_SIZE.keySet()) {
                 if (size.endsWith(key)) {
-                    return Long.parseLong(size.substring(0, size.length() - key.length())) * HUMAN_READABLE_SIZE.get(key);
+                    String numberPart = size.substring(0, size.length() - key.length());
+                    if (numberPart.contains(".")) {
+                        return new Float(HUMAN_READABLE_SIZE.get(key) * Float.parseFloat(numberPart)).longValue();
+                    }
+                    return HUMAN_READABLE_SIZE.get(key) * Long.parseLong(numberPart);
                 }
             }
             return Long.parseLong(size);
