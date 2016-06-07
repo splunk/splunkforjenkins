@@ -46,9 +46,10 @@ public class SplunkLogServiceTest {
      */
     @Test
     public void testSend() throws IOException, InterruptedException {
-        System.out.println("testSend, config is valid?" + SplunkJenkinsInstallation.get().isValid());
+        assertTrue("config is valid",SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
-        SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
+        boolean queuedGenericMessage=SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
+        assertTrue("should put message in queue", queuedGenericMessage);
         long batchId = System.currentTimeMillis();
         LOG.info("index=" + SplunkConfigUtil.INDEX_NAME + " |spath batch |search batch=" + batchId);
         long initNumber = SplunkLogService.getInstance().getSentCount();

@@ -101,8 +101,8 @@ public class SplunkConfigUtil {
         config.setToken(token);
         config.setRawEventEnabled(false);
         config.setEnabled(true);
-        config.updateCache();
         config.metaDataProperties = properties;
+        config.updateCache();
         config.save();
         return config.isValid();
     }
