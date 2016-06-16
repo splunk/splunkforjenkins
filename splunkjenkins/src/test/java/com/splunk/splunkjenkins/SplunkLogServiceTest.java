@@ -46,7 +46,7 @@ public class SplunkLogServiceTest {
      */
     @Test
     public void testSend() throws IOException, InterruptedException {
-        assertTrue("config is valid",SplunkJenkinsInstallation.get().isValid());
+        assertTrue("config should be valid",SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
         boolean queuedGenericMessage=SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
         assertTrue("should put message in queue", queuedGenericMessage);

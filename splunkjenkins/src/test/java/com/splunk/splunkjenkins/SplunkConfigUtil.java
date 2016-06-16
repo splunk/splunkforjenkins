@@ -85,8 +85,8 @@ public class SplunkConfigUtil {
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = jenkins.getExtensionList(GlobalConfiguration.class).get(SplunkJenkinsInstallation.class);
         if (config == null) {
-            System.out.println("new config");
-            config = new SplunkJenkinsInstallation();
+            LOG.severe("empty config, create a new config");
+            config = new SplunkJenkinsInstallation(false);
             jenkins.getExtensionList(GlobalConfiguration.class).add(0, config);
         }
         Properties properties = new Properties();
@@ -97,6 +97,7 @@ public class SplunkConfigUtil {
         }
         properties.put("index", INDEX_NAME);
         config.setHost(host);
+        config.setPort(8088);
         config.setUseSSL(true);
         config.setToken(token);
         config.setRawEventEnabled(false);

@@ -77,8 +77,6 @@
                 <version>2.19.1</version>
                 <configuration>
                     <useFile>false</useFile>
-                    <forkCount>0</forkCount>
-
                 </configuration>
             </plugin>
         </plugins>
