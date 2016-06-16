@@ -74,16 +74,48 @@ public class SplunkLogService {
         // Increase default max connection per route to 20
         cm.setDefaultMaxPerRoute(20);
         //socket timeout for 5 minutes
-        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int)TimeUnit.MINUTES.toMillis(5)).build();
+        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int) TimeUnit.MINUTES.toMillis(5)).build();
         cm.setDefaultSocketConfig(defaultSocketConfig);
         return cm;
     }
 
+    /**
+     * @param message the message to send, will use GENERIC_TEXT's config
+     * @return true if enqueue successfully, false if the message is discarded
+     */
     public boolean send(Object message) {
-        return send(message, EventType.GENERIC_TEXT);
+        if (message != null && message instanceof EventRecord) {
+            return enqueue((EventRecord) message);
+        } else {
+            return send(message, EventType.GENERIC_TEXT, null);
+        }
     }
 
+    /**
+     * @param message    the message to send, will use GENERIC_TEXT's config
+     * @param sourceName the source for splunk metadata
+     * @return true if enqueue successfully, false if the message is discarded
+     */
+    public boolean send(Object message, String sourceName) {
+        return send(message, EventType.GENERIC_TEXT, sourceName);
+    }
+
+    /**
+     * @param message   the message to send, will use GENERIC_TEXT's config
+     * @param eventType the type of event, @see EventType
+     * @return true if enqueue successfully, false if the message is discarded
+     */
     public boolean send(Object message, EventType eventType) {
+        return send(message, eventType, null);
+    }
+
+    /**
+     * @param message    the message to send
+     * @param eventType  the type of event, @see EventType
+     * @param sourceName the source for splunk metadata
+     * @return true if enqueue successfully, false if the message is discarded
+     */
+    public boolean send(Object message, EventType eventType, String sourceName) {
         if (message == null) {
             LOG.warning("null message discarded");
             return false;
@@ -92,6 +124,9 @@ public class SplunkLogService {
             return false;
         }
         EventRecord record = new EventRecord(message, eventType);
+        if (sourceName != null && "".equals(sourceName)) {
+            record.setSource(sourceName);
+        }
         return enqueue(record);
     }
 

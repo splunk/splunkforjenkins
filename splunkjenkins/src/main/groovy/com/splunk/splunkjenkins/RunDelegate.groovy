@@ -33,18 +33,25 @@ public class RunDelegate {
         this.listener = listener;
     }
 
+    /**
+     *
+     * @param message
+     * @return true if enqueue successfully, false if the message is discarded
+     */
     def send(def message) {
-        SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT);
+        getOut().println("sending build report")
+        return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT);
     }
 
     /**
      *
-     * @param message
-     * @param eventSourceName @see EventType
-     * @return
+     * @param message the message to send
+     * @param sourceName source for splunk metadata
+     * @return true if enqueue successfully, false if the message is discarded
      */
     def send(def message, String eventSourceName) {
-        SplunkLogService.getInstance().send(message, EventType.valueOf(eventSourceName));
+        getOut().println("sending build report with source name " + eventSourceName)
+        return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT, eventSourceName);
     }
     /**
      * Archive all configured artifacts from a build, using ant patterns defined in
@@ -64,7 +71,6 @@ public class RunDelegate {
      * @param excludes ant glob pattern
      * @param uploadFromSlave <code>true</code> if need upload directly from the slave
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
-     * @return
      */
     def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
         if (build.getProject().getPublishersList().contains(SplunkArtifactNotifier.class)) {
@@ -95,7 +101,11 @@ public class RunDelegate {
     }
 
     def println(String s) {
-        getOut().println(s)
+        try {
+            getOut().println(s)
+        } catch (Exception ex) {//shouldn't happen!
+            ex.printStackTrace();
+        }
     }
 
     def getEnv() {

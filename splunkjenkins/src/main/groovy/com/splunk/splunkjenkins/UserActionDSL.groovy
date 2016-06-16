@@ -31,6 +31,7 @@ public class UserActionDSL {
                 cc.scriptBaseClass = ClosureScript.class.name;
                 ImportCustomizer ic = new ImportCustomizer()
                 ic.addStaticStars(LogEventHelper.class.name)
+                ic.addStarImport("jenkins.model")
                 cc.addCompilationCustomizers(ic)
                 ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader, new Binding(), cc)
                         .parse(splunkConfig.getScript())
