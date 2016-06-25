@@ -195,7 +195,7 @@ public class LogEventHelper {
                 LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getName());
                 return eventCount;
             }
-            listener.getLogger().println("processing "+paths.length+" files");
+            listener.getLogger().println("archiving files "+Arrays.toString(paths)+" to splunk");
             Map configMap = SplunkJenkinsInstallation.get().toMap();
             LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap, sendFromSlave,maxFileSize);
             eventCount=fileCallable.sendFiles(paths);

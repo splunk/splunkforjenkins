@@ -66,7 +66,7 @@ public class EventRecord {
         if (message instanceof String) {
             return "{length:" + ((String) message).length() + StringUtils.substring((String) message, 0, 80)+" ...}";
         } else {
-            return "{raw data" + StringUtils.substring("" + message, 0, 80)+" ...}";
+            return "{raw data" + StringUtils.abbreviate("" + message, 80)+"}";
         }
     }
 

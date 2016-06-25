@@ -127,7 +127,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     /**
-     * Note: this method is meant be called on slave only!
+     * Note: this method is meant to be called on slave only!
      *
      * @param config the SplunkJenkinsInstallation to be used on Slave
      */
