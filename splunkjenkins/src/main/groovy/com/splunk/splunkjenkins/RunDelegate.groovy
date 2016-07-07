@@ -87,7 +87,6 @@ public class RunDelegate {
                 }
             }
         }
-        getOut().println("sending files in DSL using glob pattern includes:" + includes + " excludes:" + excludes)
         return sendFiles(build, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 

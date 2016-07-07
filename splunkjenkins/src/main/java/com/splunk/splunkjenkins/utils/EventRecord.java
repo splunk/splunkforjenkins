@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
-
 public class EventRecord {
     private final static String METADATA_KEYS[] = {"index", "source", "host", "sourcetype"};
     private long time;
@@ -110,14 +108,11 @@ public class EventRecord {
      * @return the http event collector endpoint
      */
     public String getEndpoint(SplunkJenkinsInstallation config) {
-        if (!config.isRawEventEnabled()) {
+        if (!config.isMetaDataInURLSupported(eventType.needSplit())) {
             return config.getJsonUrl();
         }
         Map queryMap = new HashMap();
         queryMap.putAll(getMetaData());
-        if (!eventType.needSplit()) {
-            queryMap.put("time", getTimestamp());
-        }
         return config.getRawUrl() + "?" + LogEventHelper.UrlQueryBuilder.toString(queryMap);
     }
 }

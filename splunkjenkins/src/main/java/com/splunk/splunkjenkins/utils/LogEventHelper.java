@@ -47,12 +47,8 @@ public class LogEventHelper {
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
         HttpPost postMethod = new HttpPost(record.getEndpoint(config));
-        if (config.isRawEventEnabled()) {
-            if(record.getEventType().needSplit()){
-                postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
-            }else{
-                postMethod.setEntity(new StringEntity(gson.toJson(record), "utf-8"));
-            }
+        if (config.isMetaDataInURLSupported(record.getEventType().needSplit())) {
+            postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
         } else {
             //http event collector does not support raw event, need split records and append metadata to message body
             String jsonRecord;

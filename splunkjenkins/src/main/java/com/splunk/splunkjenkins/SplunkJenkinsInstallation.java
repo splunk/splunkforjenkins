@@ -262,12 +262,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     /**
-     * if raw input is not supported, then metadata in URL query parameter is not supported neither
-     *
-     * @return true if supports specify meta in url query parameter
+     * Check whether we can optimize sending process, e.g. if we need to send 1000 lines for one job console log,
+     * and we can specify host,source,sourcetype,index only once in query parameter if raw event is supported,
+     * instead of sending 1000 times in request body
+     * @param needSplit does the text need to be logged to splunk line by line
+     * @return true if HEC supports specify metadata in url query parameter
      */
-    public boolean isMetaDataInURLSupported() {
-        return rawEventEnabled;
+    public boolean isMetaDataInURLSupported(boolean needSplit) {
+        return rawEventEnabled && needSplit;
     }
 
     public boolean isMonitoringConfig() {
