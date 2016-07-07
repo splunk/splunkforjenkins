@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--copy from builds/junitResult.xml -->
+<result plugin="junit@1.11-SNAPSHOT">
+    <suites>
+        <suite>
+            <file>/usr/local/eserv/workspace/Splunk/generic_jobs/generic_new_test_LINUX/new_test/tests/search/standard/test-result.xml</file>
+            <name>(empty)</name>
+            <duration>735.67676</duration>
+            <cases>
+                <case>
+                    <duration>242.55756</duration>
+                    <className>test_batchsearch_parallelization.TestBatchSearchParallelization</className>
+                    <testName>test_batch_search_parallelization[attributes0-basic_scenario]</testName>
+                    <skipped>false</skipped>
+                    <failedSince>0</failedSince>
+                </case>
+                <case>
+                    <duration>245.49579</duration>
+                    <className>test_batchsearch_parallelization.TestBatchSearchParallelization</className>
+                    <testName>test_batch_search_parallelization[attributes1-result_aggregator]</testName>
+                    <skipped>false</skipped>
+                    <failedSince>0</failedSince>
+                </case>
+                <case>
+                    <duration>247.62344</duration>
+                    <className>test_batchsearch_parallelization.TestBatchSearchParallelization</className>
+                    <testName>test_batch_search_parallelization[attributes2-serialized_queue]</testName>
+                    <skipped>false</skipped>
+                    <failedSince>0</failedSince>
+                </case>
+            </cases>
+        </suite>
+    </suites>
+    <duration>735.67676</duration>
+    <keepLongStdio>false</keepLongStdio>
+</result>

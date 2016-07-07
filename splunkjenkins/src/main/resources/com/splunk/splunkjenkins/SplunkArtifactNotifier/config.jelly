@@ -1,0 +1,20 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+    <f:entry title="${%Include files}" field="includeFiles"
+             description="${%ant_pattern('includes','**/*.log')}">
+        <f:textbox/>
+    </f:entry>
+    <f:advanced>
+        <f:entry title="${%Exclude files}" field="excludeFiles"
+                 description="${%ant_pattern('excludes','dist/**/*.log')}">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%Publish from slave}" field="publishFromSlave">
+            <f:checkbox default="true" />
+        </f:entry>
+        <f:entry title="${%Skip global splunk file archive}" field="skipGlobalSplunkArchiver">
+            <f:checkbox default="true"/>
+        </f:entry>
+    </f:advanced>
+</j:jelly>
