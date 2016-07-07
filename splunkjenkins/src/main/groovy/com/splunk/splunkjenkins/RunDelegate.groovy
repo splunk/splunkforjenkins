@@ -73,14 +73,20 @@ public class RunDelegate {
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      */
     def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
-        if (build.getProject().getPublishersList().contains(SplunkArtifactNotifier.class)) {
-            SplunkArtifactNotifier notifier = build.getProject().getPublishersList().get(SplunkArtifactNotifier.class)
+        SplunkArtifactNotifier notifier = build.getProject().getPublishersList().get(SplunkArtifactNotifier.class)
+        if (notifier != null) {
             //already defined on job level
             if (notifier.skipGlobalSplunkArchive) {
                 return;
+            }else{
+                //do not send duplicate files
+                if(excludes==null){
+                    excludes=notifier.includeFiles;
+                }else{
+                    excludes=excludes+","+notifier.includeFiles;
+                }
             }
         }
-        getOut().println("sending files using glob pattern include:" + includes + " excludes:" + excludes)
         return sendFiles(build, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 

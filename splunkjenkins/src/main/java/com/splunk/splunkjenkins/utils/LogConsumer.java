@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -90,7 +91,8 @@ public class LogConsumer implements Runnable {
                             } catch (IOException e) {
                                 content = record.getMessageString();
                             }
-                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:" + content);
+                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:"
+                                    + StringUtils.abbreviate(content,80));
                         } else {
                             //other errors
                             LOG.log(Level.SEVERE, "will resend the message:", record.getShortDescr());

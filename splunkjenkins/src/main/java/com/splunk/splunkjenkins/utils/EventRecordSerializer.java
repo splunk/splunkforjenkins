@@ -13,7 +13,7 @@ public class EventRecordSerializer implements JsonSerializer<EventRecord> {
     public JsonElement serialize(EventRecord src, Type typeOfSrc, JsonSerializationContext context) {
         JsonObject eventJson = new JsonObject();
         SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
-        if (!config.isMetaDataInURLSupported()) {
+        if (!config.isMetaDataInURLSupported(src.getEventType().needSplit())) {
             //need append metadata into event json object
             eventJson = (JsonObject) context.serialize(src.getMetaData());
         }

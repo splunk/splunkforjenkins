@@ -73,8 +73,8 @@ public class SplunkLogService {
         cm.setMaxTotal(200);
         // Increase default max connection per route to 20
         cm.setDefaultMaxPerRoute(20);
-        //socket timeout for 5 minutes
-        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int) TimeUnit.MINUTES.toMillis(5)).build();
+        //socket timeout for 2 minutes
+        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int) TimeUnit.MINUTES.toMillis(2)).build();
         cm.setDefaultSocketConfig(defaultSocketConfig);
         return cm;
     }
