@@ -13,8 +13,11 @@
         <f:entry title="${%Publish from slave}" field="publishFromSlave">
             <f:checkbox default="true" />
         </f:entry>
-        <f:entry title="${%Skip global splunk file archive}" field="skipGlobalSplunkArchiver">
+        <f:entry title="${%Skip global splunk file archive}" field="skipGlobalSplunkArchive">
             <f:checkbox default="true"/>
+        </f:entry>
+        <f:entry title="${%Max file size}" field="sizeLimit">
+            <f:textbox clazz="required" default="10MB"/>
         </f:entry>
     </f:advanced>
 </j:jelly>

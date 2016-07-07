@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles;
 
 @SuppressWarnings("unused")
@@ -24,17 +25,20 @@ public class SplunkArtifactNotifier extends Notifier {
     /**
      * {@link org.apache.tools.ant.types.FileSet} "includes" string, like "foo/bar/*.xml"
      */
-    public final String includeFiles;
-    public final String excludeFiles;
-    public final boolean publishFromSlave;
-    public final boolean skipGlobalSplunkArchive;
+    private final String includeFiles;
+    private final String excludeFiles;
+    private final boolean publishFromSlave;
+    private final boolean skipGlobalSplunkArchive;
+    private final String sizeLimit;
 
     @DataBoundConstructor
-    public SplunkArtifactNotifier(String includeFiles, String excludeFiles, boolean publishFromSlave, boolean skipGlobalSplunkArchiver) {
+    public SplunkArtifactNotifier(String includeFiles, String excludeFiles, boolean publishFromSlave,
+                                  boolean skipGlobalSplunkArchive, String sizeLimit) {
         this.includeFiles = includeFiles;
         this.excludeFiles = excludeFiles;
         this.publishFromSlave = publishFromSlave;
-        this.skipGlobalSplunkArchive = skipGlobalSplunkArchiver;
+        this.skipGlobalSplunkArchive = skipGlobalSplunkArchive;
+        this.sizeLimit=sizeLimit;
     }
 
     @Override
@@ -50,8 +54,10 @@ public class SplunkArtifactNotifier extends Notifier {
         } catch (Exception ex) {
             listener.getLogger().println("failed to get env");
         }
-        int eventCount = sendFiles(build, envVars, listener, includeFiles, excludeFiles, publishFromSlave, 0);
-        Logger.getLogger(this.getClass().getName()).log(Level.FINE,"sent "+eventCount+" events");
+        long maxFileSize=parseFileSize(sizeLimit);
+        listener.getLogger().println("sending files at job level, includes:" + includeFiles + " excludes:" + excludeFiles);
+        int eventCount = sendFiles(build, envVars, listener, includeFiles, excludeFiles, publishFromSlave, maxFileSize);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE,"sent "+eventCount+" events with file size limit "+maxFileSize);
         //do not mark build as failed even archive file failed
         return true;
     }
@@ -66,5 +72,36 @@ public class SplunkArtifactNotifier extends Notifier {
         public String getDisplayName() {
             return Messages.SplunArtifactArchive();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "SplunkArtifactNotifier{" +
+                "includeFiles='" + includeFiles + '\'' +
+                ", excludeFiles='" + excludeFiles + '\'' +
+                ", publishFromSlave=" + publishFromSlave +
+                ", skipGlobalSplunkArchive=" + skipGlobalSplunkArchive +
+                ", sizeLimit='" + sizeLimit + '\'' +
+                '}';
+    }
+
+    public String getIncludeFiles() {
+        return includeFiles;
+    }
+
+    public String getExcludeFiles() {
+        return excludeFiles;
+    }
+
+    public boolean isPublishFromSlave() {
+        return publishFromSlave;
+    }
+
+    public boolean isSkipGlobalSplunkArchive() {
+        return skipGlobalSplunkArchive;
+    }
+
+    public String getSizeLimit() {
+        return sizeLimit;
     }
 }
