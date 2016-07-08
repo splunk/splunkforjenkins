@@ -88,12 +88,12 @@ public class EventRecord {
     }
 
     /**
+     * @param config the Splunk config which contains metadata information
      * @return metdata information for http event collector
      */
-    public Map<String, String> getMetaData() {
+    private Map<String, String> getMetaData(SplunkJenkinsInstallation config) {
         LogEventHelper.UrlQueryBuilder metaDataBuilder = new LogEventHelper.UrlQueryBuilder();
         metaDataBuilder.putIfAbsent("source", source);
-        SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
         for (String metaKeyName : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
             metaDataBuilder.putIfAbsent(metaKeyName, config.getMetaData(eventType.name().toLowerCase() + "." + metaKeyName));
@@ -104,7 +104,7 @@ public class EventRecord {
 
     /**
      *
-     * @param config Splunk config
+     * @param config the Splunk config which contains metadata information
      * @return the http event collector endpoint
      */
     public String getEndpoint(SplunkJenkinsInstallation config) {
@@ -112,7 +112,21 @@ public class EventRecord {
             return config.getJsonUrl();
         }
         Map queryMap = new HashMap();
-        queryMap.putAll(getMetaData());
+        queryMap.putAll(getMetaData(config));
         return config.getRawUrl() + "?" + LogEventHelper.UrlQueryBuilder.toString(queryMap);
+    }
+
+    /**
+     *
+     * @param config the Splunk config which contains metadata information
+     * @return a Map object can be used for json serialization
+     */
+    public Map<String, Object> toMap(SplunkJenkinsInstallation config) {
+        Map<String, Object> values = new HashMap<>();
+        values.put("time", getTimestamp());
+        values.put("event", message);
+        Map<String,String> metaDataConfig=getMetaData(config);
+        values.putAll(metaDataConfig);
+        return values;
     }
 }

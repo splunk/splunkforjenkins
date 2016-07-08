@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.FilePath;
 import hudson.Util;
@@ -34,8 +35,7 @@ public class LogEventHelper {
     public static final String SEPARATOR = "    ";
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
-    private static final Gson gson = new GsonBuilder().registerTypeAdapter(EventRecord.class,
-            new EventRecordSerializer()).disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
+    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
     private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
             .put("KB", 1024L)
             .put("kB", 1000L)
@@ -60,13 +60,13 @@ public class LogEventHelper {
                         EventRecord lineRecord = new EventRecord(line, record.getEventType());
                         lineRecord.setSource(record.getSource());
                         lineRecord.setTime(record.getTime());
-                        stout.write(gson.toJson(lineRecord));
+                        stout.write(gson.toJson(lineRecord.toMap(config)));
                         stout.write("\n");
                     }
                 }
                 jsonRecord = stout.toString();
             } else {
-                jsonRecord = gson.toJson(record);
+                jsonRecord = gson.toJson(record.toMap(config));
             }
             StringEntity entity = new StringEntity(jsonRecord, "utf-8");
             entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
@@ -85,7 +85,7 @@ public class LogEventHelper {
             if (response.getStatusLine().getStatusCode() != 200) {
                 String reason = response.getStatusLine().getReasonPhrase();
                 if (response.getStatusLine().getStatusCode() == 400) {
-                    return FormValidation.error("incorrect index, please check advance section to update index");
+                    return FormValidation.error("incorrect index name or do not have write permission to the default index, please check MetaData configuration");
                 } else {
                     return FormValidation.error("token:" + config.getToken() + " response:" + reason);
                 }

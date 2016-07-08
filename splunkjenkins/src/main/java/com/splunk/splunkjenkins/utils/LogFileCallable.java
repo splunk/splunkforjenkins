@@ -133,11 +133,12 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         }
         InputStream input = new FileInputStream(f);
         try {
-            int count = send(f.getAbsolutePath(), input);
             long expireTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(WAIT_MINUTES);
+            int count = send(f.getAbsolutePath(), input);
             while (SplunkLogService.getInstance().getQueueSize() > 0 && System.currentTimeMillis() < expireTime) {
                 Thread.sleep(500);
             }
+            SplunkLogService.getInstance().stopWorker();
             SplunkLogService.getInstance().releaseConnection();
             return count;
         } finally {

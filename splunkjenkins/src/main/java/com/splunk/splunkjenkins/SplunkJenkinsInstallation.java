@@ -54,7 +54,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String metaDataConfig;
     //groovy content if file path not set
     public String scriptContent;
-    public transient Properties metaDataProperties;
+    public transient Properties metaDataProperties=new Properties();
     private boolean monitoringConfig = false;
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
