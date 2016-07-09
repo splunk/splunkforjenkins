@@ -86,8 +86,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                         if (nonEmpty(desc.sourceTypeName)) {
                             this.metaDataConfig = this.metaDataConfig + "\nsourcetype=" + desc.sourceTypeName;
                         }
-                        //overwrite with newer version
-                        this.save();
                     } else {
                         file.getXStream().fromXML(xmlText, this);
                     }
