@@ -113,6 +113,7 @@ public class LogConsumer implements Runnable {
 
     public void stopTask() {
         this.acceptingTask = false;
+        Thread.currentThread().interrupt();
     }
 
     /**

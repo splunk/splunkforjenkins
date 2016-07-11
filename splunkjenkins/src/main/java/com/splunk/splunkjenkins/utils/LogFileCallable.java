@@ -64,9 +64,11 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
     }
 
     public Integer send(String fileName, InputStream input) throws IOException, InterruptedException {
-        String sourceName = fileName;
-        if (sourceName.startsWith(baseName)) {
-            sourceName = sourceName.substring(baseName.length() + 1);
+        //always use unix style path because windows slave maybe launched by ssh
+        String sourceName = fileName.replace("\\","/");
+        String ws_posix_path =baseName.replace("\\","/");
+        if (sourceName.startsWith(ws_posix_path)) {
+            sourceName = sourceName.substring(ws_posix_path.length() + 1);
         }
         sourceName = buildUrl + sourceName;
         ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();

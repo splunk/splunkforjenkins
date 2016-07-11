@@ -23,6 +23,7 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
@@ -188,7 +189,7 @@ public class LogEventHelper {
         try {
             final FilePath[] paths = ws.list(expanded, exclude);
             if (paths.length == 0) {
-                LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getName());
+                LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getRemote());
                 return eventCount;
             }
             listener.getLogger().println("archiving files "+Arrays.toString(paths)+" to splunk");
@@ -232,7 +233,7 @@ public class LogEventHelper {
             for (String key : queryParameters.keySet()) {
                 stringBuilder.append(key)
                         .append("=")
-                        .append(queryParameters.get(key))
+                        .append(URLEncoder.encode(queryParameters.get(key)))
                         .append("&");
             }
             if (stringBuilder.length() == 0) {
