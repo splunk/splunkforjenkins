@@ -47,10 +47,10 @@ public class SplunkConfigUtil {
                 }
             }
             //enable logging endpoint
-            service.post(ENDPOINT + "/http", ImmutableMap.of("disabled", (Object) "0"));
+            service.post(ENDPOINT +"http", ImmutableMap.of("disabled", (Object) "0"));
             ResponseMessage response;
             try {
-                response = service.get(ENDPOINT + "/" + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
+                response = service.get(ENDPOINT  + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
             } catch (com.splunk.HttpException e) {
                 if (e.getStatus() != 404) {
                     throw e;
@@ -59,10 +59,12 @@ public class SplunkConfigUtil {
                 Map<String, Object> args = new HashMap<String, Object>();
                 args.put("output_mode", "json");
                 args.put("name", COLLECTOR_NAME);
+                args.put("index",INDEX_NAME);
+                args.put("indexes","main,"+INDEX_NAME);
                 args.put("description", "test http event collector");
-                response = service.post(ENDPOINT + "/http", args);
+                response = service.post(ENDPOINT + "http", args);
                 System.err.println(response);
-                response = service.get(ENDPOINT + "/" + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
+                response = service.get(ENDPOINT  + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
             }
             try {
                 String tokenMessage = IOUtils.toString(response.getContent());
