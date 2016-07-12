@@ -35,6 +35,13 @@ public class LoggingRunListener extends RunListener<Run> {
         StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
+                if(cause instanceof Cause.UpstreamCause){
+                    //find nearest upstream
+                    Cause.UpstreamCause upstreamCause=(Cause.UpstreamCause) cause;
+                    //upstream url is project url, build is build number
+                    return upstreamCause.getUpstreamUrl()+"/"+upstreamCause.getUpstreamBuild()+"/";
+                }
+                //manual triggered
                 if (buf.length() > 0) buf.append(", ");
                 buf.append(cause.getShortDescription());
             }
