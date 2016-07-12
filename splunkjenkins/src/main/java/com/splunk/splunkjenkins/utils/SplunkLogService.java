@@ -29,6 +29,7 @@ import java.util.logging.Level;
 
 public class SplunkLogService {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
+    private final static int SOCKET_TIMEOUT=3;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
@@ -74,7 +75,7 @@ public class SplunkLogService {
         // Increase default max connection per route to 20
         cm.setDefaultMaxPerRoute(20);
         //socket timeout for 2 minutes
-        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int) TimeUnit.MINUTES.toMillis(2)).build();
+        SocketConfig defaultSocketConfig = SocketConfig.custom().setSoTimeout((int) TimeUnit.MINUTES.toMillis(SOCKET_TIMEOUT)).build();
         cm.setDefaultSocketConfig(defaultSocketConfig);
         return cm;
     }
@@ -124,7 +125,7 @@ public class SplunkLogService {
             return false;
         }
         EventRecord record = new EventRecord(message, eventType);
-        if (sourceName != null && "".equals(sourceName)) {
+        if (!(sourceName == null || "".equals(sourceName))) {
             record.setSource(sourceName);
         }
         return enqueue(record);
@@ -147,9 +148,10 @@ public class SplunkLogService {
             synchronized (workers) {
                 int worksToCreate = MAX_WORKER_COUNT - workers.size();
                 for (int i = 0; i < worksToCreate; i++) {
-                    LogConsumer runnable = new LogConsumer(client, logQueue, outgoingCounter);
-                    workers.add(runnable);
-                    Thread workerThread = new Thread(runnable);
+                    LogConsumer workerThread = new LogConsumer(client, logQueue, outgoingCounter);
+                    workers.add(workerThread);
+                    String workerThreadName="splunkins-worker-"+workers.size();
+                    workerThread.setName(workerThreadName);
                     workerThread.start();
                 }
             }
@@ -157,7 +159,7 @@ public class SplunkLogService {
         long sent = incomingCounter.incrementAndGet();
         if (sent % 2000 == 0) {
             synchronized (InstanceHolder.service) {
-                connMgr.closeIdleConnections(60, TimeUnit.SECONDS);
+                connMgr.closeIdleConnections(SOCKET_TIMEOUT, TimeUnit.MINUTES);
             }
         }
         return true;
@@ -169,6 +171,9 @@ public class SplunkLogService {
                 consumer.stopTask();
             }
             workers.clear();
+        }
+        if(this.getQueueSize()!=0){
+            LOG.severe("remaining "+this.getQueueSize()+" record(s) not sent");
         }
     }
 
@@ -190,5 +195,15 @@ public class SplunkLogService {
 
     private static class InstanceHolder {
         static SplunkLogService service = new SplunkLogService();
+    }
+
+    public String getStats() {
+        StringBuilder sbr = new StringBuilder();
+        sbr.append("queue:").append(this.getQueueSize()).append("\n")
+                .append("sent:").append(this.getSentCount()).append("\n");
+        for (LogConsumer consumer : workers) {
+            sbr.append(consumer.getName()).append(":").append(consumer.getSentCount()).append("\n");
+        }
+        return sbr.toString();
     }
 }

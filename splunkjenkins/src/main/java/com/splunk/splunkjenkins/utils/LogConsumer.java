@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.utils.LogEventHelper.buildPost;
 
-public class LogConsumer implements Runnable {
+public class LogConsumer extends Thread {
     private static final Logger LOG = Logger.getLogger(LogConsumer.class.getName());
 
     private HttpClient client;
@@ -78,7 +78,7 @@ public class LogConsumer implements Runnable {
                     try {
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
-                        LOG.log(Level.WARNING, "failed to call http input with message " + record.getShortDescr(), ex);
+                        LOG.log(Level.WARNING, "content length:"+post.getEntity().getContentLength()+" origin:" + record.getShortDescr(), ex);
                         if (nonretryExceptions.contains(ex)) {
                             LOG.log(Level.SEVERE, "remote server error, will not retry");
                             return;
@@ -113,7 +113,7 @@ public class LogConsumer implements Runnable {
 
     public void stopTask() {
         this.acceptingTask = false;
-        Thread.currentThread().interrupt();
+        this.interrupt();
     }
 
     /**
@@ -128,6 +128,9 @@ public class LogConsumer implements Runnable {
         }
     }
 
+    public long getSentCount(){
+        return outgoingCounter.get();
+    }
 
     public static class SplunkClientError extends Throwable {
         int status;

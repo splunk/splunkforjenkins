@@ -17,7 +17,9 @@ import static com.splunk.splunkjenkins.utils.EventType.FILE;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogFileCallable.class.getName());
-    private final int WAIT_MINUTES = 5;
+    private static final int LOOKAHEAD_NEW_LINE=151;
+    private static final String TIMEOUT_NAME = LogFileCallable.class.getName() + ".timeout";
+    private final int WAIT_MINUTES = Integer.getInteger(TIMEOUT_NAME, 5);
     private final String baseName;
     private final String buildUrl;
     private final Map eventCollectorProperty;
@@ -42,7 +44,7 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
                     continue;
                 }
                 if (sendFromSlave) {
-                    LOG.log(Level.FINE, "uploading from slave:" + path.getName());
+                    LOG.log(Level.INFO, "uploading from slave:" + path.getName());
                     eventCount += path.act(this);
                     LOG.log(Level.FINE, "sent in " + eventCount + " batches");
                 } else {
@@ -54,10 +56,8 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
                         in.close();
                     }
                 }
-            } catch (IOException e) {
-                LOG.log(Level.SEVERE, "failed to archive files", e);
-            } catch (InterruptedException e) {
-                LOG.log(Level.SEVERE, "interrupted while archiving file", e);
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE, "archive file failed", e);
             }
         }
         return eventCount;
@@ -86,12 +86,19 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
                 break;
             }
             logText.write(c);
-            if (c == '\n') {
-                if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
-                    flushLog(sourceName, logText);
-                    count++;
-                }
+            long throttleSize= SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
+            if(!SplunkJenkinsInstallation.get().isRawEventEnabled()){
+                //if raw event is not supported, we need split the content line by line and append metadata to each line
+                throttleSize=throttleSize/2;
             }
+            if (c == '\n') {
+                throttleSize = throttleSize - LOOKAHEAD_NEW_LINE;
+            }
+            if (logText.size() >= throttleSize ) {
+                flushLog(sourceName, logText);
+                count++;
+            }
+
         }
         if (logText.size() > 0) {
             flushLog(sourceName, logText);
@@ -114,13 +121,13 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        //only use one thread on slave
+        SplunkLogService.getInstance().MAX_WORKER_COUNT=1;
         enabledSplunkConfig = true;
     }
 
     private void flushLog(String source, ByteArrayOutputStream out) {
-        EventRecord record = new EventRecord(out.toString(), FILE);
-        record.setSource(source);
-        SplunkLogService.getInstance().enqueue(record);
+        SplunkLogService.getInstance().send(out.toString(), FILE, source);
         out.reset();
     }
 
@@ -139,6 +146,10 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             int count = send(f.getAbsolutePath(), input);
             while (SplunkLogService.getInstance().getQueueSize() > 0 && System.currentTimeMillis() < expireTime) {
                 Thread.sleep(500);
+            }
+            if(System.currentTimeMillis()>expireTime){
+                LOG.log(Level.SEVERE, "sending file timeout in "+WAIT_MINUTES+" minutes," +
+                        " please adjust the value by passing -D"+TIMEOUT_NAME +"=minutes to slave jvm parameter");
             }
             SplunkLogService.getInstance().stopWorker();
             SplunkLogService.getInstance().releaseConnection();

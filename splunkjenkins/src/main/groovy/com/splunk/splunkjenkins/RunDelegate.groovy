@@ -6,6 +6,7 @@ import hudson.EnvVars
 import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.TaskListener
+import hudson.tasks.Publisher
 import hudson.tasks.junit.TestResult
 import hudson.tasks.junit.TestResultAction
 
@@ -14,7 +15,6 @@ import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.METADATA
 import static com.splunk.splunkjenkins.Constants.TESTCASE
-import static com.splunk.splunkjenkins.Constants.TESTSUITE
 import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
 
@@ -149,31 +149,35 @@ public class RunDelegate {
     public Action getAction(Class<? extends Action> type) {
         return build.getActions(type);
     }
+    /**
+     * check if the project has publisher
+     * @param className, common used publishers are
+     * @return
+     */
+    public boolean hasPublisherName(String className) {
+        boolean found = false;
+        for (Publisher publisher : build.getProject().getPublishersList()) {
+            if (publisher.getClass().getName().equals(className)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
 
     @Override
     public String toString() {
         return "RunDelegate on build:" + this.build;
     }
 
-    public static Map genJunitTestReportWithEnv(AbstractBuild build, EnvVars enVars) {
+    public static Map generateReport(AbstractBuild build, EnvVars enVars, Closure closure) {
         String url = build.getUrl();
         Map event = new HashMap();
-        event.put(TAG, "test_result")
+        event.put(TAG, "build_report")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put(METADATA, enVars);
-        TestResultAction resultAction = build.getAction(TestResultAction.class);
-        TestResult testResult;
-        if (resultAction != null) {
-            testResult = resultAction?.result;
-            //only mark result not found if user defined test result action but failed to generate test report
-            boolean reportMissing = testResult == null;
-            if (reportMissing) {
-                event.put("error", "failed to retrieve test report")
-            } else {
-                event.put(TESTSUITE, getJunitXmlCompatibleResult(testResult))
-            }
-        }
+        event.put("report",closure())
         return event
     }
 

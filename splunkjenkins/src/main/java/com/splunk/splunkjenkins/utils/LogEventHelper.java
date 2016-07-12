@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.FilePath;
 import hudson.Util;
@@ -15,6 +14,7 @@ import hudson.model.User;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -55,7 +55,7 @@ public class LogEventHelper {
             String jsonRecord;
             if (record.getEventType().needSplit()) {
                 StringWriter stout = new StringWriter();
-                String[] values = record.getMessageString().split("\n");
+                String[] values = record.getMessageString().split("[\\r\\n]+");
                 for (String line : values) {
                     if (line != "") {
                         EventRecord lineRecord = new EventRecord(line, record.getEventType());
@@ -192,10 +192,10 @@ public class LogEventHelper {
                 LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getRemote());
                 return eventCount;
             }
-            listener.getLogger().println("archiving files "+Arrays.toString(paths)+" to splunk");
             Map configMap = SplunkJenkinsInstallation.get().toMap();
             LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap, sendFromSlave,maxFileSize);
             eventCount=fileCallable.sendFiles(paths);
+            listener.getLogger().println("sent "+Arrays.toString(paths)+" to splunk in "+eventCount+" events");
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "failed to archive files", e);
         } catch (InterruptedException e) {
