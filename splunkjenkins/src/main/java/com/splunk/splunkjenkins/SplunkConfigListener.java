@@ -21,7 +21,8 @@ import java.util.regex.Pattern;
  * send xml file to splunk
  */
 
-@Extension
+//disable it for test
+//@Extension
 public class SplunkConfigListener extends SaveableListener {
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes)\\.xml$", Pattern.CASE_INSENSITIVE);
 
