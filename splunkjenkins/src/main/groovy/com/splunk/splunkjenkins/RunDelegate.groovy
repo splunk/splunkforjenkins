@@ -78,12 +78,12 @@ public class RunDelegate {
             //already defined on job level
             if (notifier.skipGlobalSplunkArchive) {
                 return;
-            }else{
+            } else {
                 //do not send duplicate files
-                if(excludes==null){
-                    excludes=notifier.includeFiles;
-                }else{
-                    excludes=excludes+","+notifier.includeFiles;
+                if (excludes == null) {
+                    excludes = notifier.includeFiles;
+                } else {
+                    excludes = excludes + "," + notifier.includeFiles;
                 }
             }
         }
@@ -151,7 +151,7 @@ public class RunDelegate {
     }
     /**
      * check if the project has publisher
-     * @param className, common used publishers are
+     * @param className , common used publishers are
      * @return
      */
     public boolean hasPublisherName(String className) {
@@ -170,15 +170,19 @@ public class RunDelegate {
         return "RunDelegate on build:" + this.build;
     }
 
-    public static Map generateReport(AbstractBuild build, EnvVars enVars, Closure closure) {
+    /**
+     * send build reports with build variables as metadata
+     * @param closure Groovy closure to return a report
+     */
+    public void sendReport(Closure closure) {
         String url = build.getUrl();
         Map event = new HashMap();
         event.put(TAG, "build_report")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put(METADATA, enVars);
-        event.put("report",closure())
-        return event
+        event.put("report", closure());
+        send(event);
     }
 
     public static Map getJunitXmlCompatibleResult(TestResult testResult) {
