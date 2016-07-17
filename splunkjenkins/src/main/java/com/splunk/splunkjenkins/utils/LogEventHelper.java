@@ -8,21 +8,24 @@ import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
-import hudson.model.AbstractBuild;
-import hudson.model.TaskListener;
-import hudson.model.User;
+import hudson.model.*;
+import hudson.model.queue.WorkUnit;
+import hudson.node_monitors.NodeMonitor;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -31,6 +34,7 @@ import java.util.logging.Logger;
 
 import static com.google.common.base.Strings.emptyToNull;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
+import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
     public static final String SEPARATOR = "    ";
@@ -43,7 +47,7 @@ public class LogEventHelper {
             .put("KiB", 1024L)
             .put("MB", 1024 * 1024L)
             .put("MiB", 1024 * 1024L)
-            .put("GB", 1024 * 1024*1024L)
+            .put("GB", 1024 * 1024 * 1024L)
             .build();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
@@ -116,7 +120,7 @@ public class LogEventHelper {
      *
      * @param in     the byte array
      * @param length how many bytes we want to read in
-     * @param out write max(length) to out
+     * @param out    write max(length) to out
      * @see hudson.console.PlainTextConsoleOutputStream
      */
     public static void decodeConsoleBase64Text(byte[] in, int length, ByteArrayOutputStream2 out) {
@@ -167,17 +171,20 @@ public class LogEventHelper {
     /**
      * @return Queue statics with timestamp
      */
-    public static String getQueueInfo() {
+    public static Map<String, Object> getQueueInfo() {
         Jenkins instance = Jenkins.getInstance();
         int computerSize = instance.getComputers().length;
         int totalExecutors = instance.overallLoad.computeTotalExecutors();
         int queueLength = instance.overallLoad.computeQueueLength();
         int idleExecutors = instance.overallLoad.computeIdleExecutors();
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-        String message = sdf.format(new Date()) + SEPARATOR + "queue_length=" + queueLength + SEPARATOR
-                + "computers_count=" + computerSize + SEPARATOR
-                + "idle_executors=" + idleExecutors + SEPARATOR + " total_executors=" + totalExecutors;
-        return message;
+        Map<String, Object> event = new HashMap<>();
+        event.put("queue_length", queueLength);
+        event.put("total_computers", computerSize);
+        event.put("idle_executors", idleExecutors);
+        event.put("total_executors", totalExecutors);
+        event.put("time", sdf.format(new Date()));
+        return event;
     }
 
     public static int sendFiles(AbstractBuild build, Map<String, String> envVars, TaskListener listener,
@@ -193,9 +200,9 @@ public class LogEventHelper {
                 return eventCount;
             }
             Map configMap = SplunkJenkinsInstallation.get().toMap();
-            LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap, sendFromSlave,maxFileSize);
-            eventCount=fileCallable.sendFiles(paths);
-            listener.getLogger().println("sent "+Arrays.toString(paths)+" to splunk in "+eventCount+" events");
+            LogFileCallable fileCallable = new LogFileCallable(ws.getRemote(), build.getUrl(), configMap, sendFromSlave, maxFileSize);
+            eventCount = fileCallable.sendFiles(paths);
+            listener.getLogger().println("sent " + Arrays.toString(paths) + " to splunk in " + eventCount + " events");
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "failed to archive files", e);
         } catch (InterruptedException e) {
@@ -267,5 +274,72 @@ public class LogEventHelper {
         public String translateName(final Field f) {
             return f.getName().toLowerCase();
         }
+    }
+
+    public static List<Map> getSlaveStats() {
+        List<Map> event = new ArrayList();
+        Computer[] computers = Jenkins.getInstance().getComputers();
+        if (computers == null || computers.length == 0) {
+            return event;
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
+        Collection<NodeMonitor> monitors = ComputerSet.getNonIgnoredMonitors().values();
+        for (Computer computer : computers) {
+            Map slaveInfo = new HashMap();
+            slaveInfo.put("tag", "slave");
+            if (computer instanceof Jenkins.MasterComputer) {
+                slaveInfo.put("node_name", "(master)");
+            } else {
+                slaveInfo.put("node_name", computer.getName());
+            }
+            Node slaveNode = computer.getNode();
+            if (slaveNode != null) {
+                slaveInfo.put("label", slaveNode.getLabelString());
+            }
+            slaveInfo.put("num_executors", computer.getNumExecutors());
+            slaveInfo.put("is_idle", computer.isIdle());
+            slaveInfo.put("is_online", computer.isOnline());
+            long connectTime = computer.getConnectTime();
+            if (connectTime != 0) {
+                slaveInfo.put("connect_time", sdf.format(new Date(connectTime)));
+            } else {
+                //slave is offline or disconnected
+                slaveInfo.put("connect_time", 0);
+            }
+            if (!computer.isIdle()) {
+                List<String> builds = new ArrayList<>();
+                for (Executor executor : computer.getExecutors()) {
+                    if (executor.isBusy()) {
+                        if (executor.isBusy() && executor.getCurrentExecutable() instanceof Run) {
+                            Run run = (Run) executor.getCurrentExecutable();
+                            if (run != null) {
+                                builds.add(run.getUrl());
+                            }
+                        }
+                    }
+                }
+                if (!builds.isEmpty()) {
+                    slaveInfo.put("builds", builds);
+                }
+            }
+            Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
+            if (method != null) {
+                try { //cloud slave may defined getUptime method
+                    Object uptime = method.invoke(computer, new Object[0]);
+                    slaveInfo.put("uptime", uptime);
+                } catch (Exception e) {
+                    //just ignore
+                }
+            }
+            for (NodeMonitor monitor : monitors) {
+                Object data = monitor.data(computer);
+                if (data != null) {
+                    String monitorName = monitor.getClass().getSimpleName();
+                    slaveInfo.put(monitorName, monitor.data(computer) + "");
+                }
+            }
+            event.add(slaveInfo);
+        }
+        return event;
     }
 }

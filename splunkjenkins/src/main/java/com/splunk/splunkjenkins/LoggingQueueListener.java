@@ -5,9 +5,9 @@ import hudson.Extension;
 import hudson.model.Queue;
 import hudson.model.queue.QueueListener;
 
-import static com.splunk.splunkjenkins.Constants.TAG;
+import java.util.Map;
+
 import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 
 /**
@@ -28,20 +28,24 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 @SuppressWarnings("unused")
 @Extension
 public class LoggingQueueListener extends QueueListener {
-    private static final String TAG_SUFFIX = SEPARATOR + TAG + "=queue";
 
     @Override
     public void onEnterWaiting(Queue.WaitingItem wi) {
         String name = getTaskName(wi.task);
-        String message = getQueueInfo() + SEPARATOR + "action=enqueue" + SEPARATOR + "item=" + name + TAG_SUFFIX;
-        SplunkLogService.getInstance().send(message, QUEUE_INFO);
+        Map event = getQueueInfo();
+        event.put("action", "enqueue");
+        event.put("item", name);
+        event.put("tag", "enqueue");
+        SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
     @Override
     public void onLeft(Queue.LeftItem li) {
         String name = getTaskName(li.task);
-        String message = getQueueInfo() + SEPARATOR + "action=dequeue" + SEPARATOR + "item=" + name + TAG_SUFFIX;
-        SplunkLogService.getInstance().send(message, QUEUE_INFO);
+        Map event = getQueueInfo();
+        event.put("item", name);
+        event.put("tag", "dequeue");
+        SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
     /**

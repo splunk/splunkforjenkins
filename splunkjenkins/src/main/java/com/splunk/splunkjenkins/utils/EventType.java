@@ -8,7 +8,8 @@ public enum EventType {
     GENERIC_TEXT(false),
     CONSOLE_LOG(true),
     GENERIC_LINES(true),
-    FILE(true);
+    FILE(true),
+    SLAVE(false);
 
     /**
      * whether the data need to be split by line breaker before send

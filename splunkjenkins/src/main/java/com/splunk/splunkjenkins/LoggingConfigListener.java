@@ -21,23 +21,22 @@ import java.util.regex.Pattern;
  * send xml file to splunk
  */
 
-//disable it for test
 //@Extension
-public class SplunkConfigListener extends SaveableListener {
+public class LoggingConfigListener extends SaveableListener {
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes)\\.xml$", Pattern.CASE_INSENSITIVE);
 
     @Override
     public void onChange(Saveable o, XmlFile file) {
         super.onChange(o, file);
-        //when config splunkins plugin will also trigger the listener, but it hasn't been configure yet
-        //use getDynamic will not trigger loading
+        if(IGNORED.matcher(file.getFile().getName()).find()){
+            return;
+        }
         SplunkJenkinsInstallation globalConfig = (SplunkJenkinsInstallation) GlobalConfiguration.all().getDynamic(SplunkJenkinsInstallation.class.getName());
-
-        if (globalConfig == null || (!globalConfig.isMonitoringConfig()) || IGNORED.matcher(file.getFile().getName()).find()) {
+        if (globalConfig == null || (!globalConfig.isMonitoringConfig())) {
             return;
         }
         Map logInfo = new HashMap<>();
-        logInfo.put(TAG, "xmlconfig");
+        logInfo.put(TAG, "config");
         logInfo.put("file", file.getFile().getAbsolutePath());
         logInfo.put("user", getUserName());
         logInfo.put("config", o);

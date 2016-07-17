@@ -61,7 +61,7 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     private Map getScmInfo(AbstractBuild build) {
-        Map event =new HashMap();
+        Map event = new HashMap();
         if (build.getProject().getScm() != null) {
             SCM scm = build.getProject().getScm();
             try {
@@ -71,12 +71,12 @@ public class LoggingRunListener extends RunListener<Run> {
                 // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
                 if (className.equals("hudson.plugins.git.GitSCM")) {
                     event.put("scm", "git");
-                    event.put("scm_url", getScmURL(envVars,"GIT_URL"));
+                    event.put("scm_url", getScmURL(envVars, "GIT_URL"));
                     event.put("branch", envVars.get("GIT_BRANCH"));
                     event.put("revision", envVars.get("GIT_COMMIT"));
                 } else if (className.equals("hudson.scm.SubversionSCM")) {
                     event.put("scm", "svn");
-                    event.put("scm_url", getScmURL(envVars,"SVN_URL"));
+                    event.put("scm_url", getScmURL(envVars, "SVN_URL"));
                     event.put("revision", envVars.get("SVN_REVISION"));
                 } else if (className.equals("org.jenkinsci.plugins.p4.PerforceScm")) {
                     event.put("scm", "svn");
@@ -161,6 +161,10 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         if (!changelog.isEmpty()) {
             builder.put("changelog", changelog);
+        }
+        if (build.getProject() instanceof Describable) {
+            String jobType = ((Describable) build.getProject()).getDescriptor().getDisplayName();
+            builder.put("job_type", jobType);
         }
         builder.putAll(getScmInfo(build));
         Map event = builder.build();
