@@ -115,7 +115,7 @@ public class LoggingRunListener extends RunListener<Run> {
             return;
         }
         AbstractBuild build = (AbstractBuild) run;
-        long queueTime = run.getStartTimeInMillis() - run.getTimeInMillis();
+        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis())/1000;
         String jenkinsNode = (build.getBuiltOn() == null ? "unknown" : build.getBuiltOn().getDisplayName());
         //check changelog
         List<String> changelog = new ArrayList<>();
@@ -151,7 +151,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 .put("upstream", getBuildCause(run,true))
                 .put(JOB_RESULT, build.getResult().toString())
                 .put("job_started_at", build.getTimestampString2())
-                .put("job_duration", build.getDuration())
+                .put("job_duration", build.getDuration()/1000)
                 .put("queue_time", queueTime)
                 .put("node", jenkinsNode);
         if (!testSummay.isEmpty()) {
