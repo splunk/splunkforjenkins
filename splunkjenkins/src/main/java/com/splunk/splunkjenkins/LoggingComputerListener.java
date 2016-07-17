@@ -19,7 +19,7 @@ import java.util.Set;
 import static com.splunk.splunkjenkins.Constants.TAG;
 import static com.splunk.splunkjenkins.utils.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
-import static com.splunk.splunkjenkins.utils.EventType.SLAVE;
+import static com.splunk.splunkjenkins.utils.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
@@ -73,7 +73,7 @@ public class LoggingComputerListener extends ComputerListener {
         event.put("tag", "temp_offline");
         event.put("node_name", getSlaveName(c));
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
-        SplunkLogService.getInstance().send(getSlaveStats(), SLAVE);
+        SplunkLogService.getInstance().send(getSlaveStats(), SLAVE_INFO);
     }
 
     @Override

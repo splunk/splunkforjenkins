@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
-import static com.splunk.splunkjenkins.utils.EventType.SLAVE;
+import static com.splunk.splunkjenkins.utils.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
@@ -32,7 +32,7 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
         SplunkLogService.getInstance().send(getQueueInfo(), QUEUE_INFO);
         List<Map> slaves = getSlaveStats();
         for (Map slaveInfo : slaves) {
-            SplunkLogService.getInstance().send(slaveInfo, SLAVE);
+            SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);
         }
         //send whole slave list
         List<Node> nodes = Jenkins.getInstance().getNodes();
@@ -46,7 +46,7 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
         Map event = new HashMap();
         event.put("tag", "slave_list");
         event.put("names", name);
-        SplunkLogService.getInstance().send(event, SLAVE);
+        SplunkLogService.getInstance().send(event, SLAVE_INFO);
     }
 
     @Override
