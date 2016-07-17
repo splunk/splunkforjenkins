@@ -29,7 +29,6 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
 
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
-        SplunkLogService.getInstance().send(getQueueInfo(), QUEUE_INFO);
         List<Map> slaves = getSlaveStats();
         for (Map slaveInfo : slaves) {
             SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);

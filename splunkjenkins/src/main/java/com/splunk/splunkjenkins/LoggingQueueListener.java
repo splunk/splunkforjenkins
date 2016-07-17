@@ -33,7 +33,6 @@ public class LoggingQueueListener extends QueueListener {
     public void onEnterWaiting(Queue.WaitingItem wi) {
         String name = getTaskName(wi.task);
         Map event = getQueueInfo();
-        event.put("action", "enqueue");
         event.put("item", name);
         event.put("tag", "enqueue");
         SplunkLogService.getInstance().send(event, QUEUE_INFO);

@@ -32,30 +32,27 @@ public class LoggingRunListener extends RunListener<Run> {
     public void onStarted(Run run, TaskListener listener) {
 
         Map event = ImmutableMap.builder()
-                .put(Constants.TAG, "job_event")
+                .put(Constants.TAG, "job_started")
                 .put(Constants.BUILD_ID, run.getUrl())
-                .put("trigger_by", getBuildCause(run))
+                .put("trigger_by", getBuildCause(run,false))
                 .put("build_event", "started").build();
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
-    private String getBuildCause(Run run) {
+    private String getBuildCause(Run run, boolean findUpstream) {
         StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
-                if (cause instanceof Cause.UpstreamCause) {
+                if (findUpstream && cause instanceof Cause.UpstreamCause) {
                     //find nearest upstream
                     Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
                     //upstream url is project url, build is build number
-                    return upstreamCause.getUpstreamUrl() + "/" + upstreamCause.getUpstreamBuild() + "/";
+                    return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
                 }
-                //manual triggered
+                //append all causes
                 if (buf.length() > 0) buf.append(", ");
                 buf.append(cause.getShortDescription());
             }
-        }
-        if (buf.length() == 0) {
-            buf.append("system");
         }
         return buf.toString();
     }
@@ -146,11 +143,12 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         ImmutableMap.Builder builder = ImmutableMap.builder()
-                .put(Constants.TAG, "job_event")
+                .put(Constants.TAG, "job_completed")
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("job_name", build.getProject().getUrl())
                 .put("build_number", run.getNumber())
-                .put("trigger_by", getBuildCause(run))
+                .put("trigger_by", getBuildCause(run,false))
+                .put("upstream", getBuildCause(run,true))
                 .put(JOB_RESULT, build.getResult().toString())
                 .put("job_started_at", build.getTimestampString2())
                 .put("job_duration", build.getDuration())
