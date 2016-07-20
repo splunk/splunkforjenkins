@@ -17,7 +17,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 @Extension
 public class LoggingSlaveStatus extends AsyncPeriodicWork {
     //make sure no less than 3 minutes, default is 10 minutes
-    public static long recurrencePeriod = TimeUnit.MINUTES.toMillis(Math.max(3, Long.getLong("com.splunk.splunkjenkins.slaveMonitorSeconds", 10)));
+    public static long recurrencePeriod = TimeUnit.MINUTES.toMillis(Math.max(3, Long.getLong("com.splunk.splunkjenkins.slaveMonitorMinutes", 10)));
     private Set<String> slaveNames = new HashSet<>();
 
     public LoggingSlaveStatus() {
@@ -30,7 +30,10 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
         Map<String,Map<String,Object>> slaveStats = getSlaveStats();
         listener.getLogger().println("collected "+slaveStats.keySet().size()+" slaves, previous slaves count "+slaveNames.size());
         Set<String> aliveSlaves = slaveStats.keySet();
-        SplunkLogService.getInstance().send(slaveStats.values(), SLAVE_INFO);
+        //send event one by one instead of list to aid search
+        for(Map slaveInfo: slaveStats.values()){
+            SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);
+        }
         for (String slaveName : slaveNames) {
             if (!aliveSlaves.contains(slaveName)) {
                 Map event = new HashMap();

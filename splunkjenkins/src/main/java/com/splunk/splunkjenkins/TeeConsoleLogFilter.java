@@ -37,7 +37,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     @Override
     public OutputStream decorateLogger(AbstractBuild build, OutputStream output) throws IOException, InterruptedException {
         if (SplunkJenkinsInstallation.get().isValid()) {
-            return new TeeOutputStrem(output, build.getUrl());
+            return new TeeOutputStream(output, build.getUrl()+"console");
         } else {
             if (SplunkJenkinsInstallation.get().isEnabled()) {
                 LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUrl());
@@ -46,21 +46,21 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         }
     }
 
-    private static class TeeOutputStrem extends FilterOutputStream {
+    public static class TeeOutputStream extends FilterOutputStream {
 
 
         private static final int LF = 0x0A;
-        String buildUrl;
+        String sourceName;
         long lineCounter = 0;
         //holds data received, will be cleared when \n received
         private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2();
         //holds decoded console text with timestamp and line number
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();
 
-        public TeeOutputStrem(OutputStream out, String buildUrl) {
+        public TeeOutputStream(OutputStream out, String sourceName) {
             super(out);
-            this.buildUrl = buildUrl;
-            LOG.log(Level.FINE, "created splunk output tee for " + buildUrl);
+            this.sourceName = sourceName;
+            LOG.log(Level.FINE, "created splunk output tee for " + sourceName);
         }
 
         @Override
@@ -106,7 +106,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
 
         private void flushLog() {
             EventRecord record = new EventRecord(logText.toString(), CONSOLE_LOG);
-            record.setSource(this.buildUrl + "console");
+            record.setSource(this.sourceName);
             SplunkLogService.getInstance().enqueue(record);
             logText.reset();
         }

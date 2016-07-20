@@ -44,7 +44,7 @@ public class LogEventHelper {
     public static String NODE_NAME = "node_name";
     public final static String SLAVE_TAG_NAME = "slave";
     //see also hudson.util.wrapToErrorSpan
-    private static final Pattern HTML_SPAN_CONTENT = Pattern.compile("<span class.*?>(.*?)</span>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern ERROR_SPAN_CONTENT = Pattern.compile("error.*?>(.*?)</span>", Pattern.CASE_INSENSITIVE);
     public static final String SEPARATOR = "    ";
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
@@ -302,6 +302,7 @@ public class LogEventHelper {
         slaveInfo.put("num_executors", computer.getNumExecutors());
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
+        slaveInfo.put("url",Jenkins.getInstance().getRootUrl()+computer.getUrl());
         long connectTime = computer.getConnectTime();
         if (connectTime != 0) {
             slaveInfo.put("connect_time", Util.XS_DATETIME_FORMATTER.format(connectTime));
@@ -322,7 +323,7 @@ public class LogEventHelper {
                 }
             }
             if (!builds.isEmpty()) {
-                slaveInfo.put("builds", builds);
+                slaveInfo.put("running_builds", builds);
             }
         }
         Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
@@ -343,24 +344,22 @@ public class LogEventHelper {
         if (data != null) {
             String monitorName = monitor.getClass().getSimpleName();
             //Jenkins monitors are designed for web pages, toString() OR toHtml may contain html code
-
-            if (data instanceof DiskSpaceMonitorDescriptor.DiskSpace) {
-                DiskSpaceMonitorDescriptor.DiskSpace diskSpace = (DiskSpaceMonitorDescriptor.DiskSpace) data;
-                //DiskSpace.isTriggered is private, check html code as workaround
-                String htmlCode = diskSpace.toHtml();
-                if (htmlCode.contains("error")) {
-                    monitorStatus.put(monitorName, "warning:" + diskSpace.getGbLeft());
-                } else {
-                    monitorStatus.put(monitorName, htmlCode);
+            String monitorData;
+            Method method = getAccessibleMethod(data.getClass(), "toHtml", new Class<?>[0]);
+            if (method != null) {
+                try {
+                    monitorData = (String) method.invoke(data, new Object[0]);
+                } catch (Exception e) {
+                    monitorData = data.toString();
                 }
             } else {
-                String monitorCode = data.toString();
-                Matcher matcher = HTML_SPAN_CONTENT.matcher(monitorCode);
-                if (matcher.find()) {
-                    monitorStatus.put(monitorName, matcher.group(1));
-                } else {
-                    monitorStatus.put(monitorName, monitorCode);
-                }
+                monitorData = data.toString();
+            }
+            Matcher matcher = ERROR_SPAN_CONTENT.matcher(monitorData);
+            if (matcher.find()) {
+                monitorStatus.put(monitorName, "warning:" + matcher.group(1));
+            } else {
+                monitorStatus.put(monitorName, monitorData);
             }
         }
         return monitorStatus;
@@ -376,7 +375,7 @@ public class LogEventHelper {
         if (computers == null || computers.length == 0) {
             return slaveStatusMap;
         }
-        Collection<NodeMonitor> monitors = ComputerSet.getNonIgnoredMonitors().values();
+        Collection<NodeMonitor> monitors = ComputerSet.getMonitors();
         for (Computer computer : computers) {
             Map slaveInfo = new HashMap();
             slaveInfo.putAll(getComputerStatus(computer));

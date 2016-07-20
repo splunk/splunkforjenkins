@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import com.google.common.io.NullOutputStream;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -8,16 +9,16 @@ import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.slaves.ComputerListener;
 import hudson.slaves.OfflineCause;
+import org.apache.commons.io.IOUtils;
 
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import static com.splunk.splunkjenkins.Constants.TAG;
-import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
@@ -28,6 +29,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 @Extension
 public class LoggingComputerListener extends ComputerListener {
     private static final String TAG_SUFFIX = SEPARATOR + TAG + "=slave";
+
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
         Map event = getQueueInfo();
@@ -92,7 +94,15 @@ public class LoggingComputerListener extends ComputerListener {
     private void sendSlaveLog(Computer c) throws IOException {
         // for each new launch (or launch attempt) after being disconnected, this log file is rotated.
         // just send whole log
-        String logText = c.getLog();
-        SplunkLogService.getInstance().send(logText, CONSOLE_LOG, c.getUrl() + "log");
+        File slaveLog = c.getLogFile();
+        if (!slaveLog.exists()) {
+            return;
+        }
+        OutputStream out = new TeeConsoleLogFilter.TeeOutputStream(new NullOutputStream(), c.getUrl() + "log");
+        try (FileInputStream in = new FileInputStream(slaveLog)) {
+            IOUtils.copy(in, out);
+        } finally {
+            out.close();
+        }
     }
 }
