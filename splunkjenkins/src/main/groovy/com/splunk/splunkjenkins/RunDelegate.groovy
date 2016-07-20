@@ -13,7 +13,6 @@ import hudson.tasks.junit.TestResultAction
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
-import static com.splunk.splunkjenkins.Constants.METADATA
 import static com.splunk.splunkjenkins.Constants.TESTCASE
 import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
@@ -143,11 +142,11 @@ public class RunDelegate {
      * Gets the action (first instance to be found) of a specified type that contributed to this build.
      *
      * @param type
-     * @return The action or <code>null</code> if no such actions exist.
+     * @return The first action item or <code>null</code> if no such actions exist.
      *
      */
     public Action getAction(Class<? extends Action> type) {
-        return build.getActions(type);
+        return build.getAction(type);
     }
     /**
      * check if the project has publisher
@@ -180,8 +179,9 @@ public class RunDelegate {
         event.put(TAG, "build_report")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
-        event.put(METADATA, enVars);
-        event.put("report", closure());
+        event.put("build_env", env);
+        def report = closure() ?: "no result found";
+        event.put("report", report);
         send(event);
     }
 
