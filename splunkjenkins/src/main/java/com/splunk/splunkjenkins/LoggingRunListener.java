@@ -32,10 +32,11 @@ public class LoggingRunListener extends RunListener<Run> {
     public void onStarted(Run run, TaskListener listener) {
 
         Map event = ImmutableMap.builder()
-                .put(Constants.TAG, "job_started")
+                .put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME)
+                .put("type", "started")
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("trigger_by", getBuildCauses(run))
-                .put("build_event", "started").build();
+                .put("upstream", getUpStreamUrl(run)).build();
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
@@ -47,7 +48,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
             }
         }
-        return null;
+        return "";
     }
 
     private String getBuildCauses(Run run) {
@@ -120,7 +121,7 @@ public class LoggingRunListener extends RunListener<Run> {
             return;
         }
         AbstractBuild build = (AbstractBuild) run;
-        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis())/1000;
+        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
         String jenkinsNode = (build.getBuiltOn() == null ? "unknown" : build.getBuiltOn().getDisplayName());
         //check changelog
         List<String> changelog = new ArrayList<>();
@@ -135,45 +136,42 @@ public class LoggingRunListener extends RunListener<Run> {
                 changelog.add(sbr.toString());
             }
         }
-        Map testSummay = new HashMap();
+        Map testSummary = new HashMap();
         //check test summary
         if (build.getProject().getPublishersList().get(JUnitResultArchiver.class) != null) {
             TestResultAction resultAction = build.getAction(TestResultAction.class);
             if (resultAction != null && resultAction.getResult() != null) {
                 TestResult testResult = resultAction.getResult();
-                testSummay.put("fail", testResult.getFailCount());
-                testSummay.put("pass", testResult.getPassCount());
-                testSummay.put("skip", testResult.getSkipCount());
-                testSummay.put("duration", testResult.getDuration());
+                testSummary.put("fail", testResult.getFailCount());
+                testSummary.put("pass", testResult.getPassCount());
+                testSummary.put("skip", testResult.getSkipCount());
+                testSummary.put("duration", testResult.getDuration());
             }
         }
-        ImmutableMap.Builder builder = ImmutableMap.builder()
-                .put(Constants.TAG, "job_completed")
-                .put(Constants.BUILD_ID, run.getUrl())
-                .put("job_name", build.getProject().getUrl())
-                .put("build_number", run.getNumber())
-                .put("trigger_by", getBuildCauses(run))
-                .put(JOB_RESULT, build.getResult().toString())
-                .put("job_started_at", build.getTimestampString2())
-                .put("job_duration", build.getDuration()/1000)
-                .put("queue_time", queueTime)
-                .put("node", jenkinsNode);
-        if (!testSummay.isEmpty()) {
-            builder.put("testsummay", testSummay);
+        Map event = new HashMap();
+        event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
+        event.put("type", "completed");
+        event.put(Constants.BUILD_ID, run.getUrl());
+        event.put("job_name", build.getProject().getUrl());
+        event.put("build_number", run.getNumber());
+        event.put("trigger_by", getBuildCauses(run));
+        event.put(JOB_RESULT, build.getResult().toString());
+        event.put("job_started_at", build.getTimestampString2());
+        event.put("job_duration", build.getDuration() / 1000);
+        event.put("queue_time", queueTime);
+        event.put("node", jenkinsNode);
+        if (!testSummary.isEmpty()) {
+            event.put("test_summary", testSummary);
         }
         if (!changelog.isEmpty()) {
-            builder.put("changelog", changelog);
+            event.put("changelog", changelog);
         }
-        String upStreamUrl=getUpStreamUrl(run);
-        if(upStreamUrl!=null){
-            builder.put("upstream",upStreamUrl);
-        }
+        event.put("upstream", getUpStreamUrl(run));
         if (build.getProject() instanceof Describable) {
             String jobType = ((Describable) build.getProject()).getDescriptor().getDisplayName();
-            builder.put("job_type", jobType);
+            event.put("job_type", jobType);
         }
-        builder.putAll(getScmInfo(build));
-        Map event = builder.build();
+        event.putAll(getScmInfo(build));
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         postJobAction.perform(build, listener);
     }

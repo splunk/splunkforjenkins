@@ -10,4 +10,7 @@ public class Constants {
     public static final String JSON_ENDPOINT = "/services/collector/event";
     public static final String RAW_ENDPOINT = "/services/collector/raw";
     public static final String LOG_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+    public final static String SLAVE_TAG_NAME = "slave";
+    public final static String QUEUE_TAG_NAME = "queue";
+    public static final String JOB_EVENT_TAG_NAME = "job_event";
 }

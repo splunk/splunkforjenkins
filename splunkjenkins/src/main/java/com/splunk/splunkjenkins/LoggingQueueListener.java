@@ -34,7 +34,8 @@ public class LoggingQueueListener extends QueueListener {
         String name = getTaskName(wi.task);
         Map event = getQueueInfo();
         event.put("item", name);
-        event.put("tag", "enqueue");
+        event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
+        event.put("type", "enqueue");
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
@@ -43,7 +44,8 @@ public class LoggingQueueListener extends QueueListener {
         String name = getTaskName(li.task);
         Map event = getQueueInfo();
         event.put("item", name);
-        event.put("tag", "dequeue");
+        event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
+        event.put("type", "dequeue");
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 

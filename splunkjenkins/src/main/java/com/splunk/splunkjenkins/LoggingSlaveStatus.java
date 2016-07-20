@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.NODE_NAME;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.SLAVE_TAG_NAME;
+import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
 @Extension
@@ -37,7 +37,7 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
         for (String slaveName : slaveNames) {
             if (!aliveSlaves.contains(slaveName)) {
                 Map event = new HashMap();
-                event.put("tag", SLAVE_TAG_NAME);
+                event.put(Constants.TAG, SLAVE_TAG_NAME);
                 event.put(NODE_NAME, slaveName);
                 event.put("status", "removed");
                 SplunkLogService.getInstance().send(event, SLAVE_INFO);

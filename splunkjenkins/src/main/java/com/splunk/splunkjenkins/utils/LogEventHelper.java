@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
@@ -11,7 +12,6 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
 import hudson.model.*;
-import hudson.node_monitors.DiskSpaceMonitorDescriptor;
 import hudson.node_monitors.NodeMonitor;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
@@ -22,10 +22,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
@@ -42,7 +39,6 @@ import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
     public static String NODE_NAME = "node_name";
-    public final static String SLAVE_TAG_NAME = "slave";
     //see also hudson.util.wrapToErrorSpan
     private static final Pattern ERROR_SPAN_CONTENT = Pattern.compile("error.*?>(.*?)</span>", Pattern.CASE_INSENSITIVE);
     public static final String SEPARATOR = "    ";
@@ -247,9 +243,13 @@ public class LogEventHelper {
             StringBuilder stringBuilder = new StringBuilder();
             for (String key : queryParameters.keySet()) {
                 stringBuilder.append(key)
-                        .append("=")
-                        .append(URLEncoder.encode(queryParameters.get(key)))
-                        .append("&");
+                        .append("=");
+                try {
+                    String encodeKey = URLEncoder.encode(queryParameters.get(key), "UTF-8");
+                    stringBuilder.append(encodeKey).append("&");
+                } catch (UnsupportedEncodingException e) {
+                    LOG.log(Level.SEVERE, "failed to encode key " + key, e);
+                }
             }
             if (stringBuilder.length() == 0) {
                 return "";
@@ -293,7 +293,7 @@ public class LogEventHelper {
             nodeName = computer.getName();
         }
         slaveInfo.put(NODE_NAME, nodeName);
-        slaveInfo.put("tag", SLAVE_TAG_NAME);
+        slaveInfo.put(Constants.TAG, Constants.SLAVE_TAG_NAME);
         Node slaveNode = computer.getNode();
         if (slaveNode != null) {
             slaveInfo.put("label", slaveNode.getLabelString());
@@ -302,7 +302,7 @@ public class LogEventHelper {
         slaveInfo.put("num_executors", computer.getNumExecutors());
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
-        slaveInfo.put("url",Jenkins.getInstance().getRootUrl()+computer.getUrl());
+        slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
         long connectTime = computer.getConnectTime();
         if (connectTime != 0) {
             slaveInfo.put("connect_time", Util.XS_DATETIME_FORMATTER.format(connectTime));
