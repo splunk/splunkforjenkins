@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import java.util.*;
 
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
-import static com.splunk.splunkjenkins.utils.EventType.BUILD_EVENT;
+import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 
 @SuppressWarnings("unused")
@@ -34,21 +34,26 @@ public class LoggingRunListener extends RunListener<Run> {
         Map event = ImmutableMap.builder()
                 .put(Constants.TAG, "job_started")
                 .put(Constants.BUILD_ID, run.getUrl())
-                .put("trigger_by", getBuildCause(run,false))
+                .put("trigger_by", getBuildCauses(run))
                 .put("build_event", "started").build();
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
-    private String getBuildCause(Run run, boolean findUpstream) {
+    private String getUpStreamUrl(Run run) {
+        StringBuilder buf = new StringBuilder(100);
+        for (CauseAction action : run.getActions(CauseAction.class)) {
+            Cause.UpstreamCause upstreamCause = action.findCause(Cause.UpstreamCause.class);
+            if (upstreamCause != null) {
+                return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
+            }
+        }
+        return null;
+    }
+
+    private String getBuildCauses(Run run) {
         StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
-                if (findUpstream && cause instanceof Cause.UpstreamCause) {
-                    //find nearest upstream
-                    Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
-                    //upstream url is project url, build is build number
-                    return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
-                }
                 //append all causes
                 if (buf.length() > 0) buf.append(", ");
                 buf.append(cause.getShortDescription());
@@ -147,8 +152,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 .put(Constants.BUILD_ID, run.getUrl())
                 .put("job_name", build.getProject().getUrl())
                 .put("build_number", run.getNumber())
-                .put("trigger_by", getBuildCause(run,false))
-                .put("upstream", getBuildCause(run,true))
+                .put("trigger_by", getBuildCauses(run))
                 .put(JOB_RESULT, build.getResult().toString())
                 .put("job_started_at", build.getTimestampString2())
                 .put("job_duration", build.getDuration()/1000)
@@ -159,6 +163,10 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         if (!changelog.isEmpty()) {
             builder.put("changelog", changelog);
+        }
+        String upStreamUrl=getUpStreamUrl(run);
+        if(upStreamUrl!=null){
+            builder.put("upstream",upStreamUrl);
         }
         if (build.getProject() instanceof Describable) {
             String jobType = ((Describable) build.getProject()).getDescriptor().getDisplayName();

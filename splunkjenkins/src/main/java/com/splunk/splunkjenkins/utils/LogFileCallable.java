@@ -1,6 +1,8 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.model.EventRecord;
+import com.splunk.splunkjenkins.model.EventType;
 import hudson.FilePath;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ByteArrayOutputStream2;
@@ -13,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static com.splunk.splunkjenkins.utils.EventType.FILE;
+import static com.splunk.splunkjenkins.model.EventType.FILE;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogFileCallable.class.getName());

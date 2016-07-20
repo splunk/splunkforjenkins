@@ -7,7 +7,7 @@ import hudson.model.queue.QueueListener;
 
 import java.util.Map;
 
-import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
+import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 
 /**

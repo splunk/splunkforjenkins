@@ -1,6 +1,7 @@
-package com.splunk.splunkjenkins.utils;
+package com.splunk.splunkjenkins.model;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.utils.LogEventHelper;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;

@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.splunk.splunkjenkins.Constants.TAG;
-import static com.splunk.splunkjenkins.utils.EventType.CONSOLE_LOG;
-import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
-import static com.splunk.splunkjenkins.utils.EventType.SLAVE_INFO;
+import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
+import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
+import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
@@ -28,7 +28,6 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 @Extension
 public class LoggingComputerListener extends ComputerListener {
     private static final String TAG_SUFFIX = SEPARATOR + TAG + "=slave";
-
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
         Map event = getQueueInfo();
@@ -73,7 +72,7 @@ public class LoggingComputerListener extends ComputerListener {
         event.put("tag", "temp_offline");
         event.put("node_name", getSlaveName(c));
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
-        SplunkLogService.getInstance().send(getSlaveStats(), SLAVE_INFO);
+        SplunkLogService.getInstance().send(getSlaveStats().values(), SLAVE_INFO);
     }
 
     @Override

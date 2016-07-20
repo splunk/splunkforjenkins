@@ -1,6 +1,6 @@
 package com.splunk.splunkjenkins
 
-import com.splunk.splunkjenkins.utils.EventType
+import com.splunk.splunkjenkins.model.EventType
 import com.splunk.splunkjenkins.utils.LogEventHelper
 import com.splunk.splunkjenkins.utils.SplunkLogService
 import hudson.EnvVars

@@ -1,6 +1,6 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.utils.EventRecord;
+import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
@@ -13,7 +13,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
-import static com.splunk.splunkjenkins.utils.EventType.CONSOLE_LOG;
+import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 
 import java.text.SimpleDateFormat;

@@ -1,7 +1,8 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
-import hudson.util.TimeUnit2;
+import com.splunk.splunkjenkins.model.EventRecord;
+import com.splunk.splunkjenkins.model.EventType;
 import org.apache.http.client.HttpClient;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
@@ -18,7 +19,6 @@ import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;

@@ -3,8 +3,10 @@ package com.splunk.splunkjenkins;
 import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.model.listeners.SaveableListener;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -21,6 +23,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -54,8 +57,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String metaDataConfig;
     //groovy content if file path not set
     public String scriptContent;
-    public transient Properties metaDataProperties=new Properties();
-    private boolean monitoringConfig = false;
+    public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
     private transient String rawUrl;
@@ -93,6 +95,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                     LOG.log(Level.SEVERE, "failed to read " + getId() + ".xml", ex);
                 }
                 this.updateCache();
+                this.updateConfigListener();
             }
         }
     }
@@ -145,8 +148,21 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
         this.cachedConfig = null;
         updateCache();
+        updateConfigListener();
         save();
         return true;
+    }
+
+    /**
+     * toggle enable/disable for config listener
+     */
+    private void updateConfigListener() {
+        LoggingConfigListener configListener= SaveableListener.all().get(LoggingConfigListener.class);
+        if (configListener!=null) {
+            boolean enabled = this.enabled
+                    && "true".equals(metaDataProperties.getProperty("jenkins_config.monitoring"));
+            configListener.setEnabled(enabled);
+        }
     }
 
     /*
@@ -263,15 +279,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * Check whether we can optimize sending process, e.g. if we need to send 1000 lines for one job console log,
      * and we can specify host,source,sourcetype,index only once in query parameter if raw event is supported,
      * instead of sending 1000 times in request body
+     *
      * @param needSplit does the text need to be logged to splunk line by line
      * @return true if HEC supports specify metadata in url query parameter
      */
     public boolean isMetaDataInURLSupported(boolean needSplit) {
         return rawEventEnabled && needSplit;
-    }
-
-    public boolean isMonitoringConfig() {
-        return monitoringConfig;
     }
 
     public String getToken() {

@@ -1,45 +1,77 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.model.JenkinsJsonConfig;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
+import com.splunk.splunkjenkins.utils.XstremJsonDriver;
+import com.thoughtworks.xstream.XStream;
 import hudson.Extension;
 import hudson.XmlFile;
+import hudson.model.Describable;
+import hudson.model.Job;
 import hudson.model.Saveable;
 import hudson.model.listeners.SaveableListener;
-import jenkins.model.GlobalConfiguration;
+import hudson.util.XStream2;
+import jenkins.model.Jenkins;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.TAG;
-import static com.splunk.splunkjenkins.utils.EventType.XML_CONFIG;
+import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 
 import java.util.regex.Pattern;
 
 /**
- * audit config and job changes
- * send xml file to splunk
+ * record jenkins config and job changes
+ * send config content to splunk
  */
 
-//@Extension
+@Extension
 public class LoggingConfigListener extends SaveableListener {
-    private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes)\\.xml$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes|build)\\.xml$", Pattern.CASE_INSENSITIVE);
+    private static final XStream xstream = new XStream2(new XstremJsonDriver());
+    private boolean enabled = false;
+    private int previousHash=0;
 
     @Override
-    public void onChange(Saveable o, XmlFile file) {
-        super.onChange(o, file);
-        if(IGNORED.matcher(file.getFile().getName()).find()){
+    public void onChange(Saveable saveable, XmlFile file) {
+        String configPath = file.getFile().getAbsolutePath();
+        String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
+        if (!enabled || IGNORED.matcher(configPath).find()) {
             return;
         }
-        SplunkJenkinsInstallation globalConfig = (SplunkJenkinsInstallation) GlobalConfiguration.all().getDynamic(SplunkJenkinsInstallation.class.getName());
-        if (globalConfig == null || (!globalConfig.isMonitoringConfig())) {
+        String config=xstream.toXML(saveable);
+        if (previousHash==config.hashCode()) {
+            //Save a job can trigger multiple SaveableListener, depends on jenkins versions
+            // e.g. AbstractProject.submit may call setters which can trigger save()
             return;
         }
+        if (configPath.startsWith(jenkinsHome)) {
+            configPath = configPath.substring(jenkinsHome.length() + 1);
+        }
+        if (saveable instanceof Job) {
+            Job job = (Job) saveable;
+            configPath = job.getUrl()+"config.xml";
+        }
+        String sourceName="jenkins://"+configPath;
         Map logInfo = new HashMap<>();
-        logInfo.put(TAG, "config");
-        logInfo.put("file", file.getFile().getAbsolutePath());
+        logInfo.put(TAG, "config_update");
+        logInfo.put("config_source", sourceName);
         logInfo.put("user", getUserName());
-        logInfo.put("config", o);
-        SplunkLogService.getInstance().send(logInfo, XML_CONFIG);
+        if (saveable instanceof Describable) {
+            Describable describable = (Describable) saveable;
+            logInfo.put("descriptor", describable.getDescriptor().getDisplayName());
+        }
+        SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, sourceName+".event");
+        SplunkLogService.getInstance().send(new JenkinsJsonConfig(config), JENKINS_CONFIG, sourceName);
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 }

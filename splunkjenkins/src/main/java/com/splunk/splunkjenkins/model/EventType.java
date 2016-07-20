@@ -1,13 +1,12 @@
-package com.splunk.splunkjenkins.utils;
+package com.splunk.splunkjenkins.model;
 
 public enum EventType {
     BUILD_REPORT(false),
     BUILD_EVENT(false),
     QUEUE_INFO(false),
-    XML_CONFIG(false),
+    JENKINS_CONFIG(false),
     GENERIC_TEXT(false),
     CONSOLE_LOG(true),
-    GENERIC_LINES(true),
     FILE(true),
     SLAVE_INFO(false);
 

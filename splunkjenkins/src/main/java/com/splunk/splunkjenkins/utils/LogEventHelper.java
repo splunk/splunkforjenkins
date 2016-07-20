@@ -5,11 +5,13 @@ import com.google.gson.FieldNamingStrategy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.model.EventRecord;
+import com.splunk.splunkjenkins.model.EventType;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
 import hudson.model.*;
-import hudson.model.queue.WorkUnit;
+import hudson.node_monitors.DiskSpaceMonitorDescriptor;
 import hudson.node_monitors.NodeMonitor;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
@@ -31,12 +33,18 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
+    public static String NODE_NAME = "node_name";
+    public final static String SLAVE_TAG_NAME = "slave";
+    //see also hudson.util.wrapToErrorSpan
+    private static final Pattern HTML_SPAN_CONTENT = Pattern.compile("<span class.*?>(.*?)</span>", Pattern.CASE_INSENSITIVE);
     public static final String SEPARATOR = "    ";
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
@@ -276,70 +284,107 @@ public class LogEventHelper {
         }
     }
 
-    public static List<Map> getSlaveStats() {
-        List<Map> event = new ArrayList();
-        Computer[] computers = Jenkins.getInstance().getComputers();
-        if (computers == null || computers.length == 0) {
-            return event;
+    private static Map<String, Object> getComputerStatus(Computer computer) {
+        String nodeName;
+        Map slaveInfo = new HashMap();
+        if (computer instanceof Jenkins.MasterComputer) {
+            nodeName = "(master)";
+        } else {
+            nodeName = computer.getName();
         }
-        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-        Collection<NodeMonitor> monitors = ComputerSet.getNonIgnoredMonitors().values();
-        for (Computer computer : computers) {
-            Map slaveInfo = new HashMap();
-            slaveInfo.put("tag", "slave");
-            if (computer instanceof Jenkins.MasterComputer) {
-                slaveInfo.put("node_name", "(master)");
-            } else {
-                slaveInfo.put("node_name", computer.getName());
-            }
-            Node slaveNode = computer.getNode();
-            if (slaveNode != null) {
-                slaveInfo.put("label", slaveNode.getLabelString());
-            }
-            slaveInfo.put("num_executors", computer.getNumExecutors());
-            slaveInfo.put("is_idle", computer.isIdle());
-            slaveInfo.put("is_online", computer.isOnline());
-            long connectTime = computer.getConnectTime();
-            if (connectTime != 0) {
-                slaveInfo.put("connect_time", sdf.format(new Date(connectTime)));
-            } else {
-                //slave is offline or disconnected
-                slaveInfo.put("connect_time", 0);
-            }
-            if (!computer.isIdle()) {
-                List<String> builds = new ArrayList<>();
-                for (Executor executor : computer.getExecutors()) {
-                    if (executor.isBusy()) {
-                        if (executor.isBusy() && executor.getCurrentExecutable() instanceof Run) {
-                            Run run = (Run) executor.getCurrentExecutable();
-                            if (run != null) {
-                                builds.add(run.getUrl());
-                            }
+        slaveInfo.put(NODE_NAME, nodeName);
+        slaveInfo.put("tag", SLAVE_TAG_NAME);
+        Node slaveNode = computer.getNode();
+        if (slaveNode != null) {
+            slaveInfo.put("label", slaveNode.getLabelString());
+        }
+        slaveInfo.put("status", "updated");
+        slaveInfo.put("num_executors", computer.getNumExecutors());
+        slaveInfo.put("is_idle", computer.isIdle());
+        slaveInfo.put("is_online", computer.isOnline());
+        long connectTime = computer.getConnectTime();
+        if (connectTime != 0) {
+            slaveInfo.put("connect_time", Util.XS_DATETIME_FORMATTER.format(connectTime));
+        } else {
+            //slave is offline or disconnected
+            slaveInfo.put("connect_time", 0);
+        }
+        if (!computer.isIdle()) {
+            List<String> builds = new ArrayList<>();
+            for (Executor executor : computer.getExecutors()) {
+                if (executor.isBusy()) {
+                    if (executor.isBusy() && executor.getCurrentExecutable() instanceof Run) {
+                        Run run = (Run) executor.getCurrentExecutable();
+                        if (run != null) {
+                            builds.add(run.getUrl());
                         }
                     }
                 }
-                if (!builds.isEmpty()) {
-                    slaveInfo.put("builds", builds);
-                }
             }
-            Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
-            if (method != null) {
-                try { //cloud slave may defined getUptime method
-                    Object uptime = method.invoke(computer, new Object[0]);
-                    slaveInfo.put("uptime", uptime);
-                } catch (Exception e) {
-                    //just ignore
-                }
+            if (!builds.isEmpty()) {
+                slaveInfo.put("builds", builds);
             }
-            for (NodeMonitor monitor : monitors) {
-                Object data = monitor.data(computer);
-                if (data != null) {
-                    String monitorName = monitor.getClass().getSimpleName();
-                    slaveInfo.put(monitorName, monitor.data(computer) + "");
-                }
-            }
-            event.add(slaveInfo);
         }
-        return event;
+        Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
+        if (method != null) {
+            try { //cloud slave may defined getUptime method
+                Object uptime = method.invoke(computer, new Object[0]);
+                slaveInfo.put("uptime", uptime);
+            } catch (Exception e) {
+                //just ignore
+            }
+        }
+        return slaveInfo;
+    }
+
+    private static Map<String, Object> getMonitorData(Computer computer, NodeMonitor monitor) {
+        Map monitorStatus = new HashMap();
+        Object data = monitor.data(computer);
+        if (data != null) {
+            String monitorName = monitor.getClass().getSimpleName();
+            //Jenkins monitors are designed for web pages, toString() OR toHtml may contain html code
+
+            if (data instanceof DiskSpaceMonitorDescriptor.DiskSpace) {
+                DiskSpaceMonitorDescriptor.DiskSpace diskSpace = (DiskSpaceMonitorDescriptor.DiskSpace) data;
+                //DiskSpace.isTriggered is private, check html code as workaround
+                String htmlCode = diskSpace.toHtml();
+                if (htmlCode.contains("error")) {
+                    monitorStatus.put(monitorName, "warning:" + diskSpace.getGbLeft());
+                } else {
+                    monitorStatus.put(monitorName, htmlCode);
+                }
+            } else {
+                String monitorCode = data.toString();
+                Matcher matcher = HTML_SPAN_CONTENT.matcher(monitorCode);
+                if (matcher.find()) {
+                    monitorStatus.put(monitorName, matcher.group(1));
+                } else {
+                    monitorStatus.put(monitorName, monitorCode);
+                }
+            }
+        }
+        return monitorStatus;
+    }
+
+    /**
+     * @return a map with slave name as key and monitor result as value
+     * monitor result is a map with monitor name as key, monitor data as value
+     */
+    public static Map<String, Map<String, Object>> getSlaveStats() {
+        Map<String, Map<String, Object>> slaveStatusMap = new HashMap<>();
+        Computer[] computers = Jenkins.getInstance().getComputers();
+        if (computers == null || computers.length == 0) {
+            return slaveStatusMap;
+        }
+        Collection<NodeMonitor> monitors = ComputerSet.getNonIgnoredMonitors().values();
+        for (Computer computer : computers) {
+            Map slaveInfo = new HashMap();
+            slaveInfo.putAll(getComputerStatus(computer));
+            for (NodeMonitor monitor : monitors) {
+                slaveInfo.putAll(getMonitorData(computer, monitor));
+            }
+            slaveStatusMap.put((String) slaveInfo.get(NODE_NAME), slaveInfo);
+        }
+        return slaveStatusMap;
     }
 }

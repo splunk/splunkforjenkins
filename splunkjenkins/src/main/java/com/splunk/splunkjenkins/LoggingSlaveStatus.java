@@ -3,25 +3,22 @@ package com.splunk.splunkjenkins;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
-import hudson.model.Node;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.splunk.splunkjenkins.utils.EventType.QUEUE_INFO;
-import static com.splunk.splunkjenkins.utils.EventType.SLAVE_INFO;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
+import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.NODE_NAME;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
 @Extension
 public class LoggingSlaveStatus extends AsyncPeriodicWork {
-    public static long recurrencePeriod = Math.max(120000, Long.getLong("com.splunk.splunkjenkins.slaveStatusPeriod", TimeUnit.MINUTES.toMillis(10)));
+    //make sure no less than 3 minutes, default is 10 minutes
+    public static long recurrencePeriod = TimeUnit.MINUTES.toMillis(Math.max(3, Long.getLong("com.splunk.splunkjenkins.slaveMonitorSeconds", 10)));
+    private Set<String> slaveNames = new HashSet<>();
 
     public LoggingSlaveStatus() {
         super("Splunk Slave monitor");
@@ -29,23 +26,23 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
 
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
-        List<Map> slaves = getSlaveStats();
-        for (Map slaveInfo : slaves) {
-            SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);
-        }
-        //send whole slave list
-        List<Node> nodes = Jenkins.getInstance().getNodes();
-        List<String> names = new ArrayList();
-        for (Node node : nodes) {
-            //non master names
-            if ("".equals(node.getNodeName())) {
-                names.add(node.getNodeName());
+        listener.getLogger().println("execute start");
+        Map<String,Map<String,Object>> slaveStats = getSlaveStats();
+        listener.getLogger().println("collected "+slaveStats.keySet().size()+" slaves, previous slaves count "+slaveNames.size());
+        Set<String> aliveSlaves = slaveStats.keySet();
+        SplunkLogService.getInstance().send(slaveStats.values(), SLAVE_INFO);
+        for (String slaveName : slaveNames) {
+            if (!aliveSlaves.contains(slaveName)) {
+                Map event = new HashMap();
+                event.put("tag", SLAVE_TAG_NAME);
+                event.put(NODE_NAME, slaveName);
+                event.put("status", "removed");
+                SplunkLogService.getInstance().send(event, SLAVE_INFO);
             }
         }
-        Map event = new HashMap();
-        event.put("tag", "slave_list");
-        event.put("names", name);
-        SplunkLogService.getInstance().send(event, SLAVE_INFO);
+        //replace slave names, at one time should only one thread is running, so it is save
+        slaveNames = aliveSlaves;
+        listener.getLogger().println("execute completed");
     }
 
     @Override
