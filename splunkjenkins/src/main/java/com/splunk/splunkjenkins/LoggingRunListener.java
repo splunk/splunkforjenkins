@@ -82,9 +82,11 @@ public class LoggingRunListener extends RunListener<Run> {
                     event.put("scm_url", getScmURL(envVars, "SVN_URL"));
                     event.put("revision", envVars.get("SVN_REVISION"));
                 } else if (className.equals("org.jenkinsci.plugins.p4.PerforceScm")) {
-                    event.put("scm", "svn");
+                    event.put("scm", "p4");
                     event.put("p4_client", envVars.get("P4_CLIENT"));
                     event.put("revision", envVars.get("P4_CHANGELIST"));
+                } else if (className.equals("hudson.scm.NullSCM")) {
+                    event.put("scm", "");
                 } else {
                     event.put("scm", className);
                 }
