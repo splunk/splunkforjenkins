@@ -1,7 +1,6 @@
 package com.splunk.splunkjenkins;
 
 
-import com.google.common.collect.ImmutableMap;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.EnvVars;
 import hudson.model.*;
@@ -30,13 +29,8 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-
-        Map event = ImmutableMap.builder()
-                .put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME)
-                .put("type", "started")
-                .put(Constants.BUILD_ID, run.getUrl())
-                .put("trigger_by", getBuildCauses(run))
-                .put("upstream", getUpStreamUrl(run)).build();
+        Map event = getCommonBuildInfo(run);
+        event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
@@ -117,64 +111,78 @@ public class LoggingRunListener extends RunListener<Run> {
         return value;
     }
 
-    @Override
-    public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        if (!(run instanceof AbstractBuild)) {
-            return;
-        }
-        AbstractBuild build = (AbstractBuild) run;
-        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
-        String jenkinsNode = (build.getBuiltOn() == null ? "unknown" : build.getBuiltOn().getDisplayName());
-        //check changelog
-        List<String> changelog = new ArrayList<>();
-        if (build.hasChangeSetComputed()) {
-            ChangeLogSet<? extends ChangeLogSet.Entry> changeset = build.getChangeSet();
-            for (ChangeLogSet.Entry entry : changeset) {
-                StringBuilder sbr = new StringBuilder();
-                sbr.append(entry.getTimestamp());
-                sbr.append(SEPARATOR).append("commit:").append(entry.getCommitId());
-                sbr.append(SEPARATOR).append("author:").append(entry.getAuthor());
-                sbr.append(SEPARATOR).append("message:").append(entry.getMsg());
-                changelog.add(sbr.toString());
-            }
-        }
-        Map testSummary = new HashMap();
-        //check test summary
-        if (build.getProject().getPublishersList().get(JUnitResultArchiver.class) != null) {
-            TestResultAction resultAction = build.getAction(TestResultAction.class);
-            if (resultAction != null && resultAction.getResult() != null) {
-                TestResult testResult = resultAction.getResult();
-                testSummary.put("fail", testResult.getFailCount());
-                testSummary.put("pass", testResult.getPassCount());
-                testSummary.put("skip", testResult.getSkipCount());
-                testSummary.put("duration", testResult.getDuration());
-            }
-        }
+    /**
+     * @param run
+     * @return Build event which are common both to start/complete event
+     * should not reference some fields only available after build such as result or duration
+     */
+    private Map<String, Object> getCommonBuildInfo(Run run) {
         Map event = new HashMap();
         event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
-        event.put("type", "completed");
-        event.put(Constants.BUILD_ID, run.getUrl());
-        event.put("job_name", build.getProject().getUrl());
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
-        event.put(JOB_RESULT, build.getResult().toString());
-        event.put("job_started_at", build.getTimestampString2());
-        event.put("job_duration", build.getDuration() / 1000);
+        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
         event.put("queue_time", queueTime);
-        event.put("node", jenkinsNode);
-        if (!testSummary.isEmpty()) {
-            event.put("test_summary", testSummary);
-        }
-        if (!changelog.isEmpty()) {
-            event.put("changelog", changelog);
-        }
+        event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
+        if (!(run instanceof AbstractBuild)) {
+            event.put("message", "unknown build type" + run.getClass().getName());
+            return event;
+        }
+        AbstractBuild build = (AbstractBuild) run;
+        String jenkinsNode = (StringUtils.isEmpty(build.getBuiltOnStr()) ? "(master)" : build.getBuiltOnStr());
+        event.put("node", jenkinsNode);
+        event.put("job_name", build.getProject().getUrl());
+        event.put("job_started_at", build.getTimestampString2());
         if (build.getProject() instanceof Describable) {
             String jobType = ((Describable) build.getProject()).getDescriptor().getDisplayName();
             event.put("job_type", jobType);
         }
-        event.putAll(getScmInfo(build));
+        return event;
+    }
+
+    @Override
+    public void onCompleted(Run run, @Nonnull TaskListener listener) {
+        Map event = getCommonBuildInfo(run);
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            postJobAction.perform(build, listener);
+            event.put(JOB_RESULT, build.getResult().toString());
+            event.put("job_duration", build.getDuration() / 1000);
+            //check changelog
+            List<String> changelog = new ArrayList<>();
+            if (build.hasChangeSetComputed()) {
+                ChangeLogSet<? extends ChangeLogSet.Entry> changeset = build.getChangeSet();
+                for (ChangeLogSet.Entry entry : changeset) {
+                    StringBuilder sbr = new StringBuilder();
+                    sbr.append(entry.getTimestamp());
+                    sbr.append(SEPARATOR).append("commit:").append(entry.getCommitId());
+                    sbr.append(SEPARATOR).append("author:").append(entry.getAuthor());
+                    sbr.append(SEPARATOR).append("message:").append(entry.getMsg());
+                    changelog.add(sbr.toString());
+                }
+            }
+            Map testSummary = new HashMap();
+            //check test summary
+            if (build.getProject().getPublishersList().get(JUnitResultArchiver.class) != null) {
+                TestResultAction resultAction = build.getAction(TestResultAction.class);
+                if (resultAction != null && resultAction.getResult() != null) {
+                    TestResult testResult = resultAction.getResult();
+                    testSummary.put("fail", testResult.getFailCount());
+                    testSummary.put("pass", testResult.getPassCount());
+                    testSummary.put("skip", testResult.getSkipCount());
+                    testSummary.put("duration", testResult.getDuration());
+                }
+            }
+            event.put("type", "completed");
+            if (!testSummary.isEmpty()) {
+                event.put("test_summary", testSummary);
+            }
+            if (!changelog.isEmpty()) {
+                event.put("changelog", changelog);
+            }
+            event.putAll(getScmInfo(build));
+        }
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
-        postJobAction.perform(build, listener);
     }
 }
