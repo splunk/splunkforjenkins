@@ -18,10 +18,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.splunk.splunkjenkins.Constants.TAG;
 import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getQueueInfo;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
 @SuppressWarnings("unused")
@@ -29,7 +28,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 public class LoggingComputerListener extends ComputerListener {
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-        Map event = getQueueInfo();
+        Map event = getMasterStats();
         event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
         event.put("type","online");
         event.put("num_executors", c.getNumExecutors());
@@ -57,7 +56,7 @@ public class LoggingComputerListener extends ComputerListener {
         } catch (Exception e) {
             //just ignore
         }
-        Map event = getQueueInfo();
+        Map event = getMasterStats();
         event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
         event.put("type", "offline");
         event.put("node_name", getSlaveName(c));
@@ -69,7 +68,7 @@ public class LoggingComputerListener extends ComputerListener {
 
     @Override
     public void onTemporarilyOnline(Computer c) {
-        Map event = getQueueInfo();
+        Map event = getMasterStats();
         event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
         event.put("type", "temp_offline");
         event.put("node_name", getSlaveName(c));

@@ -43,7 +43,7 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
                 SplunkLogService.getInstance().send(event, SLAVE_INFO);
             }
         }
-        //replace slave names, at one time should only one thread is running, so it is save
+        //replace slave names, at one time should only one thread is running, so modify slaveNames is safe without lock
         slaveNames = aliveSlaves;
         listener.getLogger().println("execute completed");
     }

@@ -23,10 +23,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.*;
+import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +44,8 @@ public class LogEventHelper {
     public static final String SEPARATOR = "    ";
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
-    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy()).create();
+    private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy())
+            .setDateFormat(LOG_TIME_FORMAT).create();
     private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
             .put("KB", 1024L)
             .put("kB", 1000L)
@@ -172,22 +173,36 @@ public class LogEventHelper {
         }
     }
 
+    private static long getUsedHeapSize() {
+        MemoryUsage usage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        long usedHeap = usage.getUsed();
+        return usedHeap;
+    }
+
     /**
-     * @return Queue statics with timestamp
+     * @return Jenkins master statistics with timestamp
      */
-    public static Map<String, Object> getQueueInfo() {
+    public static Map<String, Object> getMasterStats() {
         Jenkins instance = Jenkins.getInstance();
         int computerSize = instance.getComputers().length;
         int totalExecutors = instance.overallLoad.computeTotalExecutors();
         int queueLength = instance.overallLoad.computeQueueLength();
         int idleExecutors = instance.overallLoad.computeIdleExecutors();
-        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
         Map<String, Object> event = new HashMap<>();
         event.put("queue_length", queueLength);
         event.put("total_computers", computerSize);
         event.put("idle_executors", idleExecutors);
         event.put("total_executors", totalExecutors);
-        event.put("time", sdf.format(new Date()));
+
+        long heapSize = getUsedHeapSize();
+        long heapMB = heapSize >> 20;
+        event.put("heap_size_mb", heapMB);
+        ThreadMXBean threadMXbean = ManagementFactory.getThreadMXBean();
+        int threadCount = threadMXbean.getThreadCount();
+        int daemonThreadCount = threadMXbean.getDaemonThreadCount();
+        event.put("thread_count", threadCount);
+        event.put("daemon_count", daemonThreadCount);
+        //event.put("time", new Date());
         return event;
     }
 
