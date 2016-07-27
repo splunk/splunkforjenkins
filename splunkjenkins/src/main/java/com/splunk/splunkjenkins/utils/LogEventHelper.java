@@ -288,7 +288,7 @@ public class LogEventHelper {
         String nodeName;
         Map slaveInfo = new HashMap();
         if (computer instanceof Jenkins.MasterComputer) {
-            nodeName = "(master)";
+            nodeName = Constants.MASTER;
         } else {
             nodeName = computer.getName();
         }

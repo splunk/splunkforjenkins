@@ -85,7 +85,7 @@ public class LoggingComputerListener extends ComputerListener {
     private String getSlaveName(Computer computer) {
         String name = computer.getName();
         if ("".equals(name)) {
-            return "(master)";
+            return Constants.MASTER;
         } else {
             return name;
         }

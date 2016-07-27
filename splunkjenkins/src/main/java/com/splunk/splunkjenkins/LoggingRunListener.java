@@ -130,7 +130,7 @@ public class LoggingRunListener extends RunListener<Run> {
             return event;
         }
         AbstractBuild build = (AbstractBuild) run;
-        String jenkinsNode = (StringUtils.isEmpty(build.getBuiltOnStr()) ? "(master)" : build.getBuiltOnStr());
+        String jenkinsNode = (StringUtils.isEmpty(build.getBuiltOnStr()) ? Constants.MASTER : build.getBuiltOnStr());
         event.put("node", jenkinsNode);
         event.put("job_name", build.getProject().getUrl());
         event.put("job_started_at", build.getTimestampString2());

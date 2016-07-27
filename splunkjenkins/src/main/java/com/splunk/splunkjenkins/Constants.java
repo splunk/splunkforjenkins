@@ -13,4 +13,5 @@ public class Constants {
     public final static String SLAVE_TAG_NAME = "slave";
     public final static String QUEUE_TAG_NAME = "queue";
     public static final String JOB_EVENT_TAG_NAME = "job_event";
+    public static final String MASTER = "(master)";
 }
