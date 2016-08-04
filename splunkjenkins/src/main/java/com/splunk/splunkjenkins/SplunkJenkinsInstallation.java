@@ -19,11 +19,8 @@ import org.kohsuke.stapler.StaplerRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -34,12 +31,15 @@ import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
 import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.verifyHttpInput;
+import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
+    public static final String DEFAULT_SCRIPT_TEXT="sendReport({junitReport})";
+
     private transient static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
     // Defaults plugin global config values:
@@ -56,7 +56,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String scriptPath;
     private String metaDataConfig;
     //groovy content if file path not set
-    public String scriptContent;
+    private String scriptContent=DEFAULT_SCRIPT_TEXT;
     public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
@@ -112,19 +112,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             cachedConfig = GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
             return cachedConfig;
         }
-    }
-
-    /*
-     * Gets the jenkins's hostname
-     */
-    private static String getHostName() {
-        String hostname = null;
-        try {
-            hostname = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e1) {
-            e1.printStackTrace();
-        }
-        return hostname;
     }
 
     /**
@@ -200,7 +187,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public FormValidation doCheckScriptContent(@QueryParameter String value) {
         try {
-            new GroovyShell().parse(value);
+            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(value);
         } catch (MultipleCompilationErrorsException e) {
             return FormValidation.error(e.getMessage());
         }
@@ -383,6 +370,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         this.scriptPath = scriptPath;
     }
 
+    public String getScriptContent() {
+        return scriptContent;
+    }
+
+    public void setScriptContent(String scriptContent) {
+        this.scriptContent = scriptContent;
+    }
+
     public Map toMap() {
         HashMap map = new HashMap();
         map.put("token", this.token);
@@ -402,4 +397,5 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     protected static class Descriptor {
         protected String host, httpInputToken, httpInputPort, indexName, scheme, sourceName, sourceTypeName;
     }
+
 }

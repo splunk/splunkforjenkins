@@ -12,12 +12,17 @@ import org.junit.Test;
 import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.JenkinsRule;
 
+import java.util.UUID;
+import java.util.logging.Logger;
+
+import static com.splunk.splunkjenkins.SplunkConfigUtil.INDEX_NAME;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
+import static org.junit.Assert.*;
 
 public class SplunkArchiveFileTest {
     public static Object result = null;
+    private static final Logger logger = Logger.getLogger(SplunkArchiveFileTest.class.getName());
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
@@ -32,17 +37,26 @@ public class SplunkArchiveFileTest {
         SplunkLogService.getInstance().releaseConnection();
     }
 
-    public void buildWithScript(String groovyScript) throws Exception {
+    public String buildWithScript(String groovyScript) throws Exception {
         Label label = r.jenkins.getLabel("filetest");
         r.createOnlineSlave(label);
-        FreeStyleProject project = r.createFreeStyleProject("verify_archive");
+        FreeStyleProject project = r.createFreeStyleProject("verify_archive" + UUID.randomUUID());
         CaptureEnvironmentBuilder captureEnvironment = new CaptureEnvironmentBuilder();
         project.getBuildersList().add(captureEnvironment);
         project.getBuildersList().add(new Shell("ps -ef >process_list.txt"));
         project.setAssignedLabel(label);
-        SplunkJenkinsInstallation.get().scriptContent = groovyScript;
+        SplunkJenkinsInstallation.get().setScriptContent(groovyScript);
         SplunkJenkinsInstallation.get().updateCache();
+        long start_time = System.currentTimeMillis();
         FreeStyleBuild build = r.buildAndAssertSuccess(project);
+        String buildUrl = build.getUrl();
+        int expected = 5;
+        String query = "search index=" + INDEX_NAME
+                + " source=\"" + buildUrl + "process_list.txt\"";
+        logger.info(query);
+        int eventCount = waitForSplunkSearchResult(query, start_time, expected);
+        assertEquals(expected, eventCount);
+        return build.getUrl();
     }
 
     @Test

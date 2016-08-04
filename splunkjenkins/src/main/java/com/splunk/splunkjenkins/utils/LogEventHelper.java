@@ -26,7 +26,9 @@ import java.io.*;
 import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -401,4 +403,5 @@ public class LogEventHelper {
         }
         return slaveStatusMap;
     }
+
 }

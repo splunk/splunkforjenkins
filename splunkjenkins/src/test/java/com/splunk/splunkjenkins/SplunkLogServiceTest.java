@@ -12,6 +12,7 @@ import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.junit.*;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
 import static org.junit.Assert.*;
 
 import org.jvnet.hudson.test.JenkinsRule;
@@ -46,17 +47,18 @@ public class SplunkLogServiceTest {
      */
     @Test
     public void testSend() throws IOException, InterruptedException {
-        assertTrue("config should be valid",SplunkJenkinsInstallation.get().isValid());
+        assertTrue("config should be valid", SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
-        boolean queuedGenericMessage=SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
+        boolean queuedGenericMessage = SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
         assertTrue("should put message in queue", queuedGenericMessage);
-        long batchId = System.currentTimeMillis();
-        LOG.info("index=" + SplunkConfigUtil.INDEX_NAME + " |spath batch |search batch=" + batchId);
+        long timestamp = System.currentTimeMillis();
+        String query = "index=" + SplunkConfigUtil.INDEX_NAME + " |spath batch|where batch=" + timestamp;
+        LOG.info(query);
         long initNumber = SplunkLogService.getInstance().getSentCount();
         for (int i = 0; i < BATCH_COUNT; i++) {
             Map data = new HashMap();
             data.put("id", UUID.randomUUID().toString());
-            data.put("batch", batchId);
+            data.put("batch", timestamp);
             data.put("number", i);
             boolean queued = SplunkLogService.getInstance().send(data);
             assertTrue("should put the message to queue", queued);
@@ -73,6 +75,8 @@ public class SplunkLogServiceTest {
                 fail("can not send events in time, remaining " + remaining);
             }
         }
-
+        int expected = BATCH_COUNT;
+        int eventCount = waitForSplunkSearchResult(query, timestamp, expected);
+        assertEquals(expected, eventCount);
     }
 }

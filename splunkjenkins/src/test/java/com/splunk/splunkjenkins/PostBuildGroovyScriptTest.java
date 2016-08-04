@@ -8,10 +8,12 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.TouchBuilder;
 
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PostBuildGroovyScriptTest {
     private static final Logger LOG = Logger.getLogger(PostBuildGroovyScriptTest.class.getName());
@@ -31,7 +33,7 @@ public class PostBuildGroovyScriptTest {
                 "        \"testsuite\": getJunitReport()\n" +
                 "]\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.buildEvent=result";
-        SplunkJenkinsInstallation.get().scriptContent = groovyScript;
+        SplunkJenkinsInstallation.get().setScriptContent(groovyScript);
         SplunkJenkinsInstallation.get().updateCache();
         //create a job
         project = j.createFreeStyleProject("simple");

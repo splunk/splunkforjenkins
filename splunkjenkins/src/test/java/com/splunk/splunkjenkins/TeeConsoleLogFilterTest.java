@@ -1,13 +1,11 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.utils.SplunkLogService;
-import hudson.model.Cause;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.JDK;
 import hudson.tasks.Shell;
 
-import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -19,6 +17,8 @@ import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
@@ -40,10 +40,7 @@ public class TeeConsoleLogFilterTest {
 
     @Test
     public void decorateLogger() throws Exception {
-        FreeStyleProject p = r.createFreeStyleProject();
-        JDK jdk = new JDK("test", "/opt/jdk");
-        r.jenkins.getJDKs().add(jdk);
-        p.setJDK(jdk);
+        FreeStyleProject p = r.createFreeStyleProject("console_" + UUID.randomUUID());
         CaptureEnvironmentBuilder captureEnvironment = new CaptureEnvironmentBuilder();
         p.getBuildersList().add(captureEnvironment);
         p.getBuildersList().add(new Shell("echo $PATH;echo $$"));
@@ -57,6 +54,9 @@ public class TeeConsoleLogFilterTest {
                 fail("can not send event in time");
             }
         }
-
+        String query = "index=" + SplunkConfigUtil.INDEX_NAME + " source=" + b.getUrl() + "console";
+        int expected = 5;
+        int count = waitForSplunkSearchResult(query, b.getTimeInMillis(), expected);
+        assertEquals(expected, count);
     }
 }
