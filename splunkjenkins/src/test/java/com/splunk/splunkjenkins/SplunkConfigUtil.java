@@ -13,6 +13,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SplunkConfigUtil {
@@ -91,7 +92,7 @@ public class SplunkConfigUtil {
                 SplunkResponse result = gson.fromJson(tokenMessage, SplunkResponse.class);
                 token = result.getFirst("token");
             } catch (IOException e) {
-                e.printStackTrace();
+                LOG.log(Level.SEVERE, "failed to get token", e);
             }
         }
         if (token == null) {
@@ -106,17 +107,12 @@ public class SplunkConfigUtil {
     public static boolean setupSender(Jenkins jenkins, String host, String token) {
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = jenkins.getExtensionList(GlobalConfiguration.class).get(SplunkJenkinsInstallation.class);
-        if (config == null) {
-            LOG.severe("empty config, create a new config");
-            config = new SplunkJenkinsInstallation(false);
-            jenkins.getExtensionList(GlobalConfiguration.class).add(0, config);
-        }
         String metadataConfig = "";
         try (InputStream input = SplunkConfigUtil.class.getClassLoader().getResourceAsStream("splunk_metadata.properties")) {
             metadataConfig = IOUtils.toString(input);
             metadataConfig += "\nindex=" + INDEX_NAME;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.log(Level.SEVERE, "failed to read meta config", e);
         }
         config.setHost(host);
         config.setPort(8088);
@@ -127,7 +123,9 @@ public class SplunkConfigUtil {
         config.setMetaDataConfig(metadataConfig);
         config.updateCache();
         config.save();
-        return config.isValid();
+        boolean isValid = config.isValid();
+        LOG.fine("splunk httpinput collector config is valid ?" + isValid);
+        return isValid;
     }
 
     public static int waitForSplunkSearchResult(String query, long startTime, int expected) {
