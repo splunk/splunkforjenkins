@@ -171,7 +171,7 @@ public class RunDelegate {
 
     /**
      * send build reports with build variables as metadata
-     * @param closure Groovy closure to return a report
+     * @param closure Groovy closure to return a report(null value will skip the report)
      */
     public void sendReport(Closure closure) {
         String url = build.getUrl();
@@ -180,9 +180,11 @@ public class RunDelegate {
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put("build_env", env);
-        def report = closure() ?: "no result found";
-        event.put("report", report);
-        send(event);
+        def report = closure()
+        if (report != null) {
+            event.put("report", report);
+            send(event);
+        }
     }
 
     public static Map getJunitXmlCompatibleResult(TestResult testResult) {
