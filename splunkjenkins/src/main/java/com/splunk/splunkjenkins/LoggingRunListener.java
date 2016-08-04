@@ -125,43 +125,35 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("queue_time", queueTime);
         event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
-        if (!(run instanceof AbstractBuild)) {
-            event.put("message", "unknown build type" + run.getClass().getName());
-            return event;
-        }
-        AbstractBuild build = (AbstractBuild) run;
-        String jenkinsNode = (StringUtils.isEmpty(build.getBuiltOnStr()) ? Constants.MASTER : build.getBuiltOnStr());
-        event.put("node", jenkinsNode);
-        event.put("job_name", build.getProject().getUrl());
-        event.put("job_started_at", build.getTimestampString2());
-        if (build.getProject() instanceof Describable) {
-            String jobType = ((Describable) build.getProject()).getDescriptor().getDisplayName();
+        event.put("job_started_at", run.getTimestampString2());
+        event.put("job_name", run.getParent().getUrl());
+        if (run.getParent() instanceof Describable) {
+            String jobType = ((Describable) run.getParent()).getDescriptor().getDisplayName();
             event.put("job_type", jobType);
         }
+        Executor executor = run.getExecutor();
+        String nodeName = null;
+        if (executor != null) {
+            nodeName = executor.getOwner().getName();
+            if (StringUtils.isEmpty(nodeName)) {
+                nodeName = Constants.MASTER;
+            }
+        }
+        event.put("node", nodeName);
         return event;
     }
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
         Map event = getCommonBuildInfo(run);
+        event.put("type", "completed");
+        event.put("job_duration", run.getDuration() / 1000);
+        event.put(JOB_RESULT, run.getResult().toString());
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
             postJobAction.perform(build, listener);
-            event.put(JOB_RESULT, build.getResult().toString());
-            event.put("job_duration", build.getDuration() / 1000);
-            //check changelog
-            List<String> changelog = new ArrayList<>();
-            if (build.hasChangeSetComputed()) {
-                ChangeLogSet<? extends ChangeLogSet.Entry> changeset = build.getChangeSet();
-                for (ChangeLogSet.Entry entry : changeset) {
-                    StringBuilder sbr = new StringBuilder();
-                    sbr.append(entry.getTimestamp());
-                    sbr.append(SEPARATOR).append("commit:").append(entry.getCommitId());
-                    sbr.append(SEPARATOR).append("author:").append(entry.getAuthor());
-                    sbr.append(SEPARATOR).append("message:").append(entry.getMsg());
-                    changelog.add(sbr.toString());
-                }
-            }
+            List<String> changelog = getChangeLog(build);
+
             Map testSummary = new HashMap();
             //check test summary
             if (build.getProject().getPublishersList().get(JUnitResultArchiver.class) != null) {
@@ -174,7 +166,6 @@ public class LoggingRunListener extends RunListener<Run> {
                     testSummary.put("duration", testResult.getDuration());
                 }
             }
-            event.put("type", "completed");
             if (!testSummary.isEmpty()) {
                 event.put("test_summary", testSummary);
             }
@@ -184,5 +175,22 @@ public class LoggingRunListener extends RunListener<Run> {
             event.putAll(getScmInfo(build));
         }
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
+    }
+
+    private List<String> getChangeLog(AbstractBuild build) {
+        //check changelog
+        List<String> changelog = new ArrayList<>();
+        if (build.hasChangeSetComputed()) {
+            ChangeLogSet<? extends ChangeLogSet.Entry> changeset = build.getChangeSet();
+            for (ChangeLogSet.Entry entry : changeset) {
+                StringBuilder sbr = new StringBuilder();
+                sbr.append(entry.getTimestamp());
+                sbr.append(SEPARATOR).append("commit:").append(entry.getCommitId());
+                sbr.append(SEPARATOR).append("author:").append(entry.getAuthor());
+                sbr.append(SEPARATOR).append("message:").append(entry.getMsg());
+                changelog.add(sbr.toString());
+            }
+        }
+        return changelog;
     }
 }
