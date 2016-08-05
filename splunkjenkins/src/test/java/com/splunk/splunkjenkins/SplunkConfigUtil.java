@@ -3,8 +3,6 @@ package com.splunk.splunkjenkins;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.splunk.*;
-import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -21,7 +19,6 @@ public class SplunkConfigUtil {
     private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
     private static final String COLLECTOR_NAME = "splunkins_unittest";
     private static final String ENDPOINT = "/servicesNS/admin/search/data/inputs/http/";
-    public static String TOKEN = null;
     private static Gson gson = new Gson();
     private static Service splunkService;
 
@@ -48,7 +45,7 @@ public class SplunkConfigUtil {
 
     }
 
-    public static synchronized boolean checkTokenAvailable(Jenkins jenkins) {
+    public static synchronized boolean checkTokenAvailable() {
         String token = System.getProperty("splunk-token");
         String host = "127.0.0.1";
         try {
@@ -91,6 +88,7 @@ public class SplunkConfigUtil {
                 String tokenMessage = IOUtils.toString(response.getContent());
                 SplunkResponse result = gson.fromJson(tokenMessage, SplunkResponse.class);
                 token = result.getFirst("token");
+                System.setProperty("splunk-token", token);
             } catch (IOException e) {
                 LOG.log(Level.SEVERE, "failed to get token", e);
             }
@@ -100,13 +98,12 @@ public class SplunkConfigUtil {
                     "and you can also putIfAbsent this to global vm settings in IDE");
             return false;
         }
-        TOKEN = token;
-        return setupSender(jenkins, host, token);
+        return setupSender(host, token);
     }
 
-    public static boolean setupSender(Jenkins jenkins, String host, String token) {
+    public static boolean setupSender(String host, String token) {
         LOG.info("host:" + host + " token:" + token);
-        SplunkJenkinsInstallation config = jenkins.getExtensionList(GlobalConfiguration.class).get(SplunkJenkinsInstallation.class);
+        SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
         String metadataConfig = "";
         try (InputStream input = SplunkConfigUtil.class.getClassLoader().getResourceAsStream("splunk_metadata.properties")) {
             metadataConfig = IOUtils.toString(input);
@@ -120,8 +117,11 @@ public class SplunkConfigUtil {
         config.setToken(token);
         config.setRawEventEnabled(false);
         config.setEnabled(true);
+        config.setScriptPath(null);
+        config.setScriptContent(null);
         config.setMetaDataConfig(metadataConfig);
         config.updateCache();
+        LOG.fine("update splunkins config");
         config.save();
         boolean isValid = config.isValid();
         LOG.fine("splunk httpinput collector config is valid ?" + isValid);

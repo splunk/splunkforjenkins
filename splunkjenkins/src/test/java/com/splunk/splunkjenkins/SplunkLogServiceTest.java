@@ -17,23 +17,18 @@ import static org.junit.Assert.*;
 
 import org.jvnet.hudson.test.JenkinsRule;
 
+import javax.annotation.concurrent.NotThreadSafe;
+
+@NotThreadSafe
 public class SplunkLogServiceTest {
     private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
     private static final int BATCH_COUNT = 1000;
     @Rule
     public JenkinsRule r = new JenkinsRule();
 
-    @BeforeClass
-    public static void setUpClass() {
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-    }
-
     @Before
-    public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable(r.getInstance()));
+    public void setUp() {
+        org.junit.Assume.assumeTrue(checkTokenAvailable());
     }
 
     @After
@@ -46,7 +41,8 @@ public class SplunkLogServiceTest {
      * Test of update method, of class SplunkLogService.
      */
     @Test
-    public void testSend() throws IOException, InterruptedException {
+    public void testLogServiceSendMethod() throws IOException, InterruptedException {
+        LOG.info("running test SplunkLogServiceTest testLogServiceSendMethod");
         assertTrue("config should be valid", SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
         boolean queuedGenericMessage = SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
@@ -63,8 +59,8 @@ public class SplunkLogServiceTest {
             boolean queued = SplunkLogService.getInstance().send(data);
             assertTrue("should put the message to queue", queued);
         }
-        //give some time to send,max wait time is 2 minute
-        long timeToWait = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
+        //give some time to send,max wait time is 3 minute
+        long timeToWait = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(3);
         while (SplunkLogService.getInstance().getSentCount() < (BATCH_COUNT + initNumber)) {
             Thread.sleep(1000);
             long queueSize = SplunkLogService.getInstance().getQueueSize();

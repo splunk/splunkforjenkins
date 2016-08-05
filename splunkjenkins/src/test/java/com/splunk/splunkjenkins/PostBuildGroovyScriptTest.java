@@ -24,7 +24,7 @@ public class PostBuildGroovyScriptTest {
 
     @Before
     public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable(j.getInstance()));
+        org.junit.Assume.assumeTrue(checkTokenAvailable());
         String groovyScript = "def metadata = [:]\n" +
                 "metadata[\"product\"]=\"splunk\"\n" +
                 "def result = [\n" +

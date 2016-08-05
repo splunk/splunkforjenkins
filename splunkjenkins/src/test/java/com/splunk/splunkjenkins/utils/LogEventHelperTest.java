@@ -21,7 +21,7 @@ public class LogEventHelperTest {
 
     @Before
     public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable(r.getInstance()));
+        org.junit.Assume.assumeTrue(checkTokenAvailable());
     }
 
     @After
