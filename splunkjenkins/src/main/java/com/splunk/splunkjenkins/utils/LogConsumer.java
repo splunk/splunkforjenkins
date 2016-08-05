@@ -32,6 +32,7 @@ public class LogConsumer extends Thread {
     private boolean acceptingTask = true;
     private AtomicLong outgoingCounter;
     private int errorCount;
+    private boolean sending = false;
     private List<Class<? extends IOException>> nonretryExceptions = Arrays.asList(
             UnknownHostException.class,
             ConnectException.class,
@@ -77,6 +78,7 @@ public class LogConsumer extends Thread {
                 if (!record.discard()) {
                     HttpPost post = buildPost(record, SplunkJenkinsInstallation.get());
                     try {
+                        sending = true;
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
                         LOG.log(Level.WARNING, "content length:"+post.getEntity().getContentLength()+" origin:" + record.getShortDescr(), ex);
@@ -100,6 +102,7 @@ public class LogConsumer extends Thread {
                             retry(record);
                         }
                     } finally {
+                        sending = false;
                         post.releaseConnection();
                     }
                 } else {
@@ -114,7 +117,19 @@ public class LogConsumer extends Thread {
 
     public void stopTask() {
         this.acceptingTask = false;
-        this.interrupt();
+        for (int i = 0; i < 5; i++) {
+            if (sending) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        }
+        if(this.isAlive()){
+            //queue.take() may block the thread
+            this.interrupt();
+        }
     }
 
     /**
@@ -129,7 +144,7 @@ public class LogConsumer extends Thread {
         }
     }
 
-    public long getSentCount(){
+    public long getSentCount() {
         return outgoingCounter.get();
     }
 
