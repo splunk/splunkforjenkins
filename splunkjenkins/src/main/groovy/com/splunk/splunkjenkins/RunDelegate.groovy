@@ -59,7 +59,7 @@ public class RunDelegate {
      * @param includes ant glob pattern
      */
     def archive(String includes) {
-        archive(includes, null, true, "10MB");
+        archive(includes, null, false, "10MB");
     }
 
     /**
@@ -179,7 +179,7 @@ public class RunDelegate {
         event.put(TAG, "build_report")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
-        event.put("build_env", env);
+        event.put("parameters", build.buildVariables);
         def report = closure()
         if (report != null) {
             event.put("report", report);
