@@ -21,6 +21,7 @@ import java.util.*;
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
 import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getBuildVariables;
 
 @SuppressWarnings("unused")
 @Extension
@@ -127,6 +128,10 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("upstream", getUpStreamUrl(run));
         event.put("job_started_at", run.getTimestampString2());
         event.put("job_name", run.getParent().getUrl());
+        Map parameters = getBuildVariables(run);
+        if (!parameters.isEmpty()) {
+            event.put("parameters", parameters);
+        }
         if (run.getParent() instanceof Describable) {
             String jobType = ((Describable) run.getParent()).getDescriptor().getDisplayName();
             event.put("job_type", jobType);

@@ -179,6 +179,8 @@ public class RunDelegate {
         event.put(TAG, "build_report")
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
+        event.put("build_number", build.getNumber());
+        event.put("job_name", build.getParent().getUrl());
         event.put("parameters", build.buildVariables);
         def report = closure()
         if (report != null) {

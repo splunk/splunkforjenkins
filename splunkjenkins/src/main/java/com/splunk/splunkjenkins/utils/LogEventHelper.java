@@ -404,4 +404,15 @@ public class LogEventHelper {
         return slaveStatusMap;
     }
 
+    public static Map<String, Object> getBuildVariables(Run run) {
+        Map<String, Object> values = new HashMap<>();
+        ParametersAction parameters = run.getAction(ParametersAction.class);
+        if (parameters != null) {
+            for (ParameterValue p : parameters) {
+                values.put(p.getName(), p.getValue());
+            }
+        }
+        return values;
+    }
+
 }
