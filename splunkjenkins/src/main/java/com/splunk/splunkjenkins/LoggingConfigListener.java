@@ -32,7 +32,7 @@ public class LoggingConfigListener extends SaveableListener {
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes|build)\\.xml$", Pattern.CASE_INSENSITIVE);
     private static final XStream xstream = new XStream2(new XstremJsonDriver());
     private boolean enabled = false;
-    private int previousHash=0;
+    private int previousHash = 0;
 
     @Override
     public void onChange(Saveable saveable, XmlFile file) {
@@ -41,8 +41,12 @@ public class LoggingConfigListener extends SaveableListener {
         if (!enabled || IGNORED.matcher(configPath).find()) {
             return;
         }
-        String config=xstream.toXML(saveable);
-        if (previousHash==config.hashCode()) {
+        String user = getUserName();
+        if ("SYSTEM".equals(user)) {
+            return;
+        }
+        String config = xstream.toXML(saveable);
+        if (previousHash == config.hashCode()) {
             //Save a job can trigger multiple SaveableListener, depends on jenkins versions
             // e.g. AbstractProject.submit may call setters which can trigger save()
             return;
@@ -52,18 +56,20 @@ public class LoggingConfigListener extends SaveableListener {
         }
         if (saveable instanceof Job) {
             Job job = (Job) saveable;
-            configPath = job.getUrl()+"config.xml";
+            configPath = job.getUrl() + "config.xml";
         }
-        String sourceName="jenkins://"+configPath;
+        String sourceName = "jenkins://" + configPath;
         Map logInfo = new HashMap<>();
         logInfo.put(TAG, "config_update");
         logInfo.put("config_source", sourceName);
-        logInfo.put("user", getUserName());
+        logInfo.put("user", user);
         if (saveable instanceof Describable) {
             Describable describable = (Describable) saveable;
-            logInfo.put("descriptor", describable.getDescriptor().getDisplayName());
+            logInfo.put("id", describable.getDescriptor().getId());
+            String displayName = describable.getDescriptor().getDisplayName();
+            logInfo.put("displayName", displayName);
         }
-        SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, sourceName+".event");
+        SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, "config_audit");
         SplunkLogService.getInstance().send(new JenkinsJsonConfig(config), JENKINS_CONFIG, sourceName);
     }
 
