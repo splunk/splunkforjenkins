@@ -30,8 +30,7 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        Map event = getCommonBuildInfo(run);
-        event.put("type", "started");
+        Map event = getCommonBuildInfo(run, false);
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
@@ -117,7 +116,7 @@ public class LoggingRunListener extends RunListener<Run> {
      * @return Build event which are common both to start/complete event
      * should not reference some fields only available after build such as result or duration
      */
-    private Map<String, Object> getCommonBuildInfo(Run run) {
+    private Map<String, Object> getCommonBuildInfo(Run run, boolean completed) {
         Map event = new HashMap();
         event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
         event.put("build_number", run.getNumber());
@@ -145,12 +144,20 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         event.put("node", nodeName);
+        for (LoggingJobExtractor extendListener : LoggingJobExtractor.all()) {
+            if (extendListener.targetType.isInstance(run)) {
+                Map<String, Object> extend = extendListener.extract(run, completed);
+                if (extend != null && !extend.isEmpty()) {
+                    event.putAll(extend);
+                }
+            }
+        }
         return event;
     }
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        Map event = getCommonBuildInfo(run);
+        Map event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
         event.put("job_duration", run.getDuration() / 1000);
         event.put(JOB_RESULT, run.getResult().toString());
@@ -179,6 +186,7 @@ public class LoggingRunListener extends RunListener<Run> {
             }
             event.putAll(getScmInfo(build));
         }
+
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
