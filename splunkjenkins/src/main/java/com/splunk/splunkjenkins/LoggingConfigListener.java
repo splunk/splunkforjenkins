@@ -38,7 +38,7 @@ public class LoggingConfigListener extends SaveableListener {
     public void onChange(Saveable saveable, XmlFile file) {
         String configPath = file.getFile().getAbsolutePath();
         String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
-        if (!enabled || IGNORED.matcher(configPath).find()) {
+        if (saveable == null || !enabled || IGNORED.matcher(configPath).find()) {
             return;
         }
         String user = getUserName();
@@ -46,11 +46,13 @@ public class LoggingConfigListener extends SaveableListener {
             return;
         }
         String config = xstream.toXML(saveable);
-        if (previousHash == config.hashCode()) {
+        int configHash = config.hashCode();
+        if (previousHash == configHash) {
             //Save a job can trigger multiple SaveableListener, depends on jenkins versions
             // e.g. AbstractProject.submit may call setters which can trigger save()
             return;
         }
+        previousHash = configHash;
         if (configPath.startsWith(jenkinsHome)) {
             configPath = configPath.substring(jenkinsHome.length() + 1);
         }
