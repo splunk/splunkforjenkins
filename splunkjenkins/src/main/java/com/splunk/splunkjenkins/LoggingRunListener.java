@@ -31,6 +31,7 @@ public class LoggingRunListener extends RunListener<Run> {
     @Override
     public void onStarted(Run run, TaskListener listener) {
         Map event = getCommonBuildInfo(run, false);
+        event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
     }
 
