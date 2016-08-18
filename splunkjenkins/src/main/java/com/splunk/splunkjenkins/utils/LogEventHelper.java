@@ -212,6 +212,9 @@ public class LogEventHelper {
                                 String includes, String excludes, boolean sendFromSlave, long maxFileSize) {
         FilePath ws = build.getWorkspace();
         int eventCount = 0;
+        if(ws==null){
+            return eventCount;
+        }
         final String expanded = Util.replaceMacro(includes, envVars);
         final String exclude = Util.replaceMacro(excludes, envVars);
         try {
