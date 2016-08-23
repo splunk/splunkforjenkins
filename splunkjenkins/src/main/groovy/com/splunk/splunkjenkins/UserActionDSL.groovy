@@ -15,7 +15,7 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 public class UserActionDSL {
-    static final LOG = Logger.getLogger(UserActionDSL.class.name)
+    static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
     public void perform(AbstractBuild build, TaskListener listener) {
         try {
@@ -37,8 +37,8 @@ public class UserActionDSL {
                 try {
                     dslScript.run()
                 } catch (Exception e) {
-                    LOG.log(Level.SEVERE, "DSL script failed", e);
-                    listener.println("failed to run script " + e)
+                    LOG.log(Level.SEVERE, "UserActionDSL script failed", e);
+                    e.printStackTrace(listener.getLogger())
                 }
                 listener.getLogger().flush();
             }
