@@ -1,9 +1,11 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.EventRecord;
+import com.splunk.splunkjenkins.model.JdkSplunkLogHandler;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
+import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
 import hudson.util.ByteArrayOutputStream2;
 
@@ -15,6 +17,7 @@ import java.io.Serializable;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
+import static hudson.init.InitMilestone.JOB_LOADED;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -110,5 +113,11 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             SplunkLogService.getInstance().enqueue(record);
             logText.reset();
         }
+    }
+
+    @Initializer(after = JOB_LOADED)
+    public static void init() {
+        // capture jdk logging
+        Logger.getLogger("").addHandler(new JdkSplunkLogHandler());
     }
 }
