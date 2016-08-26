@@ -29,7 +29,8 @@ import java.util.logging.Level;
 
 public class SplunkLogService {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
-    private final static int SOCKET_TIMEOUT=3;
+    private final static int SOCKET_TIMEOUT = 3;
+    private final static int QUEUE_SIZE = 1 << 18;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
@@ -39,7 +40,7 @@ public class SplunkLogService {
     private AtomicLong outgoingCounter = new AtomicLong();
 
     private SplunkLogService() {
-        this.logQueue = new LinkedBlockingQueue<EventRecord>();
+        this.logQueue = new LinkedBlockingQueue<EventRecord>(QUEUE_SIZE);
         this.workers = new ArrayList<LogConsumer>();
         this.connMgr = buildConnectionManager();
         this.client = HttpClients.custom().setConnectionManager(this.connMgr).build();
@@ -156,8 +157,9 @@ public class SplunkLogService {
                 }
             }
         }
-        long sent = incomingCounter.incrementAndGet();
-        if (sent % 2000 == 0) {
+        long incomingCount = incomingCounter.incrementAndGet();
+        if (incomingCount % 2000 == 0) {
+            LOG.info(this.getStats());
             synchronized (InstanceHolder.service) {
                 connMgr.closeIdleConnections(SOCKET_TIMEOUT, TimeUnit.MINUTES);
             }
@@ -199,11 +201,8 @@ public class SplunkLogService {
 
     public String getStats() {
         StringBuilder sbr = new StringBuilder();
-        sbr.append("queue:").append(this.getQueueSize()).append("\n")
-                .append("sent:").append(this.getSentCount()).append("\n");
-        for (LogConsumer consumer : workers) {
-            sbr.append(consumer.getName()).append(":").append(consumer.getSentCount()).append("\n");
-        }
+        sbr.append("remaining:").append(this.getQueueSize()).append(" ")
+                .append("sent:").append(this.getSentCount());
         return sbr.toString();
     }
 }
