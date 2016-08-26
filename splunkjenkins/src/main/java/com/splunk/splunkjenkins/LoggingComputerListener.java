@@ -28,16 +28,8 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 public class LoggingComputerListener extends ComputerListener {
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-        Map event = getMasterStats();
-        event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
-        event.put("type","online");
-        event.put("num_executors", c.getNumExecutors());
-        event.put("node_name", getSlaveName(c));
-        Node node = c.getNode();
-        if (node != null) {
-            //event.put("labels", getLabels(node.getAssignedLabels()));
-            event.put("label", node.getLabelString());
-        }
+        Map event = getComputerEvent(c, null);
+        event.put("type", "online");
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
@@ -56,22 +48,30 @@ public class LoggingComputerListener extends ComputerListener {
         } catch (Exception e) {
             //just ignore
         }
-        Map event = getMasterStats();
-        event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
+        Map event = getComputerEvent(c, cause);
         event.put("type", "offline");
-        event.put("node_name", getSlaveName(c));
-        if (cause != null) {
-            event.put("cause", cause.toString());
-        }
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
-    @Override
-    public void onTemporarilyOnline(Computer c) {
+    private Map getComputerEvent(Computer c, OfflineCause cause) {
         Map event = getMasterStats();
-        event.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
-        event.put("type", "temp_offline");
+        event.put(Constants.TAG, Constants.QUEUE_TAG_NAME);
+        event.put("num_executors", c.getNumExecutors());
         event.put("node_name", getSlaveName(c));
+        Node node = c.getNode();
+        if (node != null) {
+            event.put("label", node.getLabelString());
+        }
+        if (cause != null) {
+            event.put("cause", cause.toString());
+        }
+        return event;
+    }
+
+    @Override
+    public void onTemporarilyOffline(Computer c, OfflineCause cause) {
+        Map event = getComputerEvent(c, cause);
+        event.put("type", "temp_offline");
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
         SplunkLogService.getInstance().send(getSlaveStats().values(), SLAVE_INFO);
     }
