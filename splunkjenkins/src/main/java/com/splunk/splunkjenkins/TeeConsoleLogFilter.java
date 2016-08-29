@@ -1,7 +1,6 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.EventRecord;
-import com.splunk.splunkjenkins.model.JdkSplunkLogHandler;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;

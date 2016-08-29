@@ -38,7 +38,7 @@ public class LoggingConfigListener extends SaveableListener {
     public void onChange(Saveable saveable, XmlFile file) {
         String configPath = file.getFile().getAbsolutePath();
         String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
-        if (saveable == null || !enabled || IGNORED.matcher(configPath).find()) {
+        if (saveable == null || !enabled || !SplunkJenkinsInstallation.loaded || IGNORED.matcher(configPath).find()) {
             return;
         }
         String user = getUserName();

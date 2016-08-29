@@ -1,6 +1,8 @@
-package com.splunk.splunkjenkins.model;
+package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.PrintWriter;
@@ -20,6 +22,10 @@ public class JdkSplunkLogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
+        Jenkins jenkins=Jenkins.getInstance();
+        if(jenkins==null || !SplunkJenkinsInstallation.loaded){
+            return;
+        }
         String logger = record.getLoggerName();
         if (StringUtils.startsWith(logger, packageName)) {
             //avoid sending splunkjenkins JDK logs which will cause recursive call

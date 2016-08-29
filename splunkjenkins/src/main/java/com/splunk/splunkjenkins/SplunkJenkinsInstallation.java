@@ -37,6 +37,7 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
+    transient static boolean loaded = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
     public static final String DEFAULT_SCRIPT_TEXT="sendReport({junitReport})";
 
@@ -96,6 +97,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                 }
                 this.updateCache();
                 this.updateConfigListener();
+                loaded = true;
             }
         }
     }
