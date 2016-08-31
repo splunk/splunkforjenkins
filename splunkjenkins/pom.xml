@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
     <artifactId>splunkjenkins</artifactId>
-    <version>0.7.3</version>
+    <version>0.7.4</version>
     <packaging>hpi</packaging>
 
     <name>splunkjenkins</name>
