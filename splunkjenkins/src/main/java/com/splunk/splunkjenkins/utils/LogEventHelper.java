@@ -12,6 +12,10 @@ import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
 import hudson.model.*;
+import hudson.model.Queue;
+import hudson.model.queue.Executables;
+import hudson.model.queue.SubTask;
+import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
@@ -212,7 +216,7 @@ public class LogEventHelper {
                                 String includes, String excludes, boolean sendFromSlave, long maxFileSize) {
         FilePath ws = build.getWorkspace();
         int eventCount = 0;
-        if(ws==null){
+        if (ws == null) {
             return eventCount;
         }
         final String expanded = Util.replaceMacro(includes, envVars);
@@ -332,13 +336,16 @@ public class LogEventHelper {
         }
         if (!computer.isIdle()) {
             List<String> builds = new ArrayList<>();
-            for (Executor executor : computer.getExecutors()) {
-                if (executor.isBusy()) {
-                    if (executor.isBusy() && executor.getCurrentExecutable() instanceof Run) {
-                        Run run = (Run) executor.getCurrentExecutable();
-                        if (run != null) {
-                            builds.add(run.getUrl());
-                        }
+            for (Computer.DisplayExecutor displayExecutor : computer.getDisplayExecutors()) {
+                if (displayExecutor.getExecutor().isBusy()) {
+                    WorkUnit workUnit = displayExecutor.getExecutor().getCurrentWorkUnit();
+                    Queue.Executable executable = displayExecutor.getExecutor().getCurrentExecutable();
+                    if (executable == null && workUnit != null) {
+                        executable = workUnit.getExecutable();
+                    }
+                    if (executable != null && executable instanceof Run) {
+                        Run run = (Run) executable;
+                        builds.add(run.getUrl());
                     }
                 }
             }

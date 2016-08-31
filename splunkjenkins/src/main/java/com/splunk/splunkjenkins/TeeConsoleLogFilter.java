@@ -16,7 +16,6 @@ import java.io.Serializable;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
-import static hudson.init.InitMilestone.JOB_LOADED;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -114,9 +113,4 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         }
     }
 
-    @Initializer(after = JOB_LOADED)
-    public static void init() {
-        // capture jdk logging
-        Logger.getLogger("").addHandler(new JdkSplunkLogHandler());
-    }
 }
