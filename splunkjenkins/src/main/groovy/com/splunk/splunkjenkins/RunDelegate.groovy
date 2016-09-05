@@ -14,6 +14,7 @@ import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.TESTCASE
+import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG
 import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
 
@@ -181,7 +182,7 @@ public class RunDelegate {
         event.put(BUILD_ID, url);
         event.put("build_number", build.getNumber());
         event.put("job_name", build.getParent().getUrl());
-        event.put("parameters", build.buildVariables);
+        event.put(BUILD_REPORT_ENV_TAG, build.buildVariables);
         def report = closure()
         if (report != null) {
             event.put("report", report);

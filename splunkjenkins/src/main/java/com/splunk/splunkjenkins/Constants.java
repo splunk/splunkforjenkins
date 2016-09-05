@@ -3,7 +3,6 @@ package com.splunk.splunkjenkins;
 public class Constants {
     public static final String TESTCASE = "testcase";
     public static final String TESTSUITE = "testsuite";
-    public static final String METADATA = "metadata";
     public static final String BUILD_ID = "build_url";
     public static final String TAG = "event_tag";
     public static final String JOB_RESULT = "job_result";
@@ -14,4 +13,5 @@ public class Constants {
     public final static String QUEUE_TAG_NAME = "queue";
     public static final String JOB_EVENT_TAG_NAME = "job_event";
     public static final String MASTER = "(master)";
+    public static final String BUILD_REPORT_ENV_TAG = "metadata";
 }

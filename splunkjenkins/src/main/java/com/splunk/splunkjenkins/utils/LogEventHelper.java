@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
+import static com.splunk.splunkjenkins.LoggingRunListener.getScmInfo;
 import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
@@ -308,7 +309,7 @@ public class LogEventHelper {
         }
     }
 
-    private static Map<String, Object> getComputerStatus(Computer computer) {
+    public static Map<String, Object> getComputerStatus(Computer computer) {
         String nodeName;
         Map slaveInfo = new HashMap();
         if (computer instanceof Jenkins.MasterComputer) {
@@ -326,6 +327,9 @@ public class LogEventHelper {
         slaveInfo.put("num_executors", computer.getNumExecutors());
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
+        if(computer.isOffline()){
+            slaveInfo.put("offline_reason", computer.getOfflineCauseReason());
+        }
         slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
         long connectTime = computer.getConnectTime();
         if (connectTime != 0) {
@@ -421,6 +425,9 @@ public class LogEventHelper {
             for (ParameterValue p : parameters) {
                 values.put(p.getName(), p.getValue());
             }
+        }
+        if(!values.keySet().contains("scm_repo") && run instanceof AbstractBuild){
+            values.put("scm_repo",getScmInfo((AbstractBuild) run));
         }
         return values;
     }
