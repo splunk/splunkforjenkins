@@ -18,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
+import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG;
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
 import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
@@ -58,7 +59,7 @@ public class LoggingRunListener extends RunListener<Run> {
         return buf.toString();
     }
 
-    private Map getScmInfo(AbstractBuild build) {
+    public static Map getScmInfo(AbstractBuild build) {
         Map event = new HashMap();
         if (build.getProject().getScm() != null) {
             SCM scm = build.getProject().getScm();
@@ -92,7 +93,7 @@ public class LoggingRunListener extends RunListener<Run> {
         return event;
     }
 
-    private String getScmURL(EnvVars envVars, String prefix) {
+    public static String getScmURL(EnvVars envVars, String prefix) {
         String value = envVars.get(prefix);
         if (value == null) {
             List<String> urls = new ArrayList();
@@ -130,7 +131,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("job_name", run.getParent().getUrl());
         Map parameters = getBuildVariables(run);
         if (!parameters.isEmpty()) {
-            event.put("parameters", parameters);
+            event.put(BUILD_REPORT_ENV_TAG, parameters);
         }
         if (run.getParent() instanceof Describable) {
             String jobType = ((Describable) run.getParent()).getDescriptor().getDisplayName();
@@ -187,8 +188,10 @@ public class LoggingRunListener extends RunListener<Run> {
             }
             event.putAll(getScmInfo(build));
         }
-
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        if (run.getExecutor() != null) {
+            JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
+        }
     }
 
     private List<String> getChangeLog(AbstractBuild build) {

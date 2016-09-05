@@ -2,11 +2,14 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.init.Initializer;
+import hudson.model.Computer;
 import jenkins.model.Jenkins;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.*;
 
@@ -55,13 +58,13 @@ public class JdkSplunkLogHandler extends Handler {
             if (!SplunkJenkinsInstallation.loaded) {
                 return false;
             }
-            String logger = record.getSourceClassName();
-            if (logger == null) {
+            String logSource = record.getSourceClassName();
+            if (logSource == null) {
                 return false;
             }
             for (int i = 0; i < skipLoggerNames.length; i++) {
                 String skipPrefix = skipLoggerNames[i];
-                if (logger.startsWith(skipPrefix)) {
+                if (logSource.startsWith(skipPrefix)) {
                     return false;
                 }
             }
@@ -103,17 +106,29 @@ public class JdkSplunkLogHandler extends Handler {
 
     @Initializer(after = JOB_LOADED)
     public static void forwardJdkLog() {
-        ClassLoader cl = Jenkins.getInstance().getPluginManager().uberClassLoader;
-        JdkSplunkLogHandler instance;
-        try {
-            instance = (JdkSplunkLogHandler) cl.loadClass(JdkSplunkLogHandler.class.getName()).newInstance();
-            Logger.getLogger("").addHandler(instance);
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+        Logger.getLogger("").addHandler(LogHolder.LOG_HANDLER);
+    }
+
+    static final class LogHolder {
+        /**
+         * This field is used on each slave node to record log records on the slave.
+         */
+        static final JdkSplunkLogHandler LOG_HANDLER = new JdkSplunkLogHandler();
+
+        static void getSlaveLog(Computer computer) {
+            if(computer==null || computer instanceof Jenkins.MasterComputer){
+                return;
+            }
+            try {
+                List<LogRecord> records = computer.getLogRecords();
+                for (LogRecord record : records) {
+                    LOG_HANDLER.publish(record);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }
