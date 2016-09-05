@@ -4,8 +4,9 @@ import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
-import hudson.init.Initializer;
 import hudson.model.AbstractBuild;
+import hudson.model.Computer;
+import hudson.model.Run;
 import hudson.util.ByteArrayOutputStream2;
 
 import java.io.FilterOutputStream;
@@ -35,21 +36,35 @@ import java.util.logging.Logger;
 public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializable {
     private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilter.class.getName());
 
+    //backwards compatibility
     @Override
     public OutputStream decorateLogger(AbstractBuild build, OutputStream output) throws IOException, InterruptedException {
+        return teeOutput(output, build.getUrl() + "console");
+    }
+
+    //introduced in jenkins 1.632
+    public OutputStream decorateLogger(Run build, OutputStream output) throws IOException, InterruptedException {
+        return teeOutput(output, build.getUrl() + "console");
+
+    }
+
+    //introduced in jenkins 1.632
+    public OutputStream decorateLogger(Computer computer, OutputStream logger) throws IOException, InterruptedException {
+        return teeOutput(logger, computer.getUrl() + "log");
+    }
+
+    private OutputStream teeOutput(OutputStream output, String source) {
         if (SplunkJenkinsInstallation.get().isValid()) {
-            return new TeeOutputStream(output, build.getUrl()+"console");
+            return new TeeOutputStream(output, source);
         } else {
             if (SplunkJenkinsInstallation.get().isEnabled()) {
-                LOG.log(Level.WARNING, "invalid splunk config, skipped sending console logs for build " + build.getUrl());
+                LOG.log(Level.WARNING, "invalid splunk config, skipped sending logs for " + source);
             }
             return output;
         }
     }
 
     public static class TeeOutputStream extends FilterOutputStream {
-
-
         private static final int LF = 0x0A;
         String sourceName;
         long lineCounter = 0;
