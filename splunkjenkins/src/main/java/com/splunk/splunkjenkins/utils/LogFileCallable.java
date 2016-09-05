@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
+import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.FILE;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
@@ -73,7 +74,7 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             sourceName = sourceName.substring(ws_posix_path.length() + 1);
         }
         sourceName = buildUrl + sourceName;
-        ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();
+        ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
         long totalSize=0;
         Integer count = 0;
         int c;

@@ -15,6 +15,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
+import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 
@@ -69,9 +70,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         String sourceName;
         long lineCounter = 0;
         //holds data received, will be cleared when \n received
-        private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2();
-        //holds decoded console text with timestamp and line number
-        private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2();
+        private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(512);
+        //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
+        private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
 
         public TeeOutputStream(OutputStream out, String sourceName) {
             super(out);
@@ -82,6 +83,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         @Override
         public void close() throws IOException {
             super.close();
+            logText.close();
             branch.close();
         }
 

@@ -39,6 +39,8 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
     transient static boolean loaded = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
+    public transient static final int MIN_BUFFER_SIZE=2048;
+    private transient static final int MAX_BUFFER_SIZE=1<<21;
     public static final String DEFAULT_SCRIPT_TEXT="sendReport({junitReport})";
 
     private transient static SplunkJenkinsInstallation cachedConfig;
@@ -49,8 +51,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String token;
     private boolean useSSL = true;
     private Integer port = 8088;
-    //for console log default cache size for 512k
-    private long maxEventsBatchSize = 512 * 1024;
+    //for console log default cache size for 256KB
+    private long maxEventsBatchSize = 1<<18;
     private long retriesOnError = 3;
     private boolean rawEventEnabled = false;
     //groovy script path
@@ -196,6 +198,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return FormValidation.ok();
     }
 
+    public FormValidation doCheckMaxEventsBatchSize(@QueryParameter int value) {
+        if (value < MIN_BUFFER_SIZE || value > MAX_BUFFER_SIZE) {
+            return FormValidation.error(String.format("please consider a value between %d and %d", MIN_BUFFER_SIZE, MAX_BUFFER_SIZE));
+        }
+        return FormValidation.ok();
+    }
+
     ////////END OF FORM VALIDATION/////////
     protected void updateCache() {
         if (scriptPath != null) {
@@ -333,7 +342,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public void setMaxEventsBatchSize(long maxEventsBatchSize) {
-        this.maxEventsBatchSize = maxEventsBatchSize;
+        if (maxEventsBatchSize > MIN_BUFFER_SIZE) {
+            this.maxEventsBatchSize = maxEventsBatchSize;
+        } else {
+            this.maxEventsBatchSize = MIN_BUFFER_SIZE;
+        }
     }
 
     public void setRawEventEnabled(boolean rawEventEnabled) {
