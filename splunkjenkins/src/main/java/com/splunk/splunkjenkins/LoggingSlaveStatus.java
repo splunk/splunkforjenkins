@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.NODE_NAME;
 import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
 @Extension
@@ -45,6 +47,11 @@ public class LoggingSlaveStatus extends AsyncPeriodicWork {
         }
         //replace slave names, at one time should only one thread is running, so modify slaveNames is safe without lock
         slaveNames = aliveSlaves;
+        //update master stats
+        Map masterEvent = getMasterStats();
+        masterEvent.put("item", name);
+        masterEvent.put(Constants.TAG,Constants.QUEUE_TAG_NAME);
+        SplunkLogService.getInstance().send(masterEvent, QUEUE_INFO);
         listener.getLogger().println("execute completed");
     }
 

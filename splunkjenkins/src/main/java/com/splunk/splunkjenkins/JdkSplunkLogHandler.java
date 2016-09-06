@@ -51,7 +51,7 @@ public class JdkSplunkLogHandler extends Handler {
     private class LogFilter implements Filter {
         //logger may trigger recursive call, need skip them
         private final String[] skipLoggerNames = {"com.splunk.splunkjenkins", "jenkins.InitReactorRunner",
-                "org.apache.http"};
+                "org.apache.http", "hudson.node_monitors"};
 
         @Override
         public boolean isLoggable(LogRecord record) {
@@ -98,7 +98,7 @@ public class JdkSplunkLogHandler extends Handler {
                 PrintWriter pw = new PrintWriter(sw);
                 record.getThrown().printStackTrace(pw);
                 pw.close();
-                event.put("throwable", sw.toString());
+                event.put("log_thrown", sw.toString());
             }
             return event;
         }
@@ -116,7 +116,7 @@ public class JdkSplunkLogHandler extends Handler {
         static final JdkSplunkLogHandler LOG_HANDLER = new JdkSplunkLogHandler();
 
         static void getSlaveLog(Computer computer) {
-            if(computer==null || computer instanceof Jenkins.MasterComputer){
+            if (computer == null || computer instanceof Jenkins.MasterComputer) {
                 return;
             }
             try {
