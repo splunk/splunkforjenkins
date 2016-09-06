@@ -315,6 +315,9 @@ public class LogEventHelper {
     public static Map<String, Object> getComputerStatus(Computer computer) {
         String nodeName;
         Map slaveInfo = new HashMap();
+        if(computer==null){
+            return slaveInfo;
+        }
         if (computer instanceof Jenkins.MasterComputer) {
             nodeName = Constants.MASTER;
         } else {

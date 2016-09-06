@@ -14,19 +14,24 @@ import hudson.scm.SCM;
 import hudson.tasks.junit.JUnitResultArchiver;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.*;
 
 import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG;
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
+import static com.splunk.splunkjenkins.Constants.MASTER;
 import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
+import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getBuildVariables;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getComputerStatus;
 
 @SuppressWarnings("unused")
 @Extension
 public class LoggingRunListener extends RunListener<Run> {
+    private final String NODE_NAME_KEY="node";
     UserActionDSL postJobAction = new UserActionDSL();
 
     @Override
@@ -34,6 +39,14 @@ public class LoggingRunListener extends RunListener<Run> {
         Map event = getCommonBuildInfo(run, false);
         event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        //sync with computer status
+        String nodeName=(String)event.get(NODE_NAME_KEY);
+        if(nodeName!=null && !MASTER.equals(nodeName)){
+            Computer computer=Jenkins.getInstance().getComputer(nodeName);
+            if(computer!=null){
+                SplunkLogService.getInstance().send(getComputerStatus(computer), SLAVE_INFO);
+            }
+        }
     }
 
     private String getUpStreamUrl(Run run) {
@@ -145,7 +158,7 @@ public class LoggingRunListener extends RunListener<Run> {
                 nodeName = Constants.MASTER;
             }
         }
-        event.put("node", nodeName);
+        event.put(NODE_NAME_KEY, nodeName);
         for (LoggingJobExtractor extendListener : LoggingJobExtractor.all()) {
             if (extendListener.targetType.isInstance(run)) {
                 Map<String, Object> extend = extendListener.extract(run, completed);
