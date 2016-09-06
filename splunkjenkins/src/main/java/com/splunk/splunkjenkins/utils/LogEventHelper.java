@@ -332,6 +332,7 @@ public class LogEventHelper {
         slaveInfo.put("is_online", computer.isOnline());
         if (computer.isOffline()) {
             slaveInfo.put("offline_reason", computer.getOfflineCauseReason());
+            slaveInfo.put("connecting", computer.isConnecting());
         }
         slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
         long connectTime = computer.getConnectTime();
