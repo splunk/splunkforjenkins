@@ -14,4 +14,6 @@ public class Constants {
     public static final String JOB_EVENT_TAG_NAME = "job_event";
     public static final String MASTER = "(master)";
     public static final String BUILD_REPORT_ENV_TAG = "metadata";
+    public static final String AUDIT_SOURCE = "jenkins://audit";
+
 }

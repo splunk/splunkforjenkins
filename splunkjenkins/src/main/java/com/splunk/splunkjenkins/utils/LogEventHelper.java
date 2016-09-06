@@ -40,8 +40,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
+import static com.splunk.splunkjenkins.Constants.AUDIT_SOURCE;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
+import static com.splunk.splunkjenkins.Constants.TAG;
 import static com.splunk.splunkjenkins.LoggingRunListener.getScmInfo;
+import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
 import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
@@ -327,7 +330,7 @@ public class LogEventHelper {
         slaveInfo.put("num_executors", computer.getNumExecutors());
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
-        if(computer.isOffline()){
+        if (computer.isOffline()) {
             slaveInfo.put("offline_reason", computer.getOfflineCauseReason());
         }
         slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
@@ -426,10 +429,17 @@ public class LogEventHelper {
                 values.put(p.getName(), p.getValue());
             }
         }
-        if(!values.keySet().contains("scm_repo") && run instanceof AbstractBuild){
-            values.put("scm_repo",getScmInfo((AbstractBuild) run));
+        if (!values.keySet().contains("scm_repo") && run instanceof AbstractBuild) {
+            values.put("scm_repo", getScmInfo((AbstractBuild) run));
         }
         return values;
     }
 
+    public static void logUserAction(String user, String message) {
+        Map logInfo = new HashMap<>();
+        logInfo.put(TAG, "audit_trail");
+        logInfo.put("message", message);
+        logInfo.put("user", user);
+        SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, AUDIT_SOURCE);
+    }
 }

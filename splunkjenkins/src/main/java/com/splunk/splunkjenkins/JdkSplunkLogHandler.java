@@ -104,12 +104,7 @@ public class JdkSplunkLogHandler extends Handler {
         }
     }
 
-    @Initializer(after = JOB_LOADED)
-    public static void forwardJdkLog() {
-        Logger.getLogger("").addHandler(LogHolder.LOG_HANDLER);
-    }
-
-    static final class LogHolder {
+    public static final class LogHolder {
         /**
          * This field is used on each slave node to record log records on the slave.
          */
