@@ -259,6 +259,19 @@ public class LogEventHelper {
         }
     }
 
+    /**
+     * @param run
+     * @return the user who triggered the build
+     */
+    public static String getTriggerUserName(Run run) {
+        String userName = "anonymous";
+        Cause.UserIdCause cause = (Cause.UserIdCause) run.getCause(Cause.UserIdCause.class);
+        if (cause != null) {
+            userName = cause.getUserName();
+        }
+        return userName;
+    }
+
     public static class UrlQueryBuilder {
         private Map<String, String> query = new HashMap();
 

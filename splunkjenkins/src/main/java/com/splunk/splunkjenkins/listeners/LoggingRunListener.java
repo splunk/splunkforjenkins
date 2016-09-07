@@ -35,7 +35,6 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 @Extension
 public class LoggingRunListener extends RunListener<Run> {
     private final String NODE_NAME_KEY = "node";
-    private final String USER_NAME_KEY = "user";
 
     UserActionDSL postJobAction = new UserActionDSL();
 
@@ -45,8 +44,8 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         //audit the start action
-        if (event.get(USER_NAME_KEY) != null) {
-            logUserAction((String) event.get(USER_NAME_KEY), Messages.audit_start_job(event.get(Constants.BUILD_ID)));
+        if (event.get(Constants.USER_NAME_KEY) != null) {
+            logUserAction((String) event.get(Constants.USER_NAME_KEY), Messages.audit_start_job(event.get(Constants.BUILD_ID)));
         }
         updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
     }
@@ -72,19 +71,6 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         return buf.toString();
-    }
-
-    /**
-     * @param run
-     * @return the username who triggered the build
-     */
-    private String getTriggerUserName(Run run) {
-        String userName = null;
-        Cause.UserIdCause cause = (Cause.UserIdCause) run.getCause(Cause.UserIdCause.class);
-        if (cause != null) {
-            userName = cause.getUserName();
-        }
-        return userName;
     }
 
     public static Map getScmInfo(AbstractBuild build) {
@@ -151,7 +137,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
-        event.put(USER_NAME_KEY, getTriggerUserName(run));
+        event.put(Constants.USER_NAME_KEY, getTriggerUserName(run));
         float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
         event.put("queue_time", queueTime);
         event.put("queue_id", run.getQueueId());

@@ -14,9 +14,12 @@ import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.TESTCASE
+import static com.splunk.splunkjenkins.Constants.USER_NAME_KEY
 import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG
 import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getTriggerUserName
+
 
 public class RunDelegate {
     AbstractBuild build;
@@ -178,6 +181,7 @@ public class RunDelegate {
         String url = build.getUrl();
         Map event = new HashMap();
         event.put(TAG, "build_report")
+        event.put(USER_NAME_KEY,getTriggerUserName(build));
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put("build_number", build.getNumber());
