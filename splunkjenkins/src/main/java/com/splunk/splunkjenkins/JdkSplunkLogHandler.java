@@ -110,7 +110,7 @@ public class JdkSplunkLogHandler extends Handler {
          */
         static final JdkSplunkLogHandler LOG_HANDLER = new JdkSplunkLogHandler();
 
-        static void getSlaveLog(Computer computer) {
+        public static void getSlaveLog(Computer computer) {
             if (computer == null || computer instanceof Jenkins.MasterComputer) {
                 return;
             }

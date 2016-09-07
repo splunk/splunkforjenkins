@@ -1,4 +1,4 @@
-package com.splunk.splunkjenkins;
+package com.splunk.splunkjenkins.listeners;
 
 import hudson.Extension;
 import jenkins.security.SecurityListener;

@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.listeners.LoggingConfigListener;
 import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.XmlFile;

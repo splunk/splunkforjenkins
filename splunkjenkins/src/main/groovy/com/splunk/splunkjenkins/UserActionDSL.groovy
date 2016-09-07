@@ -1,6 +1,6 @@
 package com.splunk.splunkjenkins
 
-
+import com.splunk.splunkjenkins.listeners.LoggingRunListener
 import com.splunk.splunkjenkins.utils.LogEventHelper
 import hudson.EnvVars
 import hudson.model.AbstractBuild

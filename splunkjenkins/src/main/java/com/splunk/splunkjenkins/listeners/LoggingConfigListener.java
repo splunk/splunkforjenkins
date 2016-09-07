@@ -1,4 +1,4 @@
-package com.splunk.splunkjenkins;
+package com.splunk.splunkjenkins.listeners;
 
 import com.splunk.splunkjenkins.model.JenkinsJsonConfig;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
@@ -6,29 +6,21 @@ import com.splunk.splunkjenkins.utils.XstremJsonDriver;
 import com.thoughtworks.xstream.XStream;
 import hudson.Extension;
 import hudson.XmlFile;
-import hudson.model.Describable;
-import hudson.model.Job;
+import hudson.model.Item;
 import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.model.listeners.SaveableListener;
-import hudson.util.ReflectionUtils;
 import hudson.util.XStream2;
 import jenkins.model.Jenkins;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import static com.splunk.splunkjenkins.Constants.AUDIT_SOURCE;
-import static com.splunk.splunkjenkins.Constants.TAG;
-import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
-import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
-
 import java.util.WeakHashMap;
 import java.util.regex.Pattern;
+
+import static com.splunk.splunkjenkins.Constants.JENKINS_CONFIG_PREFIX;
+import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
+import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 /**
  * record jenkins config and job changes
@@ -39,7 +31,7 @@ import java.util.regex.Pattern;
 public class LoggingConfigListener extends SaveableListener {
     //queue.xml or nodes/*/config.xml
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats|nodes|build)(\\.xml|/[^/]+/config.xml)", Pattern.CASE_INSENSITIVE);
-    private static final XStream xstream = new XStream2(new XstremJsonDriver());
+    public static final XStream xstream = new XStream2(new XstremJsonDriver());
     private boolean enabled = false;
     private WeakHashMap cached = new WeakHashMap(512);
 
@@ -47,11 +39,11 @@ public class LoggingConfigListener extends SaveableListener {
     public void onChange(Saveable saveable, XmlFile file) {
         String configPath = file.getFile().getAbsolutePath();
         String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
-        if (saveable == null || !enabled || !SplunkJenkinsInstallation.loaded || IGNORED.matcher(configPath).find()) {
+        if (saveable == null || !enabled || IGNORED.matcher(configPath).find()) {
             return;
         }
-        if (saveable instanceof User) {
-            //we use SecurityListener to capture login/logout events
+        if (saveable instanceof User || saveable instanceof Item) {
+            //we use SecurityListener to capture login/logout events, and ItemListener to capture job config
             return;
         }
         String user = getUserName();
@@ -73,9 +65,8 @@ public class LoggingConfigListener extends SaveableListener {
                 configUrl = configPath;
             }
         }
-        String sourceName = "jenkins://" + configUrl;
+        String sourceName = JENKINS_CONFIG_PREFIX + configUrl;
         SplunkLogService.getInstance().send(new JenkinsJsonConfig(xstream.toXML(saveable)), JENKINS_CONFIG, sourceName);
-        logUserAction(user, "updated " + configUrl);
     }
 
     private String getUrl(Saveable saveable) {

@@ -13,8 +13,6 @@ import hudson.Util;
 import hudson.console.ConsoleNote;
 import hudson.model.*;
 import hudson.model.Queue;
-import hudson.model.queue.Executables;
-import hudson.model.queue.SubTask;
 import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
 import hudson.util.ByteArrayOutputStream2;
@@ -30,9 +28,7 @@ import java.io.*;
 import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
 import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,11 +36,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
-import static com.splunk.splunkjenkins.Constants.AUDIT_SOURCE;
-import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
-import static com.splunk.splunkjenkins.Constants.TAG;
-import static com.splunk.splunkjenkins.LoggingRunListener.getScmInfo;
+import static com.splunk.splunkjenkins.Constants.*;
+import static com.splunk.splunkjenkins.listeners.LoggingRunListener.getScmInfo;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
+import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 public class LogEventHelper {
@@ -315,7 +310,7 @@ public class LogEventHelper {
     public static Map<String, Object> getComputerStatus(Computer computer) {
         String nodeName;
         Map slaveInfo = new HashMap();
-        if(computer==null){
+        if (computer == null) {
             return slaveInfo;
         }
         if (computer instanceof Jenkins.MasterComputer) {
@@ -445,5 +440,23 @@ public class LogEventHelper {
         logInfo.put("message", message);
         logInfo.put("user", user);
         SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, AUDIT_SOURCE);
+    }
+
+    public static void updateSlaveInfoAsync(final String nodeName) {
+        Computer.threadPoolForRemoting.submit(new Runnable() {
+            @Override
+            public void run() {
+                if (nodeName != null) {
+                    Node node = Jenkins.getInstance().getNode(nodeName);
+                    if (node != null && node.toComputer() != null) {
+                        Computer computer = node.toComputer();
+                        Map event = getComputerStatus(computer);
+                        if (!event.isEmpty()) {
+                            SplunkLogService.getInstance().send(event, SLAVE_INFO);
+                        }
+                    }
+                }
+            }
+        });
     }
 }

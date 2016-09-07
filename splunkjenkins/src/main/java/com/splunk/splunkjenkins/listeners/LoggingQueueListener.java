@@ -1,5 +1,6 @@
-package com.splunk.splunkjenkins;
+package com.splunk.splunkjenkins.listeners;
 
+import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Queue;

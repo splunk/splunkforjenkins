@@ -11,9 +11,12 @@ public class Constants {
     public static final String LOG_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
     public final static String SLAVE_TAG_NAME = "slave";
     public final static String QUEUE_TAG_NAME = "queue";
+    public final static String QUEUE_WAITING_ITEM_NAME = "queue_item";
     public static final String JOB_EVENT_TAG_NAME = "job_event";
     public static final String MASTER = "(master)";
     public static final String BUILD_REPORT_ENV_TAG = "metadata";
-    public static final String AUDIT_SOURCE = "jenkins://audit";
+    public static final String JENKINS_CONFIG_PREFIX = "jenkins://";
+    public static final String AUDIT_SOURCE = JENKINS_CONFIG_PREFIX + "audit";
+
 
 }

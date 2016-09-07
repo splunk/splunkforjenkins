@@ -1,37 +1,39 @@
-package com.splunk.splunkjenkins;
+package com.splunk.splunkjenkins.listeners;
 
 
+import com.splunk.splunkjenkins.Constants;
+import com.splunk.splunkjenkins.JdkSplunkLogHandler;
+import com.splunk.splunkjenkins.LoggingJobExtractor;
+import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.EnvVars;
+import hudson.Extension;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
-
-import javax.annotation.Nonnull;
-
-import hudson.Extension;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
 import hudson.tasks.junit.JUnitResultArchiver;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.*;
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG;
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
-import static com.splunk.splunkjenkins.Constants.MASTER;
 import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
-import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.SEPARATOR;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getBuildVariables;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getComputerStatus;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 
 @SuppressWarnings("unused")
 @Extension
 public class LoggingRunListener extends RunListener<Run> {
-    private final String NODE_NAME_KEY="node";
+    private final String NODE_NAME_KEY = "node";
+    private final String USER_NAME_KEY = "user";
+
     UserActionDSL postJobAction = new UserActionDSL();
 
     @Override
@@ -39,14 +41,11 @@ public class LoggingRunListener extends RunListener<Run> {
         Map event = getCommonBuildInfo(run, false);
         event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
-        //sync with computer status
-        String nodeName=(String)event.get(NODE_NAME_KEY);
-        if(nodeName!=null && !MASTER.equals(nodeName)){
-            Computer computer=Jenkins.getInstance().getComputer(nodeName);
-            if(computer!=null){
-                SplunkLogService.getInstance().send(getComputerStatus(computer), SLAVE_INFO);
-            }
+        //audit the start action
+        if (event.get(USER_NAME_KEY) != null) {
+            logUserAction((String) event.get(USER_NAME_KEY), "started job " + event.get(Constants.BUILD_ID));
         }
+        updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
     }
 
     private String getUpStreamUrl(Run run) {
@@ -70,6 +69,19 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         return buf.toString();
+    }
+
+    /**
+     * @param run
+     * @return the username who triggered the build
+     */
+    private String getTriggerUserName(Run run) {
+        String userName = null;
+        Cause.UserIdCause cause = (Cause.UserIdCause) run.getCause(Cause.UserIdCause.class);
+        if (cause != null) {
+            userName = cause.getUserName();
+        }
+        return userName;
     }
 
     public static Map getScmInfo(AbstractBuild build) {
@@ -136,8 +148,10 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
+        event.put(USER_NAME_KEY, getTriggerUserName(run));
         float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
         event.put("queue_time", queueTime);
+        event.put("queue_id", run.getQueueId());
         event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
         event.put("job_started_at", run.getTimestampString2());
@@ -204,6 +218,7 @@ public class LoggingRunListener extends RunListener<Run> {
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         if (run.getExecutor() != null) {
             JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
+            updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
         }
     }
 
