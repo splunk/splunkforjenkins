@@ -40,23 +40,23 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     //backwards compatibility
     @Override
     public OutputStream decorateLogger(AbstractBuild build, OutputStream output) throws IOException, InterruptedException {
-        return teeOutput(output, build.getUrl() + "console");
+        return teeOutput(output, build.getUrl() + "console", true);
     }
 
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Run build, OutputStream output) throws IOException, InterruptedException {
-        return teeOutput(output, build.getUrl() + "console");
+        return teeOutput(output, build.getUrl() + "console", true);
 
     }
 
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Computer computer, OutputStream logger) throws IOException, InterruptedException {
-        return teeOutput(logger, computer.getUrl() + "log");
+        return teeOutput(logger, computer.getUrl() + "log", false);
     }
 
-    private OutputStream teeOutput(OutputStream output, String source) {
+    private OutputStream teeOutput(OutputStream output, String source, boolean addLineNumber) {
         if (SplunkJenkinsInstallation.get().isValid()) {
-            return new TeeOutputStream(output, source);
+            return new TeeOutputStream(output, addLineNumber, source);
         } else {
             if (SplunkJenkinsInstallation.get().isEnabled()) {
                 LOG.log(Level.WARNING, "invalid splunk config, skipped sending logs for " + source);
@@ -67,17 +67,24 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
 
     public static class TeeOutputStream extends FilterOutputStream {
         private static final int LF = 0x0A;
+        boolean requireLineNumber = true;
         String sourceName;
         long lineCounter = 0;
         //holds data received, will be cleared when \n received
         private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(512);
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
+        SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
 
         public TeeOutputStream(OutputStream out, String sourceName) {
             super(out);
             this.sourceName = sourceName;
             LOG.log(Level.FINE, "created splunk output tee for " + sourceName);
+        }
+
+        public TeeOutputStream(OutputStream out, boolean requireLineNumber, String sourceName) {
+            this(out, sourceName);
+            this.requireLineNumber = requireLineNumber;
         }
 
         @Override
@@ -111,9 +118,11 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             }
             lineCounter++;
             //ISO 8601 datetime, and build url and line number
-            SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-            String prefix = sdf.format(new Date()) + "  line:" + lineCounter + "  ";
+            String prefix = sdf.format(new Date()) + "  ";
             logText.write(prefix.getBytes());
+            if (requireLineNumber) {
+                logText.write(("line:" + lineCounter + "  ").getBytes());
+            }
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
             if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
                 flushLog();
