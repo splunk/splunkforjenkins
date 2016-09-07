@@ -16,17 +16,17 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 public class LoggingItemListener extends ItemListener {
     @Override
     public void onCreated(Item item) {
-        logUserAction(getUserName(), "created " + item.getUrl());
+        logUserAction(getUserName(), Messages.audit_create_item(item.getUrl()));
     }
 
     @Override
     public void onCopied(Item src, Item item) {
-        logUserAction(getUserName(), "copied " + item.getUrl());
+        logUserAction(getUserName(), Messages.audit_cloned_item(item.getUrl(), src.getUrl()));
     }
 
     @Override
     public void onDeleted(Item item) {
-        logUserAction(getUserName(), "deleted " + item.getUrl());
+        logUserAction(getUserName(), Messages.audit_delete_item(item.getUrl()));
     }
 
     @Override
@@ -37,13 +37,13 @@ public class LoggingItemListener extends ItemListener {
     @Override
     public void onUpdated(Item item) {
         //prior to delete, makeDisabled was called and onUpdated is triggered
-        logUserAction(getUserName(), "updated " + item.getUrl());
+        logUserAction(getUserName(), Messages.audit_update_item(item.getUrl()));
         String sourceName = JENKINS_CONFIG_PREFIX + item.getUrl();
         SplunkLogService.getInstance().send(new JenkinsJsonConfig(xstream.toXML(item)), JENKINS_CONFIG, sourceName);
     }
 
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
-        logUserAction(getUserName(), "renamed " + item.getUrl() + " from " + oldFullName + "to " + newFullName);
+        logUserAction(getUserName(), Messages.audit_rename_item(item.getUrl(), oldFullName, newFullName));
     }
 }

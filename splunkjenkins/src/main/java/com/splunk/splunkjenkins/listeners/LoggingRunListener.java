@@ -8,6 +8,7 @@ import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import hudson.scm.ChangeLogSet;
@@ -15,6 +16,8 @@ import hudson.scm.SCM;
 import hudson.tasks.junit.JUnitResultArchiver;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -43,7 +46,7 @@ public class LoggingRunListener extends RunListener<Run> {
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         //audit the start action
         if (event.get(USER_NAME_KEY) != null) {
-            logUserAction((String) event.get(USER_NAME_KEY), "started job " + event.get(Constants.BUILD_ID));
+            logUserAction((String) event.get(USER_NAME_KEY), Messages.audit_start_job(event.get(Constants.BUILD_ID)));
         }
         updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
     }
@@ -220,6 +223,22 @@ public class LoggingRunListener extends RunListener<Run> {
             JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
             updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
         }
+        recordAbortAction(run);
+    }
+
+    private void recordAbortAction(Run run) {
+        List<InterruptedBuildAction> actions = run.getActions(InterruptedBuildAction.class);
+        for (InterruptedBuildAction action : actions) {
+            List<CauseOfInterruption.UserInterruption> interrupts = Util.filter(action.getCauses(), CauseOfInterruption.UserInterruption.class);
+            if (!interrupts.isEmpty()) { //contains at most one record
+                User user = interrupts.get(0).getUser();
+                if (user != null) {
+                    logUserAction(user.getFullName(), Messages.audit_abort_job(run.getUrl()));
+                    break;
+                }
+            }
+        }
+
     }
 
     private List<String> getChangeLog(AbstractBuild build) {
