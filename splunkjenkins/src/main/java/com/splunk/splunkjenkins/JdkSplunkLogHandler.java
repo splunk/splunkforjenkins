@@ -59,12 +59,13 @@ public class JdkSplunkLogHandler extends Handler {
                 return false;
             }
             String logSource = record.getSourceClassName();
-            if (logSource == null) {
+            String loggerName = record.getLoggerName();
+            if (logSource == null || loggerName == null) {
                 return false;
             }
             for (int i = 0; i < skipLoggerNames.length; i++) {
                 String skipPrefix = skipLoggerNames[i];
-                if (logSource.startsWith(skipPrefix)) {
+                if (logSource.startsWith(skipPrefix) || loggerName.startsWith(skipPrefix)) {
                     return false;
                 }
             }
