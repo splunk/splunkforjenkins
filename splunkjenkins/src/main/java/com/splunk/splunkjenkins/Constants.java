@@ -16,7 +16,7 @@ public class Constants {
     public static final String MASTER = "(master)";
     public static final String BUILD_REPORT_ENV_TAG = "metadata";
     public static final String JENKINS_CONFIG_PREFIX = "jenkins://";
-    public static final String AUDIT_SOURCE = JENKINS_CONFIG_PREFIX + "audit";
+    public static final String AUDIT_SOURCE = "audit_trail";
     public static final String USER_NAME_KEY = "user";
 
 }
