@@ -4,6 +4,9 @@ import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.listeners.ItemListener;
 
+import java.io.File;
+
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getRelativeJekinsHomePath;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 
@@ -11,17 +14,17 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 public class LoggingItemListener extends ItemListener {
     @Override
     public void onCreated(Item item) {
-        logUserAction(getUserName(), Messages.audit_create_item(item.getUrl()));
+        logUserAction(getUserName(), Messages.audit_create_item(getConfigPath(item)));
     }
 
     @Override
     public void onCopied(Item src, Item item) {
-        logUserAction(getUserName(), Messages.audit_cloned_item(item.getUrl(), src.getUrl()));
+        logUserAction(getUserName(), Messages.audit_cloned_item(getConfigPath(item), getConfigPath(src)));
     }
 
     @Override
     public void onDeleted(Item item) {
-        logUserAction(getUserName(), Messages.audit_delete_item(item.getUrl()));
+        logUserAction(getUserName(), Messages.audit_delete_item(getConfigPath(item)));
     }
 
     @Override
@@ -32,11 +35,18 @@ public class LoggingItemListener extends ItemListener {
     @Override
     public void onUpdated(Item item) {
         //prior to delete, makeDisabled was called and onUpdated is triggered
-        logUserAction(getUserName(), Messages.audit_update_item(item.getUrl()));
+        logUserAction(getUserName(), Messages.audit_update_item(getConfigPath(item)));
     }
 
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
-        logUserAction(getUserName(), Messages.audit_rename_item(item.getUrl(), oldFullName, newFullName));
+        logUserAction(getUserName(), Messages.audit_rename_item(getConfigPath(item), oldFullName, newFullName));
+    }
+
+    private String getConfigPath(Item item) {
+        if (item == null) {
+            return "unknown";
+        }
+        return getRelativeJekinsHomePath(item.getRootDir() + File.separator + "config.xml");
     }
 }

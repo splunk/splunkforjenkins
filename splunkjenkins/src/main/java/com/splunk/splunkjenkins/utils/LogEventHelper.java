@@ -472,4 +472,17 @@ public class LogEventHelper {
             }
         });
     }
+
+    /**
+     * @param configPath
+     * @return the relative path to <tt>JENKINS_HOME</tt> directory
+     */
+    public static String getRelativeJekinsHomePath(String configPath) {
+        String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
+        String relativePath = configPath;
+        if (configPath.startsWith(jenkinsHome)) {
+            relativePath = configPath.substring(jenkinsHome.length() + 1);
+        }
+        return relativePath;
+    }
 }
