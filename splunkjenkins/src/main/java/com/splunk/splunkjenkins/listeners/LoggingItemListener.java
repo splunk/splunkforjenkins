@@ -1,14 +1,9 @@
 package com.splunk.splunkjenkins.listeners;
 
-import com.splunk.splunkjenkins.model.JenkinsJsonConfig;
-import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.listeners.ItemListener;
 
-import static com.splunk.splunkjenkins.Constants.JENKINS_CONFIG_PREFIX;
-import static com.splunk.splunkjenkins.listeners.LoggingConfigListener.xstream;
-import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 
@@ -38,8 +33,6 @@ public class LoggingItemListener extends ItemListener {
     public void onUpdated(Item item) {
         //prior to delete, makeDisabled was called and onUpdated is triggered
         logUserAction(getUserName(), Messages.audit_update_item(item.getUrl()));
-        String sourceName = JENKINS_CONFIG_PREFIX + item.getUrl();
-        SplunkLogService.getInstance().send(new JenkinsJsonConfig(xstream.toXML(item)), JENKINS_CONFIG, sourceName);
     }
 
     @Override
