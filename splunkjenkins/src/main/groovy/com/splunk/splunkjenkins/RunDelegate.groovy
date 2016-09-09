@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins
 
 import com.splunk.splunkjenkins.model.EventType
+import com.splunk.splunkjenkins.utils.LogEventHelper
 import com.splunk.splunkjenkins.utils.SplunkLogService
 import hudson.EnvVars
 import hudson.model.AbstractBuild
@@ -9,6 +10,7 @@ import hudson.model.TaskListener
 import hudson.tasks.Publisher
 import hudson.tasks.junit.TestResult
 import hudson.tasks.junit.TestResultAction
+import hudson.tasks.test.AggregatedTestResultAction
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
@@ -94,15 +96,17 @@ public class RunDelegate {
     }
 
     def getJunitReport() {
-        TestResultAction resultAction = build.getAction(TestResultAction.class);
-        if (resultAction == null) {
-            return ["message": "No TestResultAction"];
+        TestResultAction resultAction = getAction(TestResultAction.class);
+        if (resultAction != null) {
+            println("has TestResultAction")
+            return getJunitXmlCompatibleResult(resultAction.result);
         }
-        TestResult testResult = resultAction.result;
-        if (testResult == null) {
-            return ["error": "junit report is missing"];
+        AggregatedTestResultAction aggAction = getAction(AggregatedTestResultAction);
+        if (aggAction != null) {
+            println("has AggregatedTestResultAction")
+            return getAggregatedJunitReport(aggAction)
         }
-        return getJunitXmlCompatibleResult(testResult);
+        return [];
     }
 
     def getOut() {
@@ -134,13 +138,12 @@ public class RunDelegate {
      * @param className
      * @return
      */
-    public Action getActionByClassName(String className) {
-        for (Action action : build.getAllActions()) {
-            if (action.getClass().getName().equals(className)) {
-                return action;
-            }
+    def Action getActionByClassName(String className) {
+        Class actionClz = Class.forName(className);
+        if (!actionClz instanceof Action) {
+            return null;
         }
-        return null;
+        return build.getAction(actionClz);
     }
     /**
      * Gets the action (first instance to be found) of a specified type that contributed to this build.
@@ -157,10 +160,11 @@ public class RunDelegate {
      * @param className , common used publishers are
      * @return
      */
-    public boolean hasPublisherName(String className) {
+    def boolean hasPublisherName(String className) {
         boolean found = false;
+        Class publisherClazz = Class.forName(className);
         for (Publisher publisher : build.getProject().getPublishersList()) {
-            if (publisher.getClass().getName().equals(className)) {
+            if (publisherClazz.isInstance(publisher)) {
                 found = true;
                 break;
             }
@@ -174,47 +178,72 @@ public class RunDelegate {
     }
 
     /**
+     * <pre>
+     * {@code
+     * sendReport ({report - >
+     * report["foo"] = "bar";
+     * report["testsuite"] = junitReport;
+     *})
+     *}</pre>
      * send build reports with build variables as metadata
-     * @param closure Groovy closure to return a report(null value will skip the report)
+     * @param closure Groovy closure with a Map as parameter
      */
     public void sendReport(Closure closure) {
         String url = build.getUrl();
         Map event = new HashMap();
         event.put(TAG, "build_report")
-        event.put(USER_NAME_KEY,getTriggerUserName(build));
+        event.put(USER_NAME_KEY, getTriggerUserName(build));
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
         event.put("build_number", build.getNumber());
         event.put("job_name", build.getParent().getUrl());
         event.put(BUILD_REPORT_ENV_TAG, build.buildVariables);
-        def report = closure()
-        if (report != null) {
-            event.put("report", report);
-            send(event);
+        closure(event);
+        send(event);
+    }
+    /**
+     *
+     * @param testResult
+     * @return compatible with junit xml result send directly to splunk
+     */
+    public static Map getJunitXmlCompatibleResult(TestResult resultAction) {
+        if (resultAction == null) {
+            return ["message": "No TestResult"];
         }
+        def testsuite = LogEventHelper.getTestSummary(resultAction)
+        def testcase = [];
+        testsuite.put(TESTCASE, testcase);
+        try {
+            resultAction.getSuites().each { suite ->
+                testcase.addAll(suite.getCases());
+            }
+        } catch (UnsupportedOperationException ex) {
+            //not support, just ignore
+        }
+        testsuite.put("errors", testcase.size() > 0 ? 0 : 1);
+        return testsuite;
     }
 
-    public static Map getJunitXmlCompatibleResult(TestResult testResult) {
-        def testsuite = [:]
-        if (testResult != null) {
-            testsuite.put("time", testResult.getDuration());
-            testsuite.put("total", testResult.getTotalCount());
-            testsuite.put("passes", testResult.getPassCount());
-            testsuite.put("failures", testResult.getFailCount());
-            testsuite.put("skips", testResult.getSkipCount())
-            testsuite.put("tests", testResult.getTotalCount())
-            def testcase = [];
-            testsuite.put(TESTCASE, testcase);
-            try {
-                testResult.getSuites().each { suite ->
-                    testcase.addAll(suite.getCases());
+    def getAggregatedJunitReport(AggregatedTestResultAction resultAction) {
+        if (resultAction == null) {
+            return ["message": "No AggregatedTestResultAction"];
+        }
+        def testsuite = LogEventHelper.getAggregateTestSummary(resultAction);
+        def testcase = [];
+        testsuite.put(TESTCASE, testcase);
+        for (AggregatedTestResultAction.ChildReport childReport : resultAction.getChildReports()) {
+            if (childReport.result instanceof TestResult) {
+                TestResult testResult = (TestResult) childReport.result
+                try {
+                    testResult.getSuites().each { suite ->
+                        testcase.addAll(suite.getCases());
+                    }
+                } catch (UnsupportedOperationException ex) {
+                    //just ignore
                 }
-                testsuite.put("errors", 0);
-            } catch (UnsupportedOperationException ex) {
-                testsuite.put("errors", 1);
-                //not support, just ignore
             }
         }
+        testsuite.put("errors", testcase.size() > 0 ? 0 : 1);
         return testsuite;
     }
 }

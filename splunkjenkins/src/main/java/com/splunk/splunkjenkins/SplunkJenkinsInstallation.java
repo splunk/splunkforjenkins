@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
 import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.verifyHttpInput;
 import static hudson.Util.getHostName;
@@ -40,9 +41,8 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
     transient static boolean loaded = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
-    public transient static final int MIN_BUFFER_SIZE=2048;
-    private transient static final int MAX_BUFFER_SIZE=1<<21;
-    public static final String DEFAULT_SCRIPT_TEXT="sendReport({junitReport})";
+    public transient static final int MIN_BUFFER_SIZE = 2048;
+    private transient static final int MAX_BUFFER_SIZE = 1 << 21;
 
     private transient static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
@@ -53,14 +53,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private boolean useSSL = true;
     private Integer port = 8088;
     //for console log default cache size for 256KB
-    private long maxEventsBatchSize = 1<<18;
+    private long maxEventsBatchSize = 1 << 18;
     private long retriesOnError = 3;
     private boolean rawEventEnabled = false;
     //groovy script path
     private String scriptPath;
     private String metaDataConfig;
     //groovy content if file path not set
-    private String scriptContent=DEFAULT_SCRIPT_TEXT;
+    private String scriptContent;
     public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
@@ -149,8 +149,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * toggle enable/disable for config listener
      */
     private void updateConfigListener() {
-        LoggingConfigListener configListener= SaveableListener.all().get(LoggingConfigListener.class);
-        if (configListener!=null) {
+        LoggingConfigListener configListener = SaveableListener.all().get(LoggingConfigListener.class);
+        if (configListener != null) {
             boolean enabled = this.enabled
                     && "true".equals(metaDataProperties.getProperty("jenkins_config.monitoring"));
             configListener.setEnabled(enabled);
@@ -414,4 +414,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         protected String host, httpInputToken, httpInputPort, indexName, scheme, sourceName, sourceTypeName;
     }
 
+    public String getScriptOrDefault() {
+        if (scriptContent == null && scriptPath == null) {
+            //when user clear the text on UI, it will be set to empty string
+            //so use null check will not overwrite user settings
+            return getPostJobSample();
+        } else {
+            return scriptContent;
+        }
+    }
 }

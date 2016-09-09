@@ -6,11 +6,11 @@
     <div>
         You can sent events to splunk by call:
         <pre>
-    def event=[]
-    event["build_url"]=build.url
-    event["result"]=testResult
-    event["metadat"]=env
-    send(event)
+sendReport({ event ->
+    if (hasPublisherName("hudson.tasks.junit.JUnitResultArchiver")) {
+        event["testsuite"] = junitReport
+    }
+})
         </pre>
         you can reference below variables
         <pre> 

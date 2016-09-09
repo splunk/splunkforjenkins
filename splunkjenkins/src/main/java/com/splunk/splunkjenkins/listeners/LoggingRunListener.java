@@ -2,7 +2,6 @@ package com.splunk.splunkjenkins.listeners;
 
 
 import com.splunk.splunkjenkins.Constants;
-import com.splunk.splunkjenkins.JdkSplunkLogHandler;
 import com.splunk.splunkjenkins.LoggingJobExtractor;
 import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
@@ -13,9 +12,8 @@ import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
-import hudson.tasks.junit.JUnitResultArchiver;
-import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
+import hudson.tasks.test.AggregatedTestResultAction;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
@@ -186,16 +184,14 @@ public class LoggingRunListener extends RunListener<Run> {
 
             Map testSummary = new HashMap();
             //check test summary
-            if (build.getProject().getPublishersList().get(JUnitResultArchiver.class) != null) {
-                TestResultAction resultAction = build.getAction(TestResultAction.class);
-                if (resultAction != null && resultAction.getResult() != null) {
-                    TestResult testResult = resultAction.getResult();
-                    testSummary.put("fail", testResult.getFailCount());
-                    testSummary.put("pass", testResult.getPassCount());
-                    testSummary.put("skip", testResult.getSkipCount());
-                    testSummary.put("duration", testResult.getDuration());
-                }
+            TestResultAction resultAction = build.getAction(TestResultAction.class);
+            if (resultAction != null && resultAction.getResult() != null) {
+                testSummary = getTestSummary(resultAction.getResult());
+            } else if (build.getAction(AggregatedTestResultAction.class) != null) {
+                AggregatedTestResultAction aggregateResult = build.getAction(AggregatedTestResultAction.class);
+                testSummary = getAggregateTestSummary(aggregateResult);
             }
+
             if (!testSummary.isEmpty()) {
                 event.put("test_summary", testSummary);
             }
@@ -206,7 +202,7 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         if (run.getExecutor() != null) {
-            JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
+            //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
             updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
         }
         recordAbortAction(run);
