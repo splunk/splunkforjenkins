@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import static com.splunk.splunkjenkins.Constants.JENKINS_CONFIG_PREFIX;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getRelativeJekinsHomePath;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getRelativeJenkinsHomePath;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 
@@ -57,7 +57,7 @@ public class LoggingConfigListener extends SaveableListener {
                 return;
             }
             cached.put(configHash, 0);
-            String relativePath = getRelativeJekinsHomePath(configPath);
+            String relativePath = getRelativeJenkinsHomePath(configPath);
             String sourceName = JENKINS_CONFIG_PREFIX + relativePath;
             String userName = getUserName();
             String comment = String.format(XML_COMMENT, userName);

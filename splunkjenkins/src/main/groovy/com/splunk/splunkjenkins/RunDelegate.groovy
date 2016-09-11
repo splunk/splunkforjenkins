@@ -1,21 +1,18 @@
 package com.splunk.splunkjenkins
 
 import com.splunk.splunkjenkins.model.EventType
-import com.splunk.splunkjenkins.utils.LogEventHelper
+import com.splunk.splunkjenkins.model.JunitTestCaseGroup
 import com.splunk.splunkjenkins.utils.SplunkLogService
+import com.splunk.splunkjenkins.utils.TestCaseResultUtils
 import hudson.EnvVars
 import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.TaskListener
 import hudson.tasks.Publisher
-import hudson.tasks.junit.TestResult
-import hudson.tasks.junit.TestResultAction
-import hudson.tasks.test.AggregatedTestResultAction
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
-import static com.splunk.splunkjenkins.Constants.TESTCASE
 import static com.splunk.splunkjenkins.Constants.USER_NAME_KEY
 import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG
 import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize
@@ -96,17 +93,17 @@ public class RunDelegate {
     }
 
     def getJunitReport() {
-        TestResultAction resultAction = getAction(TestResultAction.class);
-        if (resultAction != null) {
-            println("has TestResultAction")
-            return getJunitXmlCompatibleResult(resultAction.result);
+        //no pagination, use MAX_VALUE as page size
+        List<JunitTestCaseGroup> results = TestCaseResultUtils.getBuildReport(build, Integer.MAX_VALUE);
+        if (!results.isEmpty()) {
+            return results.get(0)
+        } else {
+            return results;
         }
-        AggregatedTestResultAction aggAction = getAction(AggregatedTestResultAction);
-        if (aggAction != null) {
-            println("has AggregatedTestResultAction")
-            return getAggregatedJunitReport(aggAction)
-        }
-        return [];
+    }
+
+    def getJunitReport(int pageSize) {
+        return TestCaseResultUtils.getBuildReport(build, pageSize);
     }
 
     def getOut() {
@@ -177,6 +174,19 @@ public class RunDelegate {
         return "RunDelegate on build:" + this.build;
     }
 
+    def getBuildEvent() {
+        String url = build.getUrl();
+        Map event = new HashMap();
+        event.put(TAG, "build_report")
+        event.put(USER_NAME_KEY, getTriggerUserName(build));
+        event.put(JOB_RESULT, build.getResult().toString());
+        event.put(BUILD_ID, url);
+        event.put(BUILD_REPORT_ENV_TAG, build.buildVariables);
+        event.put("build_number", build.getNumber());
+        event.put("job_name", build.getParent().getUrl());
+        return event;
+    }
+
     /**
      * <pre>
      * {@code
@@ -189,61 +199,9 @@ public class RunDelegate {
      * @param closure Groovy closure with a Map as parameter
      */
     public void sendReport(Closure closure) {
-        String url = build.getUrl();
-        Map event = new HashMap();
-        event.put(TAG, "build_report")
-        event.put(USER_NAME_KEY, getTriggerUserName(build));
-        event.put(JOB_RESULT, build.getResult().toString());
-        event.put(BUILD_ID, url);
-        event.put("build_number", build.getNumber());
-        event.put("job_name", build.getParent().getUrl());
-        event.put(BUILD_REPORT_ENV_TAG, build.buildVariables);
+        Map event = getBuildEvent();
         closure(event);
         send(event);
     }
-    /**
-     *
-     * @param testResult
-     * @return compatible with junit xml result send directly to splunk
-     */
-    public static Map getJunitXmlCompatibleResult(TestResult resultAction) {
-        if (resultAction == null) {
-            return ["message": "No TestResult"];
-        }
-        def testsuite = LogEventHelper.getTestSummary(resultAction)
-        def testcase = [];
-        testsuite.put(TESTCASE, testcase);
-        try {
-            resultAction.getSuites().each { suite ->
-                testcase.addAll(suite.getCases());
-            }
-        } catch (UnsupportedOperationException ex) {
-            //not support, just ignore
-        }
-        testsuite.put("errors", testcase.size() > 0 ? 0 : 1);
-        return testsuite;
-    }
 
-    def getAggregatedJunitReport(AggregatedTestResultAction resultAction) {
-        if (resultAction == null) {
-            return ["message": "No AggregatedTestResultAction"];
-        }
-        def testsuite = LogEventHelper.getAggregateTestSummary(resultAction);
-        def testcase = [];
-        testsuite.put(TESTCASE, testcase);
-        for (AggregatedTestResultAction.ChildReport childReport : resultAction.getChildReports()) {
-            if (childReport.result instanceof TestResult) {
-                TestResult testResult = (TestResult) childReport.result
-                try {
-                    testResult.getSuites().each { suite ->
-                        testcase.addAll(suite.getCases());
-                    }
-                } catch (UnsupportedOperationException ex) {
-                    //just ignore
-                }
-            }
-        }
-        testsuite.put("errors", testcase.size() > 0 ? 0 : 1);
-        return testsuite;
-    }
 }

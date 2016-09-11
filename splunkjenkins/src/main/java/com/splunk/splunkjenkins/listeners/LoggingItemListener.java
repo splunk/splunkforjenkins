@@ -6,7 +6,7 @@ import hudson.model.listeners.ItemListener;
 
 import java.io.File;
 
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getRelativeJekinsHomePath;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getRelativeJenkinsHomePath;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getUserName;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 
@@ -47,6 +47,6 @@ public class LoggingItemListener extends ItemListener {
         if (item == null) {
             return "unknown";
         }
-        return getRelativeJekinsHomePath(item.getRootDir() + File.separator + "config.xml");
+        return getRelativeJenkinsHomePath(item.getRootDir() + File.separator + "config.xml");
     }
 }

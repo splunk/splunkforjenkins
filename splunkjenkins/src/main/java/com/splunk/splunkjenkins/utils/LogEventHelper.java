@@ -15,9 +15,6 @@ import hudson.model.*;
 import hudson.model.Queue;
 import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
-import hudson.tasks.junit.TestResult;
-import hudson.tasks.junit.TestResultAction;
-import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
@@ -29,7 +26,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 import java.io.*;
-import java.lang.management.*;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
@@ -481,7 +480,7 @@ public class LogEventHelper {
      * @param configPath
      * @return the relative path to <tt>JENKINS_HOME</tt> directory
      */
-    public static String getRelativeJekinsHomePath(String configPath) {
+    public static String getRelativeJenkinsHomePath(String configPath) {
         String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
         String relativePath = configPath;
         if (configPath.startsWith(jenkinsHome)) {
@@ -501,45 +500,4 @@ public class LogEventHelper {
         return exampleText;
     }
 
-    /**
-     * @param testResult
-     * @return junit result summary
-     * use same attributes of junit
-     * <testsuite failures="0" skips="12" tests="172" time="300.702">
-     */
-    public static Map<String, Object> getTestSummary(TestResult testResult) {
-        Map<String, Object> event = new HashMap();
-        if (testResult != null) {
-            event.put("failures", testResult.getFailCount());
-            event.put("passes", testResult.getPassCount());
-            event.put("skips", testResult.getSkipCount());
-            event.put("total", testResult.getTotalCount());
-            event.put("duration", testResult.getDuration());
-            //alias tests=total time=duration
-            event.put("tests", testResult.getTotalCount());
-            event.put("time", testResult.getDuration());
-
-        }
-        return event;
-    }
-
-    public static Map<String, Object> getAggregateTestSummary(AggregatedTestResultAction resultAction) {
-        Map<String, Object> event = new HashMap();
-        event.put("total", resultAction.getTotalCount());
-        event.put("passes", resultAction.getTotalCount() - resultAction.getFailCount() - resultAction.getSkipCount());
-        event.put("failures", resultAction.getFailCount());
-        event.put("skips", resultAction.getSkipCount());
-        //alias tests=total time=duration
-        event.put("tests", resultAction.getTotalCount());
-        float duration = 0;
-        for (AggregatedTestResultAction.ChildReport childReport : resultAction.getChildReports()) {
-            if (childReport.result instanceof TestResult) {
-                TestResult testResult = (TestResult) childReport.result;
-                duration += testResult.getDuration();
-            }
-        }
-        event.put("time", duration);
-        event.put("duration", duration);
-        return event;
-    }
 }

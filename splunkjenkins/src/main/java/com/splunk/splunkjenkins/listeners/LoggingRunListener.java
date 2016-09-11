@@ -5,6 +5,7 @@ import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.LoggingJobExtractor;
 import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
+import com.splunk.splunkjenkins.utils.TestCaseResultUtils;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
@@ -12,8 +13,6 @@ import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import hudson.scm.ChangeLogSet;
 import hudson.scm.SCM;
-import hudson.tasks.junit.TestResultAction;
-import hudson.tasks.test.AggregatedTestResultAction;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
@@ -182,16 +181,7 @@ public class LoggingRunListener extends RunListener<Run> {
             postJobAction.perform(build, listener);
             List<String> changelog = getChangeLog(build);
 
-            Map testSummary = new HashMap();
-            //check test summary
-            TestResultAction resultAction = build.getAction(TestResultAction.class);
-            if (resultAction != null && resultAction.getResult() != null) {
-                testSummary = getTestSummary(resultAction.getResult());
-            } else if (build.getAction(AggregatedTestResultAction.class) != null) {
-                AggregatedTestResultAction aggregateResult = build.getAction(AggregatedTestResultAction.class);
-                testSummary = getAggregateTestSummary(aggregateResult);
-            }
-
+            Map testSummary = TestCaseResultUtils.getSummary(build);
             if (!testSummary.isEmpty()) {
                 event.put("test_summary", testSummary);
             }
