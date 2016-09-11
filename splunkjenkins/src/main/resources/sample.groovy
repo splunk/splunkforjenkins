@@ -5,7 +5,7 @@ def event = getBuildEvent()
 def pageNumber = 0;
 results.each { junitResult ->
     event["testsuite"] = junitResult;
-    event["page_num"] = pageNumber;
-    pageNumber++;
+    event["page_num"] = pageNumber++;
+    println("sending report page:${pageNumber}")
     send(event)
 }

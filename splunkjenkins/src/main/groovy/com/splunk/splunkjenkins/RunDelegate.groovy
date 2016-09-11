@@ -41,7 +41,6 @@ public class RunDelegate {
      * @return true if enqueue successfully, false if the message is discarded
      */
     def send(def message) {
-        getOut().println("sending build report")
         return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT);
     }
 
