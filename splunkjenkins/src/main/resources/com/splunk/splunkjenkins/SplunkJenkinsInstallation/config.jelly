@@ -22,6 +22,9 @@
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
                           with="host,port,token,useSSL,metaDataConfig"/>
         <f:advanced>
+            <f:entry title="${%URL for splunk_app_jenkins}" field="splunkAppUrl">
+                <f:textbox/>
+            </f:entry>
             <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
                 <f:checkbox default="true"/>
             </f:entry>

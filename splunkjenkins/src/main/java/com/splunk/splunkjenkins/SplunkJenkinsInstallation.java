@@ -35,6 +35,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.verifyHttpInput;
 import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
+import static org.apache.commons.lang.StringUtils.isEmpty;
 
 @Restricted(NoExternalUse.class)
 @Extension
@@ -61,6 +62,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String metaDataConfig;
     //groovy content if file path not set
     private String scriptContent;
+    //the app-jenkins link
+    private String splunkAppUrl;
     public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
@@ -422,5 +425,34 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         } else {
             return scriptContent;
         }
+    }
+
+    public String getSplunkAppUrl() {
+        if (splunkAppUrl == null && host != null) {
+            return "http://" + host + ":8000/en-US/app/splunk_app_jenkins/";
+        }
+        return splunkAppUrl;
+    }
+
+    public String getAppUrlOrHelp() {
+        String url = getSplunkAppUrl();
+        if (isEmpty(url)) {
+            return "/plugin/splunkjenkins/help-splunkAppUrl.html?";
+        }
+        return url;
+    }
+
+    public void setSplunkAppUrl(String splunkAppUrl) {
+        if (!isEmpty(splunkAppUrl) && !splunkAppUrl.endsWith("/")) {
+            splunkAppUrl += "/";
+        }
+        this.splunkAppUrl = splunkAppUrl;
+    }
+
+    public String getMetadataHost() {
+        if (metaDataProperties != null && metaDataProperties.containsKey("host")) {
+            return (String) metaDataProperties.get("host");
+        }
+        return getHostName();
     }
 }
