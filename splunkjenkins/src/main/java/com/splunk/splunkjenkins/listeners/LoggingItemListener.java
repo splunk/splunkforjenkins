@@ -40,7 +40,7 @@ public class LoggingItemListener extends ItemListener {
 
     @Override
     public void onLocationChanged(Item item, String oldFullName, String newFullName) {
-        logUserAction(getUserName(), Messages.audit_rename_item(getConfigPath(item), oldFullName, newFullName));
+        logUserAction(getUserName(), Messages.audit_rename_item(oldFullName, newFullName));
     }
 
     private String getConfigPath(Item item) {
