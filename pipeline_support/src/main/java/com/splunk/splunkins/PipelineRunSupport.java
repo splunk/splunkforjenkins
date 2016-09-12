@@ -18,7 +18,7 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
     public Map<String, Object> extract(WorkflowRun workflowRun, boolean jobCompleted) {
         Map<String, Object> info = new HashMap<String, Object>();
         if (jobCompleted) {
-            RunExt runExt = RunExt.createOld(workflowRun);
+            RunExt runExt = RunExt.create(workflowRun);
             List<StageNodeExt> nodes = runExt.getStages();
             if (!nodes.isEmpty()) {
                 List<Map> stages = new ArrayList<Map>(nodes.size());
