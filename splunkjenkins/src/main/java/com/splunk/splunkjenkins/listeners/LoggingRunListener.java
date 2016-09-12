@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG;
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
@@ -31,6 +33,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 @SuppressWarnings("unused")
 @Extension
 public class LoggingRunListener extends RunListener<Run> {
+    private static final Logger LOG = Logger.getLogger(LoggingRunListener.class.getName());
     private final String NODE_NAME_KEY = "node";
 
     UserActionDSL postJobAction = new UserActionDSL();
@@ -51,7 +54,13 @@ public class LoggingRunListener extends RunListener<Run> {
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
         Map event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
-        event.put("job_duration", run.getDuration() / 1000f);
+        float duration = run.getDuration() / 1000f;
+        if (duration < 0.01f) {
+            //workflow job duration is updated after job completed
+            //not available in onCompleted listener
+            duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 100f);
+        }
+        event.put("job_duration", duration);
         event.put(JOB_RESULT, run.getResult().toString());
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
@@ -140,7 +149,7 @@ public class LoggingRunListener extends RunListener<Run> {
                     event.put("scm", className);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.log(Level.SEVERE, "failed to extract scm info", e);
             }
         }
         return event;
@@ -212,9 +221,13 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put(NODE_NAME_KEY, nodeName);
         for (LoggingJobExtractor extendListener : LoggingJobExtractor.all()) {
             if (extendListener.targetType.isInstance(run)) {
-                Map<String, Object> extend = extendListener.extract(run, completed);
-                if (extend != null && !extend.isEmpty()) {
-                    event.putAll(extend);
+                try {
+                    Map<String, Object> extend = extendListener.extract(run, completed);
+                    if (extend != null && !extend.isEmpty()) {
+                        event.putAll(extend);
+                    }
+                } catch (Exception e) {
+                    LOG.log(Level.SEVERE, "failed to extract job info", e);
                 }
             }
         }
