@@ -6,6 +6,7 @@ import hudson.model.ManagementLink;
 
 import static com.splunk.splunkjenkins.Messages.SplunkIconName;
 
+@SuppressWarnings("unused")
 @Extension
 public class HealthLinkAction extends ManagementLink {
     @Override

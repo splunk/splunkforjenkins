@@ -6,22 +6,24 @@ import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Action;
+import hudson.model.BuildableItem;
 import jenkins.model.TransientActionFactory;
 
 import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 
+@SuppressWarnings("unused")
 @Extension
-public class ProjectActionFactory extends TransientActionFactory<AbstractProject> {
+public class BuildableItemActionFactory extends TransientActionFactory<BuildableItem> {
     @Override
-    public Class<AbstractProject> type() {
-        return AbstractProject.class;
+    public Class<BuildableItem> type() {
+        return BuildableItem.class;
     }
 
     @Nonnull
     @Override
-    public Collection<? extends Action> createFor(@Nonnull AbstractProject target) {
+    public Collection<? extends Action> createFor(@Nonnull BuildableItem target) {
         String query = new LogEventHelper.UrlQueryBuilder()
                 .putIfAbsent("build_analysis_jenkinsmaster", SplunkJenkinsInstallation.get().getMetadataHost())
                 .putIfAbsent("build_analysis_job", target.getUrl()).build();

@@ -6,6 +6,7 @@ import hudson.model.RootAction;
 
 import static com.splunk.splunkjenkins.Messages.SplunkIconName;
 
+@SuppressWarnings("unused")
 @Extension
 public class ReportAction implements RootAction {
     @Override
