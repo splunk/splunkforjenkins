@@ -36,7 +36,6 @@ public class LoggingConfigListener extends SaveableListener {
     @Override
     public void onChange(Saveable saveable, XmlFile file) {
         String configPath = file.getFile().getAbsolutePath();
-        String jenkinsHome = Jenkins.getInstance().getRootDir().getPath();
         if (saveable == null || !isEnabled() || IGNORED.matcher(configPath).find()) {
             return;
         }
@@ -62,7 +61,7 @@ public class LoggingConfigListener extends SaveableListener {
             String userName = getUserName();
             String comment = String.format(XML_COMMENT, userName);
             SplunkLogService.getInstance().send(comment + configContent, JENKINS_CONFIG, sourceName);
-            //log audit trail, except user or job which were already tracked by other listener
+            //log audit trail, excludes Item instances which were already tracked by other listener
             if (!(saveable instanceof Item)) {
                 logUserAction(getUserName(), Messages.audit_update_item(relativePath));
             }

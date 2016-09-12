@@ -47,6 +47,40 @@ public class LoggingRunListener extends RunListener<Run> {
         updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
     }
 
+    @Override
+    public void onCompleted(Run run, @Nonnull TaskListener listener) {
+        Map event = getCommonBuildInfo(run, true);
+        event.put("type", "completed");
+        event.put("job_duration", run.getDuration() / 1000);
+        event.put(JOB_RESULT, run.getResult().toString());
+        if (run instanceof AbstractBuild) {
+            AbstractBuild build = (AbstractBuild) run;
+            postJobAction.perform(build, listener);
+            List<String> changelog = getChangeLog(build);
+
+            Map testSummary = TestCaseResultUtils.getSummary(build);
+            if (!testSummary.isEmpty()) {
+                event.put("test_summary", testSummary);
+            }
+            if (!changelog.isEmpty()) {
+                event.put("changelog", changelog);
+            }
+            event.putAll(getScmInfo(build));
+        }
+        SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        if (run.getExecutor() != null) {
+            //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
+            updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
+        }
+        //remove cached values
+        LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
+        recordAbortAction(run);
+    }
+
+    /**
+     * @param run
+     * @return the upstream job url
+     */
     private String getUpStreamUrl(Run run) {
         StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
@@ -58,6 +92,10 @@ public class LoggingRunListener extends RunListener<Run> {
         return "";
     }
 
+    /**
+     * @param run
+     * @return causes separated by comma
+     */
     private String getBuildCauses(Run run) {
         StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
@@ -70,6 +108,10 @@ public class LoggingRunListener extends RunListener<Run> {
         return buf.toString();
     }
 
+    /**
+     * @param build
+     * @return scm information, we only support git,svn and p4
+     */
     public static Map getScmInfo(AbstractBuild build) {
         Map event = new HashMap();
         if (build.getProject().getScm() != null) {
@@ -104,6 +146,11 @@ public class LoggingRunListener extends RunListener<Run> {
         return event;
     }
 
+    /**
+     * @param envVars
+     * @param prefix
+     * @return parsed scm urls from build env, e.g. GIT_URL_1, GIT_URL_2, ... GIT_URL_10 or GIT_URL
+     */
     public static String getScmURL(EnvVars envVars, String prefix) {
         String value = envVars.get(prefix);
         if (value == null) {
@@ -174,36 +221,11 @@ public class LoggingRunListener extends RunListener<Run> {
         return event;
     }
 
-    @Override
-    public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        Map event = getCommonBuildInfo(run, true);
-        event.put("type", "completed");
-        event.put("job_duration", run.getDuration() / 1000);
-        event.put(JOB_RESULT, run.getResult().toString());
-        if (run instanceof AbstractBuild) {
-            AbstractBuild build = (AbstractBuild) run;
-            postJobAction.perform(build, listener);
-            List<String> changelog = getChangeLog(build);
-
-            Map testSummary = TestCaseResultUtils.getSummary(build);
-            if (!testSummary.isEmpty()) {
-                event.put("test_summary", testSummary);
-            }
-            if (!changelog.isEmpty()) {
-                event.put("changelog", changelog);
-            }
-            event.putAll(getScmInfo(build));
-        }
-        SplunkLogService.getInstance().send(event, BUILD_EVENT);
-        if (run.getExecutor() != null) {
-            //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
-            updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
-        }
-        //remove cached values
-        LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
-        recordAbortAction(run);
-    }
-
+    /**
+     * Send audit information
+     *
+     * @param run
+     */
     private void recordAbortAction(Run run) {
         List<InterruptedBuildAction> actions = run.getActions(InterruptedBuildAction.class);
         for (InterruptedBuildAction action : actions) {
@@ -219,6 +241,10 @@ public class LoggingRunListener extends RunListener<Run> {
 
     }
 
+    /**
+     * @param build
+     * @return scm change log
+     */
     private List<String> getChangeLog(AbstractBuild build) {
         //check changelog
         List<String> changelog = new ArrayList<>();
