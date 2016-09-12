@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.listeners;
 
 import hudson.Extension;
+import hudson.model.User;
 import jenkins.security.SecurityListener;
 import org.acegisecurity.userdetails.UserDetails;
 
@@ -20,13 +21,12 @@ public class UserSecurityListener extends SecurityListener {
 
     @Override
     protected void failedToAuthenticate(@Nonnull String username) {
-        logUserAction(username, Messages.audit_user_fail_auth());
+        logUserAction(getFullName(username), Messages.audit_user_fail_auth());
     }
 
     @Override
     protected void loggedIn(@Nonnull String username) {
-        logUserAction(username, Messages.audit_user_login());
-
+        logUserAction(getFullName(username), Messages.audit_user_login());
     }
 
     @Override
@@ -36,6 +36,20 @@ public class UserSecurityListener extends SecurityListener {
 
     @Override
     protected void loggedOut(@Nonnull String username) {
-        logUserAction(username, Messages.audit_user_logout());
+        logUserAction(getFullName(username), Messages.audit_user_logout());
+    }
+
+    /**
+     * @param username
+     * @return full name
+     */
+    private String getFullName(String username) {
+        //user may not exists when user failed to login
+        User user = User.get(username);
+        if (user != null) {
+            return user.getFullName();
+        } else {
+            return username;
+        }
     }
 }
