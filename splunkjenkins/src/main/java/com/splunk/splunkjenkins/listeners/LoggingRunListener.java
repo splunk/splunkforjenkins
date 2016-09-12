@@ -135,8 +135,12 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
         event.put(Constants.USER_NAME_KEY, getTriggerUserName(run));
-        float queueTime = (run.getStartTimeInMillis() - run.getTimeInMillis()) / 1000;
-        event.put("queue_time", queueTime);
+        Float queueTime = LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
+        if (queueTime != null) {
+            event.put("queue_time", queueTime);
+        } else {
+            event.put("queue_time", 0);
+        }
         event.put("queue_id", run.getQueueId());
         event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
@@ -195,6 +199,8 @@ public class LoggingRunListener extends RunListener<Run> {
             //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
             updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
         }
+        //remove cached values
+        LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
         recordAbortAction(run);
     }
 
