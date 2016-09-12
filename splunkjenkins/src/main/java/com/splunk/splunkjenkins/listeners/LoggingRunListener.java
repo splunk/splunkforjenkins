@@ -51,7 +51,7 @@ public class LoggingRunListener extends RunListener<Run> {
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
         Map event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
-        event.put("job_duration", run.getDuration() / 1000);
+        event.put("job_duration", run.getDuration() / 1000f);
         event.put(JOB_RESULT, run.getResult().toString());
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
