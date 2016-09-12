@@ -264,16 +264,32 @@ public class LogEventHelper {
 
     /**
      * @param run
-     * @return the user who triggered the build
+     * @return the user who triggered the build or upstream build
      */
     public static String getTriggerUserName(Run run) {
         String userName = "anonymous";
-        Cause.UserIdCause cause = (Cause.UserIdCause) run.getCause(Cause.UserIdCause.class);
-        if (cause != null) {
-            userName = cause.getUserName();
+        Cause.UserIdCause userCause = null;
+        findUserLoop:
+        for (CauseAction action : run.getActions(CauseAction.class)) {
+            for (Cause cause : action.getCauses()) {
+                if (cause instanceof Cause.UserIdCause) {
+                    userCause = (Cause.UserIdCause) cause;
+                } else if (cause instanceof Cause.UpstreamCause) {
+                    Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
+                    List<Cause.UserIdCause> userCauses = Util.filter(upstreamCause.getUpstreamCauses(), Cause.UserIdCause.class);
+                    if (!userCauses.isEmpty()) {
+                        userCause = userCauses.get(0);
+                    }
+                }
+                if (userCause != null) {
+                    userName = userCause.getUserName();
+                    break findUserLoop;
+                }
+            }
         }
         return userName;
     }
+
 
     public static class UrlQueryBuilder {
         private Map<String, String> query = new HashMap();
