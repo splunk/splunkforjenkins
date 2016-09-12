@@ -1,5 +1,7 @@
 package com.splunk.splunkjenkins.links;
 
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.utils.LogEventHelper;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractProject;
@@ -20,7 +22,9 @@ public class ProjectActionFactory extends TransientActionFactory<AbstractProject
     @Nonnull
     @Override
     public Collection<? extends Action> createFor(@Nonnull AbstractProject target) {
-        return Collections.singleton(new LinkSplunkAction("build_analysis",
-                "job=" + Util.encode(target.getUrl()), "Splunk"));
+        String query = new LogEventHelper.UrlQueryBuilder()
+                .putIfAbsent("build_analysis_jenkinsmaster", SplunkJenkinsInstallation.get().getMetadataHost())
+                .putIfAbsent("build_analysis_job", target.getUrl()).build();
+        return Collections.singleton(new LinkSplunkAction("build_analysis", query, "Splunk"));
     }
 }

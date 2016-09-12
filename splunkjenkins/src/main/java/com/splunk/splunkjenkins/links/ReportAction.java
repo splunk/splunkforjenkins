@@ -21,6 +21,6 @@ public class ReportAction implements RootAction {
     @Override
     public String getUrlName() {
         SplunkJenkinsInstallation instance = SplunkJenkinsInstallation.get();
-        return instance.getAppUrlOrHelp() + "overview?host=" + instance.getMetadataHost();
+        return instance.getAppUrlOrHelp() + "overview?overview_jenkinsmaster=" + instance.getMetadataHost();
     }
 }

@@ -30,6 +30,6 @@ public class LinkSplunkAction implements Action {
     @Override
     public String getUrlName() {
         SplunkJenkinsInstallation instance = SplunkJenkinsInstallation.get();
-        return instance.getAppUrlOrHelp() + page + "?host=" + instance.getMetadataHost() + "&" + query;
+        return instance.getAppUrlOrHelp() + page + "?" + query;
     }
 }
