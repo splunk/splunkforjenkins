@@ -8,6 +8,7 @@ import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
+import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ public class TestCaseResultUtils {
      * split test result into groups, each contains maximum pageSize testcases
      *
      * @param result
+     * @param pageSize
      * @return
      */
     public static List<JunitTestCaseGroup> split(TestResult result, int pageSize) {
@@ -39,9 +41,33 @@ public class TestCaseResultUtils {
     }
 
     /**
+     * @param resultAction
+     * @param pageSize
+     * @return
+     */
+    public static List<JunitTestCaseGroup> splitRaw(AbstractTestResultAction resultAction, int pageSize) {
+        List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
+        JunitTestCaseGroup group = new JunitTestCaseGroup();
+        testCasesCollect.add(group);
+        List<CaseResult> results = new ArrayList<>();
+        results.addAll(resultAction.getFailedTests());
+        results.addAll(resultAction.getSkippedTests());
+        results.addAll(resultAction.getPassedTests());
+        for (CaseResult testCase : results) {
+            group.add(testCase);
+            if (group.getTotal() > pageSize) {
+                group = new JunitTestCaseGroup();
+                testCasesCollect.add(group);
+            }
+        }
+        return testCasesCollect;
+    }
+
+    /**
      * split aggregated test result into groups, each contains maximum pageSize testcases
      *
      * @param aggregatedResult
+     * @param pageSize
      * @return
      */
     public static List<JunitTestCaseGroup> split(AggregatedTestResultAction aggregatedResult, int pageSize) {
@@ -85,6 +111,11 @@ public class TestCaseResultUtils {
         AggregatedTestResultAction aggAction = build.getAction(AggregatedTestResultAction.class);
         if (aggAction != null) {
             return split(aggAction, pageSize);
+        }
+        //last resort, try AbstractTestResultAction
+        AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
+        if (abstractTestResultAction != null) {
+            return splitRaw(abstractTestResultAction, pageSize);
         }
         return junitReports;
     }

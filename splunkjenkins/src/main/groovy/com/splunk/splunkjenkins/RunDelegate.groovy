@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins
 
+import com.splunk.splunkjenkins.listeners.LoggingRunListener
 import com.splunk.splunkjenkins.model.EventType
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup
 import com.splunk.splunkjenkins.utils.SplunkLogService
@@ -9,6 +10,9 @@ import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.TaskListener
 import hudson.tasks.Publisher
+
+import java.util.logging.Level
+import java.util.logging.Logger
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
 import static com.splunk.splunkjenkins.Constants.TAG
@@ -21,6 +25,8 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getTriggerUserName
 
 
 public class RunDelegate {
+    static final LOG = Logger.getLogger(LoggingRunListener.class.name)
+
     AbstractBuild build;
     Map env;
     TaskListener listener
@@ -93,7 +99,7 @@ public class RunDelegate {
 
     def getJunitReport() {
         //no pagination, use MAX_VALUE as page size
-        List<JunitTestCaseGroup> results = TestCaseResultUtils.getBuildReport(build, Integer.MAX_VALUE);
+        List<JunitTestCaseGroup> results = getJunitReport(Integer.MAX_VALUE);
         if (!results.isEmpty()) {
             return results.get(0)
         } else {
@@ -102,7 +108,12 @@ public class RunDelegate {
     }
 
     def getJunitReport(int pageSize) {
-        return TestCaseResultUtils.getBuildReport(build, pageSize);
+        try {
+            return TestCaseResultUtils.getBuildReport(build, pageSize);
+        } catch (Exception ex) {
+            LOG.log(Level.SEVERE, "failed to get junit report", ex)
+            return Collections.emptyList();
+        }
     }
 
     def getOut() {
