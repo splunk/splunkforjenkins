@@ -1,5 +1,5 @@
 Plugin implements some interfaces and mark the implemention to use annotaion @Extension so Jenkins can load it dynamically
-Type of implementation
+
 # Configure
 
 ### SplunkJenkinsInstallation 
@@ -26,7 +26,7 @@ Type of implementation
 ```
     it will call fireOnDeleted to notify all ItemListeners
 
-##Listeners list
+## Listeners list
 #### [SecurityListener](http://javadoc.jenkins-ci.org/jenkins/security/SecurityListener.html)
     record user login/logout and failedToLogIn events
 #### [SaveableListener](http://javadoc.jenkins-ci.org/hudson/model/listeners/SaveableListener.html)
