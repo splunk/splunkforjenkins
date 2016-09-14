@@ -15,6 +15,7 @@ import hudson.model.*;
 import hudson.model.Queue;
 import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
+import hudson.triggers.TimerTrigger;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
@@ -268,21 +269,22 @@ public class LogEventHelper {
      */
     public static String getTriggerUserName(Run run) {
         String userName = "anonymous";
-        Cause.UserIdCause userCause = null;
         findUserLoop:
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
-                if (cause instanceof Cause.UserIdCause) {
-                    userCause = (Cause.UserIdCause) cause;
-                } else if (cause instanceof Cause.UpstreamCause) {
+                String triggerUserName = getUsernameOrTimer(cause);
+                if (triggerUserName == null && cause instanceof Cause.UpstreamCause) {
                     Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
-                    List<Cause.UserIdCause> userCauses = Util.filter(upstreamCause.getUpstreamCauses(), Cause.UserIdCause.class);
-                    if (!userCauses.isEmpty()) {
-                        userCause = userCauses.get(0);
+                    for (Cause upCause : upstreamCause.getUpstreamCauses()) {
+                        triggerUserName = getUsernameOrTimer(upCause);
+                        if (triggerUserName != null) {
+                            break;
+                        }
                     }
                 }
-                if (userCause != null) {
-                    userName = userCause.getUserName();
+                //check if we located the user name
+                if (triggerUserName != null) {
+                    userName = triggerUserName;
                     break findUserLoop;
                 }
             }
@@ -290,6 +292,14 @@ public class LogEventHelper {
         return userName;
     }
 
+    private static String getUsernameOrTimer(Cause cause) {
+        if (cause instanceof Cause.UserIdCause) {
+            return ((Cause.UserIdCause) cause).getUserName();
+        } else if (cause instanceof TimerTrigger.TimerTriggerCause) {
+            return "(timer)";
+        }
+        return null;
+    }
 
     public static class UrlQueryBuilder {
         private Map<String, String> query = new HashMap();
