@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.links;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.utils.LogEventHelper;
 import hudson.Extension;
 import hudson.model.Action;
 import hudson.model.Computer;
@@ -15,8 +16,10 @@ import java.util.Collection;
 public class ComputerLogActionFactory extends TransientComputerActionFactory {
     @Override
     public Collection<? extends Action> createFor(Computer target) {
-        return Collections.singleton(new LinkSplunkAction("agent",
-                "form.host=" + SplunkJenkinsInstallation.get().getMetadataHost() + "&form.agent_name=" + target.getName(),
-                "Splunk"));
+        String query = new LogEventHelper.UrlQueryBuilder()
+                .putIfAbsent("form.host", SplunkJenkinsInstallation.get().getMetadataHost())
+                .putIfAbsent("form.agent_name", target.getName())
+                .build();
+        return Collections.singleton(new LinkSplunkAction("agent", query, "Splunk"));
     }
 }
