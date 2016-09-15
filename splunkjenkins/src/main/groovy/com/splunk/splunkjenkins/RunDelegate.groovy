@@ -191,7 +191,7 @@ public class RunDelegate {
         event.put(USER_NAME_KEY, getTriggerUserName(build));
         event.put(JOB_RESULT, build.getResult().toString());
         event.put(BUILD_ID, url);
-        event.put(BUILD_REPORT_ENV_TAG, build.buildVariables);
+        event.put(BUILD_REPORT_ENV_TAG, env);
         event.put("build_number", build.getNumber());
         event.put("job_name", build.getParent().getUrl());
         return event;

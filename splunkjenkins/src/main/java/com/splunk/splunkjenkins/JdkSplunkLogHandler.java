@@ -50,8 +50,9 @@ public class JdkSplunkLogHandler extends Handler {
 
     private class LogFilter implements Filter {
         //logger may trigger recursive call, need skip them
-        private final String[] skipLoggerNames = {"com.splunk.splunkjenkins", "jenkins.InitReactorRunner",
-                "org.apache.http", "hudson.node_monitors"};
+        private final String[] skipLoggerNames = {
+                "com.splunk.splunkjenkins.SplunkLogService", "com.splunk.splunkjenkins.utils.LogConsumer",
+                "jenkins.InitReactorRunner", "org.apache.http", "hudson.node_monitors"};
 
         @Override
         public boolean isLoggable(LogRecord record) {
