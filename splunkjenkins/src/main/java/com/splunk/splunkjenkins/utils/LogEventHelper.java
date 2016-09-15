@@ -269,6 +269,11 @@ public class LogEventHelper {
      */
     public static String getTriggerUserName(Run run) {
         String userName = "anonymous";
+        //maven modules triggered by ModuleSet project, no causes available
+        if (run.getParent().getClass().getName().equals("hudson.maven.MavenModule")) {
+            return "(maven)";
+        }
+
         findUserLoop:
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
