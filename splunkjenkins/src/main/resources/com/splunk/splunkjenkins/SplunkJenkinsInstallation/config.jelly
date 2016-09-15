@@ -36,7 +36,7 @@
                 <f:textbox/>
             </f:entry>
             <f:radioBlock name="commandsOrFileInSplunkins" value="file"
-                          title="${%Run Script File to Process Test Result}"
+                          title="${%Customize Event Processing Script}"
                           checked="${instance.getScriptPath() !=null}" inline="true">
                 <f:entry field="scriptPath"
                          help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
@@ -44,7 +44,7 @@
                 </f:entry>
             </f:radioBlock>
             <f:radioBlock name="commandsOrFileInSplunkins" value="content"
-                          title="${%Run Commands to Process Test Result}"
+                          title="${%Customize Event Processing Command}"
                           checked="${instance.getScriptPath() == null }" inline="true">
                 <f:entry help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
                     <f:textarea class="fixed-width splunkins" codemirror-mode="clike"
