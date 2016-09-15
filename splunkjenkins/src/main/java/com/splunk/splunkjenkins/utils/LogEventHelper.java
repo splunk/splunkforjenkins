@@ -15,6 +15,7 @@ import hudson.model.*;
 import hudson.model.Queue;
 import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
+import hudson.triggers.SCMTrigger;
 import hudson.triggers.TimerTrigger;
 import hudson.util.ByteArrayOutputStream2;
 import hudson.util.FormValidation;
@@ -302,6 +303,8 @@ public class LogEventHelper {
             return ((Cause.UserIdCause) cause).getUserName();
         } else if (cause instanceof TimerTrigger.TimerTriggerCause) {
             return "(timer)";
+        }else if(cause instanceof SCMTrigger.SCMTriggerCause){
+            return "(scm)";
         }
         return null;
     }
