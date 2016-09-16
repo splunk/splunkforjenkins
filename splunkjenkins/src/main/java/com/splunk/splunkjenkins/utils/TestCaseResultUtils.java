@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins.utils;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
 import hudson.model.AbstractBuild;
 import hudson.model.Build;
+import hudson.model.Run;
 import hudson.scheduler.Hash;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
@@ -99,7 +100,7 @@ public class TestCaseResultUtils {
      * @param pageSize
      * @return
      */
-    public static List<JunitTestCaseGroup> getBuildReport(AbstractBuild build, int pageSize) {
+    public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize) {
         List<JunitTestCaseGroup> junitReports = new ArrayList<>();
         if (build == null) {
             return junitReports;
@@ -124,7 +125,7 @@ public class TestCaseResultUtils {
      * @param build
      * @return summary of failures,passes,skips, total and duration
      */
-    public static Map<String, Object> getSummary(AbstractBuild build) {
+    public static Map<String, Object> getSummary(Run build) {
         List<JunitTestCaseGroup> results = getBuildReport(build, Integer.MAX_VALUE);
         Map<String, Object> summary = new HashMap();
         if (results.isEmpty()) {

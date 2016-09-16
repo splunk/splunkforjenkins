@@ -4,6 +4,7 @@ import com.splunk.splunkjenkins.listeners.LoggingRunListener
 import com.splunk.splunkjenkins.utils.LogEventHelper
 import hudson.EnvVars
 import hudson.model.AbstractBuild
+import hudson.model.Run
 import hudson.model.TaskListener
 import hudson.util.spring.ClosureScript
 import jenkins.model.Jenkins
@@ -17,7 +18,7 @@ import java.util.logging.Logger
 public class UserActionDSL {
     static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
-    public void perform(AbstractBuild build, TaskListener listener) {
+    public void perform(Run build, TaskListener listener) {
         try {
             EnvVars enVars = build.getEnvironment(listener);
             SplunkJenkinsInstallation splunkConfig = SplunkJenkinsInstallation.get();

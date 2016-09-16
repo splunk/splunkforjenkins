@@ -62,21 +62,23 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         event.put("job_duration", duration);
         event.put(JOB_RESULT, run.getResult().toString());
+        Map testSummary = TestCaseResultUtils.getSummary(run);
+        if (!testSummary.isEmpty()) {
+            event.put("test_summary", testSummary);
+        }
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
-            postJobAction.perform(build, listener);
             List<String> changelog = getChangeLog(build);
 
-            Map testSummary = TestCaseResultUtils.getSummary(build);
-            if (!testSummary.isEmpty()) {
-                event.put("test_summary", testSummary);
-            }
             if (!changelog.isEmpty()) {
                 event.put("changelog", changelog);
             }
             event.putAll(getScmInfo(build));
         }
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        //custom event processing dsl
+        postJobAction.perform(run, listener);
+
         if (run.getExecutor() != null) {
             //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
             updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));

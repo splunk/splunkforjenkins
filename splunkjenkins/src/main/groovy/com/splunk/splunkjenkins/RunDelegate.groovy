@@ -8,6 +8,7 @@ import com.splunk.splunkjenkins.utils.TestCaseResultUtils
 import hudson.EnvVars
 import hudson.model.AbstractBuild
 import hudson.model.Action
+import hudson.model.Run
 import hudson.model.TaskListener
 import hudson.tasks.Publisher
 
@@ -27,11 +28,11 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getTriggerUserName
 public class RunDelegate {
     static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
-    AbstractBuild build;
+    Run build;
     Map env;
     TaskListener listener
 
-    public RunDelegate(AbstractBuild build, EnvVars enVars, TaskListener listener) {
+    public RunDelegate(Run build, EnvVars enVars, TaskListener listener) {
         this.build = build;
         if (enVars != null) {
             this.env = enVars;
@@ -80,7 +81,10 @@ public class RunDelegate {
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      */
     def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
-        SplunkArtifactNotifier notifier = build.getProject().getPublishersList().get(SplunkArtifactNotifier.class)
+        SplunkArtifactNotifier notifier = null;
+        if (build instanceof AbstractBuild) {
+            notifier = ((AbstractBuild) build).getProject().getPublishersList().get(SplunkArtifactNotifier.class)
+        }
         if (notifier != null) {
             //already defined on job level
             if (notifier.skipGlobalSplunkArchive) {
@@ -169,8 +173,11 @@ public class RunDelegate {
      */
     def boolean hasPublisherName(String className) {
         boolean found = false;
+        if (build instanceof AbstractBuild) {
+            return found;
+        }
         Class publisherClazz = Class.forName(className);
-        for (Publisher publisher : build.getProject().getPublishersList()) {
+        for (Publisher publisher : ((AbstractBuild) build).getProject().getPublishersList()) {
             if (publisherClazz.isInstance(publisher)) {
                 found = true;
                 break;
