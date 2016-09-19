@@ -17,9 +17,9 @@ public class ComputerLogActionFactory extends TransientComputerActionFactory {
     @Override
     public Collection<? extends Action> createFor(Computer target) {
         String query = new LogEventHelper.UrlQueryBuilder()
-                .putIfAbsent("form.host", SplunkJenkinsInstallation.get().getMetadataHost())
-                .putIfAbsent("form.agent_name", target.getName())
+                .putIfAbsent("master", SplunkJenkinsInstallation.get().getMetadataHost())
+                .putIfAbsent("slave", target.getName())
                 .build();
-        return Collections.singleton(new LinkSplunkAction("agent", query, "Splunk"));
+        return Collections.singleton(new LinkSplunkAction("jenkins_slave", query, "Splunk"));
     }
 }
