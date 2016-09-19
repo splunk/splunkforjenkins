@@ -1,0 +1,28 @@
+<div>
+    <p>Specifiy index, host, source, soucetype for the events, This can be used in splunk query language such as
+        <b> index="main" source="jenkins" host="jenkins.domain" sourcetype="_json" </b>
+    </p>
+    <p>The index in Splunk to which the events will be indexed to. Defaults to "main" index in Splunk.
+        Note: If using a custom index, that index must be already exist on your Splunk instance. Splunk-Jenkins will not
+        create it for you.</p>
+    <p>The metadata can be customized for each event prefix: <b>test_result, console_log, queue_info, file,
+        xml_config</b>
+        e.g.
+     <pre>
+    #index
+    index=main #this is global level
+    console_log.index=ci_log #only for console_log
+    #source
+    source=sandbox
+    console_log.source=jenkins_job
+    #sourcetype
+    sourcetype=_json
+    #host
+    host=sandbox
+    </pre>
+    will set index as ci_log for console_log event, main as index for others. jenkins_job as source for console_log
+    event,
+    sandbox as source for others
+    <br/>Note: double quote is not needed for values.
+    </pre>
+</div>

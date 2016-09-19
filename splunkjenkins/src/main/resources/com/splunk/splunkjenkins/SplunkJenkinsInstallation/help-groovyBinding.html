@@ -1,0 +1,44 @@
+<div>
+    <div><h3>Provide a groovy script to customize event process,
+        will be executed when job is completed</h3>
+
+    </div>
+    <div>
+        You can customize the events sent to splunk by call:
+<pre>  <code>
+def results = getJunitReport(200)
+def event = getBuildEvent()
+def pageNumber = 0;
+results.each { junitResult ->
+    event["testsuite"] = junitResult;
+    event["page_num"] = pageNumber++;
+    println("sending report page:${pageNumber}")
+    send(event)
+}
+//archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit)
+archive("**/*.log",null,false,500MB)
+
+</code></pre>
+        you can reference below variables or methods
+ <pre> <code>
+AbstractBuild build;
+Map env;
+Action getAction(Class type);
+Action getActionByClassName(String className);
+//send message to splunk
+boolean send(Object message);
+//Archive all configured artifacts from slave, with each file size limit to 10MB, using ant patterns defined in http://ant.apache.org/manual/Types/fileset.html
+def archive(String includes) {
+    archive(includes, null, true, "10MB");
+}
+archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit)
+//will send build parameters as metadata and with the object returned from closure to splunk
+sendReport(Closure closure)
+//a junit report with summary of passes,failures,skips and details of testcase
+getJunitReport()
+//a a list of junit report each with summary of passes,failures,skips and details of testcase
+//each report contains max pageSize testcases
+getJunitReport(int pageSize)
+ </code> </pre>
+    </div>
+</div>
