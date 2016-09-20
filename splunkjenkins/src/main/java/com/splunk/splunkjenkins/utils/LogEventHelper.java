@@ -280,13 +280,7 @@ public class LogEventHelper {
             for (Cause cause : action.getCauses()) {
                 String triggerUserName = getUsernameOrTimer(cause);
                 if (triggerUserName == null && cause instanceof Cause.UpstreamCause) {
-                    Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
-                    for (Cause upCause : upstreamCause.getUpstreamCauses()) {
-                        triggerUserName = getUsernameOrTimer(upCause);
-                        if (triggerUserName != null) {
-                            break;
-                        }
-                    }
+                    triggerUserName = getUpStreamUser((Cause.UpstreamCause) cause);
                 }
                 //check if we located the user name
                 if (triggerUserName != null) {
@@ -298,12 +292,39 @@ public class LogEventHelper {
         return userName;
     }
 
+    /**
+     * get the user name from UpstreamCause, also recursive check top level upstreams
+     * e.g.<pre>
+     * Started by upstream project "jobs_list" build number 47
+     *  originally caused by:
+     *  Started by upstream project "trigger_job" build number 2
+     *      originally caused by:
+     *      Started by user Jonh doe
+     * </pre>
+     *
+     * @param upstreamCause
+     * @return
+     */
+    private static String getUpStreamUser(Cause.UpstreamCause upstreamCause) {
+        for (Cause upCause : upstreamCause.getUpstreamCauses()) {
+            if (upCause instanceof Cause.UpstreamCause) {
+                return getUpStreamUser((Cause.UpstreamCause) upCause);
+            } else {
+                String userName = getUsernameOrTimer(upCause);
+                if (userName != null) {
+                    return userName;
+                }
+            }
+        }
+        return null;
+    }
+
     private static String getUsernameOrTimer(Cause cause) {
         if (cause instanceof Cause.UserIdCause) {
             return ((Cause.UserIdCause) cause).getUserName();
         } else if (cause instanceof TimerTrigger.TimerTriggerCause) {
             return "(timer)";
-        }else if(cause instanceof SCMTrigger.SCMTriggerCause){
+        } else if (cause instanceof SCMTrigger.SCMTriggerCause) {
             return "(scm)";
         }
         return null;
