@@ -18,5 +18,6 @@ public class Constants {
     public static final String JENKINS_CONFIG_PREFIX = "jenkins://";
     public static final String AUDIT_SOURCE = "audit_trail";
     public static final String USER_NAME_KEY = "user";
+    public static final String EVENT_CAUSED_BY="event_src";
 
 }

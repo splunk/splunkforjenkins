@@ -482,6 +482,7 @@ public class LogEventHelper {
         Collection<NodeMonitor> monitors = ComputerSet.getMonitors();
         for (Computer computer : computers) {
             Map slaveInfo = new HashMap();
+            slaveInfo.put(EVENT_CAUSED_BY,"monitor");
             slaveInfo.putAll(getComputerStatus(computer));
             for (NodeMonitor monitor : monitors) {
                 slaveInfo.putAll(getMonitorData(computer, monitor));
