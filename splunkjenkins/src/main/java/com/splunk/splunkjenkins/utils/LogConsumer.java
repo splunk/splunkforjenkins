@@ -23,7 +23,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.utils.LogEventHelper.buildPost;
-import static com.splunk.splunkjenkins.utils.SplunkLogService.QUEUE_SIZE;
 
 public class LogConsumer extends Thread {
     private static final Logger LOG = Logger.getLogger(LogConsumer.class.getName());

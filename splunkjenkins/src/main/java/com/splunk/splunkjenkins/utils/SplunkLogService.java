@@ -142,7 +142,9 @@ public class SplunkLogService {
         }
         boolean added = logQueue.offer(record);
         if (!added) {
-            LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");
+            //clear the queue, the event int the queue may have format issue and caused congestion
+            logQueue.clear();
+            LOG.log(Level.SEVERE, "queue is blocked,jenkins is too busy or has too few workers, discarded all queued messages");
             return false;
         }
         if (workers.size() < MAX_WORKER_COUNT) {
@@ -151,7 +153,7 @@ public class SplunkLogService {
                 for (int i = 0; i < worksToCreate; i++) {
                     LogConsumer workerThread = new LogConsumer(client, logQueue, outgoingCounter);
                     workers.add(workerThread);
-                    String workerThreadName="splunkins-worker-"+workers.size();
+                    String workerThreadName = "splunkins-worker-" + workers.size();
                     workerThread.setName(workerThreadName);
                     workerThread.start();
                 }
@@ -174,8 +176,8 @@ public class SplunkLogService {
             }
             workers.clear();
         }
-        if(this.getQueueSize()!=0){
-            LOG.severe("remaining "+this.getQueueSize()+" record(s) not sent");
+        if (this.getQueueSize() != 0) {
+            LOG.severe("remaining " + this.getQueueSize() + " record(s) not sent");
         }
     }
 
