@@ -41,6 +41,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.listeners.LoggingRunListener.getScmInfo;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
@@ -66,17 +67,19 @@ public class LogEventHelper {
             .build();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
-        HttpPost postMethod = new HttpPost(record.getEndpoint(config));
-        if (config.isMetaDataInURLSupported(record.getEventType().needSplit())) {
+        HttpPost postMethod;
+        if (config.isMetaDataInURLSupported(record.getEventType())) {
+            postMethod = new HttpPost(record.getRawEndpoint(config));
             postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
         } else {
-            //http event collector does not support raw event, need split records and append metadata to message body
+            postMethod = new HttpPost(config.getJsonUrl());
             String jsonRecord;
             if (record.getEventType().needSplit()) {
+                //http event collector does not support raw event, need split records and append metadata to message body
                 StringWriter stout = new StringWriter();
                 String[] values = record.getMessageString().split("[\\r\\n]+");
                 for (String line : values) {
-                    if (line != "") {
+                    if (!isNullOrEmpty(line)) {
                         EventRecord lineRecord = new EventRecord(line, record.getEventType());
                         lineRecord.setSource(record.getSource());
                         lineRecord.setTime(record.getTime());
@@ -88,6 +91,7 @@ public class LogEventHelper {
             } else {
                 jsonRecord = gson.toJson(record.toMap(config));
             }
+            LOG.log(Level.FINEST, jsonRecord);
             StringEntity entity = new StringEntity(jsonRecord, "utf-8");
             entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
             postMethod.setEntity(entity);
@@ -482,7 +486,7 @@ public class LogEventHelper {
         Collection<NodeMonitor> monitors = ComputerSet.getMonitors();
         for (Computer computer : computers) {
             Map slaveInfo = new HashMap();
-            slaveInfo.put(EVENT_CAUSED_BY,"monitor");
+            slaveInfo.put(EVENT_CAUSED_BY, "monitor");
             slaveInfo.putAll(getComputerStatus(computer));
             for (NodeMonitor monitor : monitors) {
                 slaveInfo.putAll(getMonitorData(computer, monitor));

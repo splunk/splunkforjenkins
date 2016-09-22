@@ -8,8 +8,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
+
 public class EventRecord {
-    private final static String METADATA_KEYS[] = {"index", "source", "host", "sourcetype"};
+    private final static String METADATA_KEYS[] = {"index", "source", "host"};
     private long time;
     private int retryCount;
     private Object message;
@@ -63,9 +65,9 @@ public class EventRecord {
             return "NULL message";
         }
         if (message instanceof String) {
-            return "{length:" + ((String) message).length() +" "+ StringUtils.substring((String) message, 0, 160)+" ...}";
+            return "{length:" + ((String) message).length() + " " + StringUtils.substring((String) message, 0, 160) + " ...}";
         } else {
-            return "{raw data" + StringUtils.abbreviate("" + message, 160)+"}";
+            return "{raw data" + StringUtils.abbreviate("" + message, 160) + "}";
         }
     }
 
@@ -100,25 +102,22 @@ public class EventRecord {
             metaDataBuilder.putIfAbsent(metaKeyName, config.getMetaData(eventType.name().toLowerCase() + "." + metaKeyName));
             metaDataBuilder.putIfAbsent(metaKeyName, config.getMetaData(metaKeyName));
         }
+        metaDataBuilder.putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(eventType.name().toLowerCase() + "." + EVENT_SOURCE_TYPE));
+        metaDataBuilder.putIfAbsent(EVENT_SOURCE_TYPE, eventType.getSourceType());
         return metaDataBuilder.getQueryMap();
     }
 
     /**
-     *
      * @param config the Splunk config which contains metadata information
      * @return the http event collector endpoint
      */
-    public String getEndpoint(SplunkJenkinsInstallation config) {
-        if (!config.isMetaDataInURLSupported(eventType.needSplit())) {
-            return config.getJsonUrl();
-        }
+    public String getRawEndpoint(SplunkJenkinsInstallation config) {
         Map queryMap = new HashMap();
         queryMap.putAll(getMetaData(config));
         return config.getRawUrl() + "?" + LogEventHelper.UrlQueryBuilder.toString(queryMap);
     }
 
     /**
-     *
      * @param config the Splunk config which contains metadata information
      * @return a Map object can be used for json serialization
      */
@@ -126,11 +125,12 @@ public class EventRecord {
         Map<String, Object> values = new HashMap<>();
         values.put("time", getTimestamp());
         values.put("event", message);
-        Map<String,String> metaDataConfig=getMetaData(config);
+        Map<String, String> metaDataConfig = getMetaData(config);
         values.putAll(metaDataConfig);
         return values;
     }
-    public boolean isFailed(){
-        return retryCount >0;
+
+    public boolean isFailed() {
+        return retryCount > 0;
     }
 }

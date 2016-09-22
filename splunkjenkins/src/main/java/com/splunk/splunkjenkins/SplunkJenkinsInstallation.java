@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.listeners.LoggingConfigListener;
+import com.splunk.splunkjenkins.model.EventType;
 import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -282,11 +283,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * and we can specify host,source,sourcetype,index only once in query parameter if raw event is supported,
      * instead of sending 1000 times in request body
      *
-     * @param needSplit does the text need to be logged to splunk line by line
+     * @param eventType does this type of text need to be logged to splunk line by line
      * @return true if HEC supports specify metadata in url query parameter
      */
-    public boolean isMetaDataInURLSupported(boolean needSplit) {
-        return rawEventEnabled && needSplit;
+    public boolean isMetaDataInURLSupported(EventType eventType) {
+        return rawEventEnabled && eventType.needSplit();
     }
 
     public String getToken() {
