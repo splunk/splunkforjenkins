@@ -25,12 +25,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 public class SplunkLogService {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
-    private final static int QUEUE_SIZE = 1 << 18;
+    private final static int QUEUE_SIZE = 1 << 17;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
@@ -38,6 +40,7 @@ public class SplunkLogService {
     HttpClientConnectionManager connMgr;
     private AtomicLong incomingCounter = new AtomicLong();
     private AtomicLong outgoingCounter = new AtomicLong();
+    private Lock maintenanceLock =new ReentrantLock();
 
     private SplunkLogService() {
         this.logQueue = new LinkedBlockingQueue<EventRecord>(QUEUE_SIZE);
@@ -142,9 +145,23 @@ public class SplunkLogService {
         }
         boolean added = logQueue.offer(record);
         if (!added) {
-            //clear the queue, the event int the queue may have format issue and caused congestion
-            logQueue.clear();
-            LOG.log(Level.SEVERE, "queue is blocked,jenkins is too busy or has too few workers, discarded all queued messages");
+            LOG.log(Level.SEVERE, "failed to send message due to queue is full");
+            if (maintenanceLock.tryLock()) {
+                try {
+                    //clear the queue, the event in the queue may have format issue and caused congestion
+                    List<EventRecord> stuckRecords = new ArrayList<>(logQueue.size());
+                    logQueue.drainTo(stuckRecords);
+                    LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
+                    for (EventRecord queuedRecord : stuckRecords) {
+                        if(queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)){
+                            continue;
+                        }
+                        logQueue.offer(queuedRecord);
+                    }
+                } finally {
+                    maintenanceLock.unlock();
+                }
+            }
             return false;
         }
         if (workers.size() < MAX_WORKER_COUNT) {

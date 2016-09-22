@@ -130,4 +130,7 @@ public class EventRecord {
         values.putAll(metaDataConfig);
         return values;
     }
+    public boolean isFailed(){
+        return retryCount >0;
+    }
 }
