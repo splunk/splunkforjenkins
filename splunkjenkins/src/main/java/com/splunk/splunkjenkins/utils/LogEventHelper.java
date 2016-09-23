@@ -404,7 +404,13 @@ public class LogEventHelper {
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
         if (computer.isOffline()) {
-            slaveInfo.put("offline_reason", computer.getOfflineCauseReason());
+            String offlineReason = computer.getOfflineCauseReason();
+            if (hudson.model.Messages.Hudson_NodeBeingRemoved().equals(offlineReason)) {
+                //overwrite num_executors to zero
+                slaveInfo.put("num_executors", 0);
+                slaveInfo.put("removed", "true");
+            }
+            slaveInfo.put("offline_reason", offlineReason);
             slaveInfo.put("connecting", computer.isConnecting());
         }
         slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
