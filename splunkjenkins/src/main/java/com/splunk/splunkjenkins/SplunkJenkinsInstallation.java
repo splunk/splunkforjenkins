@@ -2,17 +2,14 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.listeners.LoggingConfigListener;
 import com.splunk.splunkjenkins.model.EventType;
-import groovy.lang.GroovyShell;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.listeners.SaveableListener;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -31,9 +28,7 @@ import java.util.regex.Pattern;
 
 import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
 import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.verifyHttpInput;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -195,12 +190,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public FormValidation doCheckScriptContent(@QueryParameter String value) {
-        try {
-            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(value);
-        } catch (MultipleCompilationErrorsException e) {
-            return FormValidation.error(e.getMessage());
-        }
-        return FormValidation.ok();
+        return validateGroovyScript(value);
     }
 
     public FormValidation doCheckMaxEventsBatchSize(@QueryParameter int value) {

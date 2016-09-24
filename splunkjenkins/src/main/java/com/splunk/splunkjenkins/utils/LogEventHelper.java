@@ -8,6 +8,7 @@ import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
+import groovy.lang.GroovyShell;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
@@ -26,6 +27,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -564,6 +566,19 @@ public class LogEventHelper {
             LOG.log(Level.SEVERE, "failed to read example.groovy", e);
         }
         return exampleText;
+    }
+
+    /**
+     * @param script
+     * @return error message if there is any
+     */
+    public static FormValidation validateGroovyScript(String script) {
+        try {
+            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(script);
+        } catch (MultipleCompilationErrorsException e) {
+            return FormValidation.error(e.getMessage());
+        }
+        return FormValidation.ok();
     }
 
 }
