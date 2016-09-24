@@ -29,7 +29,7 @@ public class TestCaseResultUtils {
         for (SuiteResult suite : result.getSuites()) {
             for (CaseResult testCase : suite.getCases()) {
                 group.add(testCase);
-                if (group.getTotal() > pageSize) {
+                if (group.getTotal() >= pageSize) {
                     group = new JunitTestCaseGroup();
                     testCasesCollect.add(group);
                 }

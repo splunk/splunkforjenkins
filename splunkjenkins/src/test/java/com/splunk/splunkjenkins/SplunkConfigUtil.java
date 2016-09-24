@@ -130,7 +130,7 @@ public class SplunkConfigUtil {
         return isValid;
     }
 
-    public static void verifySplunkSearchResult(String query, long startTime, int minNumber) {
+    public static void verifySplunkSearchResult(String query, long startTime, int minNumber) throws InterruptedException {
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
         jobargs.put("earliest_time", startTime / 1000);
@@ -140,19 +140,15 @@ public class SplunkConfigUtil {
         query = query + "|head " + minNumber;
         LOG.info("running query " + query);
         int eventCount = 0;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 20; i++) {
             com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
             eventCount = job.getEventCount();
             if (eventCount < minNumber) {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                Thread.sleep(10000);
             } else {
                 break;
             }
         }
-        assertEquals("event not reached", minNumber, eventCount);
+        assertEquals("event not reached using:" + query, minNumber, eventCount);
     }
 }

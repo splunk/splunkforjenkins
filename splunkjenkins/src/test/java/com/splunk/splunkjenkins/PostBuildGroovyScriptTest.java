@@ -78,14 +78,14 @@ public class PostBuildGroovyScriptTest {
     @Test
     public void paginationResult() throws Exception {
         String report_id = UUID.randomUUID().toString();
+        int pageSize = 100;
         String groovyScript = "def report_id=\"" + report_id + "\"\n" +
-                "def suites=getJunitReport(600)\n" +
+                "def suites=getJunitReport(" + pageSize + ")\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.suites=suites\n" +
                 "suites.each{ report->\n" +
                 "\tsend( [\"report_id\":report_id, \"report\":report] );\n" +
                 "}";
         createJob(large_project, groovyScript);
-        int pageSize = 600;
         int remained = (large_project_cases % pageSize == 0) ? 0 : 1;
         int pageCount = large_project_cases / pageSize + remained;
         assertEquals(pageCount, suites.size());
@@ -95,7 +95,7 @@ public class PostBuildGroovyScriptTest {
         }
         assertEquals(large_project_cases, total);
         //check splunk event
-        String query = "index=" + SplunkConfigUtil.INDEX_NAME + " report_id=" + report_id;
+        String query = "index=" + SplunkConfigUtil.INDEX_NAME + " |spath report_id |search report_id=" + report_id;
         verifySplunkSearchResult(query, build.getTimeInMillis(), pageCount);
     }
 
