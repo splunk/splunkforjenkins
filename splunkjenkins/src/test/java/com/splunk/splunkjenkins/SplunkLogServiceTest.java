@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.junit.*;
 
@@ -45,7 +44,7 @@ public class SplunkLogServiceTest {
         LOG.info("running test SplunkLogServiceTest testLogServiceSendMethod");
         assertTrue("config should be valid", SplunkJenkinsInstallation.get().isValid());
         String line = "127.0.0.1 - admin \"GET /en-US/ HTTP/1.1\"";
-        boolean queuedGenericMessage = SplunkLogService.getInstance().send(line, EventType.GENERIC_TEXT);
+        boolean queuedGenericMessage = SplunkLogService.getInstance().send(line);
         assertTrue("should put message in queue", queuedGenericMessage);
         long timestamp = System.currentTimeMillis();
         String query = "index=" + SplunkConfigUtil.INDEX_NAME + " |spath batch|where batch=" + timestamp;

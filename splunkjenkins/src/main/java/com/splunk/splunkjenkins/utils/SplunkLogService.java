@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.google.common.base.Strings;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
@@ -85,24 +86,24 @@ public class SplunkLogService {
     }
 
     /**
-     * @param message the message to send, will use GENERIC_TEXT's config
+     * @param message the message to send
      * @return true if enqueue successfully, false if the message is discarded
      */
     public boolean send(Object message) {
         if (message != null && message instanceof EventRecord) {
             return enqueue((EventRecord) message);
         } else {
-            return send(message, EventType.GENERIC_TEXT, null);
+            return send(message, null, null);
         }
     }
 
     /**
-     * @param message    the message to send, will use GENERIC_TEXT's config
+     * @param message    the message to send
      * @param sourceName the source for splunk metadata
      * @return true if enqueue successfully, false if the message is discarded
      */
     public boolean send(Object message, String sourceName) {
-        return send(message, EventType.GENERIC_TEXT, sourceName);
+        return send(message, null, sourceName);
     }
 
     /**
@@ -129,7 +130,7 @@ public class SplunkLogService {
             return false;
         }
         EventRecord record = new EventRecord(message, eventType);
-        if (!(sourceName == null || "".equals(sourceName))) {
+        if (!Strings.isNullOrEmpty(sourceName)) {
             record.setSource(sourceName);
         }
         return enqueue(record);

@@ -26,6 +26,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
 import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
 import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
@@ -213,7 +214,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             String scheme = useSSL ? "https" : "http";
             jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT, null, null).toString();
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
-            metaDataProperties = new Properties();
+            if (metaDataProperties == null) {
+                metaDataProperties = new Properties();
+            }
+            fillDefault(metaDataProperties);
             if (metaDataConfig != null) {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
@@ -445,5 +449,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             return (String) metaDataProperties.get("host");
         }
         return getHostName();
+    }
+
+    private void fillDefault(Properties properties) {
+        properties.put(EventType.GENERIC_TEXT.getKey(EVENT_SOURCE_TYPE), "httpevent");
+        properties.put(EventType.CONSOLE_LOG.getKey(EVENT_SOURCE_TYPE), "httpevent");
+        properties.put(EventType.FILE.getKey(EVENT_SOURCE_TYPE), "httpevent");
     }
 }

@@ -11,7 +11,7 @@ import java.util.Map;
 import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
 
 public class EventRecord {
-    private final static String METADATA_KEYS[] = {"index", "source", "host"};
+    private final static String METADATA_KEYS[] = {"index", "source", "host", EVENT_SOURCE_TYPE};
     private long time;
     private int retryCount;
     private Object message;
@@ -97,13 +97,11 @@ public class EventRecord {
     private Map<String, String> getMetaData(SplunkJenkinsInstallation config) {
         LogEventHelper.UrlQueryBuilder metaDataBuilder = new LogEventHelper.UrlQueryBuilder();
         metaDataBuilder.putIfAbsent("source", source);
-        for (String metaKeyName : METADATA_KEYS) {
+        for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
-            metaDataBuilder.putIfAbsent(metaKeyName, config.getMetaData(eventType.name().toLowerCase() + "." + metaKeyName));
-            metaDataBuilder.putIfAbsent(metaKeyName, config.getMetaData(metaKeyName));
+            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)));
+            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
         }
-        metaDataBuilder.putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(eventType.name().toLowerCase() + "." + EVENT_SOURCE_TYPE));
-        metaDataBuilder.putIfAbsent(EVENT_SOURCE_TYPE, eventType.getSourceType());
         return metaDataBuilder.getQueryMap();
     }
 

@@ -2,7 +2,6 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.utils.LogConsumer;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
-import hudson.init.Initializer;
 import hudson.model.Computer;
 import jenkins.model.Jenkins;
 
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.*;
 
-import static hudson.init.InitMilestone.JOB_LOADED;
 
 public class JdkSplunkLogHandler extends Handler {
     private Level filterLevel = Level.parse(System.getProperty(JdkSplunkLogHandler.class.getName() + ".level", "INFO"));

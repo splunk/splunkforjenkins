@@ -83,9 +83,7 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             if(maxFileSize!=0 && totalSize>maxFileSize){
                 logText.reset();
                 logText.write(("file truncated to size:"+maxFileSize).getBytes());
-                EventRecord warningRecord=new EventRecord(sourceName+" too large", EventType.GENERIC_TEXT);
-                warningRecord.setSource("large_file");
-                SplunkLogService.getInstance().send(warningRecord);
+                SplunkLogService.getInstance().send(sourceName+" too large", "large_file");
                 break;
             }
             logText.write(c);

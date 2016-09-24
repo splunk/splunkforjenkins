@@ -119,7 +119,7 @@ public class LogEventHelper {
             EntityUtils.consume(response.getEntity());
             //check if raw events is supported
             config.setRawEventEnabled(true);
-            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.GENERIC_TEXT), config);
+            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.CONSOLE_LOG), config);
             response = client.execute(post);
             SplunkJenkinsInstallation globalConfig = SplunkJenkinsInstallation.get();
             if (response.getStatusLine().getStatusCode() != 200 && globalConfig != null) {
