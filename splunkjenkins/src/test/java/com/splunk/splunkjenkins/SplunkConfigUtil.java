@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.junit.Assert.assertEquals;
+
 public class SplunkConfigUtil {
     public static final String INDEX_NAME = System.getProperty("splunk-index", "plugin_sandbox");
     private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
@@ -128,20 +130,20 @@ public class SplunkConfigUtil {
         return isValid;
     }
 
-    public static int waitForSplunkSearchResult(String query, long startTime, int expected) {
+    public static void verifySplunkSearchResult(String query, long startTime, int minNumber) {
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
         jobargs.put("earliest_time", startTime / 1000);
         if (!query.startsWith("search")) {
             query = "search " + query;
         }
-        query = query + "|head " + expected;
+        query = query + "|head " + minNumber;
         LOG.info("running query " + query);
         int eventCount = 0;
         for (int i = 0; i < 6; i++) {
             com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
             eventCount = job.getEventCount();
-            if (eventCount < expected) {
+            if (eventCount < minNumber) {
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {
@@ -151,6 +153,6 @@ public class SplunkConfigUtil {
                 break;
             }
         }
-        return eventCount;
+        assertEquals("event not reached", minNumber, eventCount);
     }
 }

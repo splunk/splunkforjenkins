@@ -12,7 +12,7 @@ import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.junit.*;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
-import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.*;
 
 import org.jvnet.hudson.test.JenkinsRule;
@@ -72,7 +72,6 @@ public class SplunkLogServiceTest {
             }
         }
         int expected = BATCH_COUNT;
-        int eventCount = waitForSplunkSearchResult(query, timestamp, expected);
-        assertEquals(expected, eventCount);
+        verifySplunkSearchResult(query, timestamp, expected);
     }
 }

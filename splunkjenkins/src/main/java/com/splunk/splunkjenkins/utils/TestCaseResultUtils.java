@@ -1,10 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
-import hudson.model.AbstractBuild;
-import hudson.model.Build;
 import hudson.model.Run;
-import hudson.scheduler.Hash;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.junit.TestResult;
