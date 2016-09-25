@@ -7,7 +7,7 @@ import hudson.model.Item;
 import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.model.listeners.SaveableListener;
-import jenkins.model.Jenkins;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
 import java.util.WeakHashMap;
@@ -49,13 +49,13 @@ public class LoggingConfigListener extends SaveableListener {
         }
         try {
             String configContent = file.asString();
-            int configHash = configContent.hashCode();
-            if (cached.containsKey(configHash)) {
+            String checkSum=DigestUtils.md5Hex(configPath+configContent);
+            if (cached.containsKey(checkSum)) {
                 //Save a job can trigger multiple SaveableListener, depends on jenkins versions
                 // e.g. AbstractProject.submit may call setters which can trigger save()
                 return;
             }
-            cached.put(configHash, 0);
+            cached.put(checkSum, 0);
             String relativePath = getRelativeJenkinsHomePath(configPath);
             String sourceName = JENKINS_CONFIG_PREFIX + relativePath;
             String userName = getUserName();

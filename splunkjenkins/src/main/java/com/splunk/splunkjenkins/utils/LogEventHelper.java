@@ -8,6 +8,7 @@ import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
+import groovy.lang.GroovyShell;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
@@ -26,6 +27,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -41,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.listeners.LoggingRunListener.getScmInfo;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
@@ -66,17 +69,19 @@ public class LogEventHelper {
             .build();
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
-        HttpPost postMethod = new HttpPost(record.getEndpoint(config));
-        if (config.isMetaDataInURLSupported(record.getEventType().needSplit())) {
+        HttpPost postMethod;
+        if (config.isMetaDataInURLSupported(record.getEventType())) {
+            postMethod = new HttpPost(record.getRawEndpoint(config));
             postMethod.setEntity(new StringEntity(record.getMessageString(), "utf-8"));
         } else {
-            //http event collector does not support raw event, need split records and append metadata to message body
+            postMethod = new HttpPost(config.getJsonUrl());
             String jsonRecord;
             if (record.getEventType().needSplit()) {
+                //http event collector does not support raw event, need split records and append metadata to message body
                 StringWriter stout = new StringWriter();
                 String[] values = record.getMessageString().split("[\\r\\n]+");
                 for (String line : values) {
-                    if (line != "") {
+                    if (!isNullOrEmpty(line)) {
                         EventRecord lineRecord = new EventRecord(line, record.getEventType());
                         lineRecord.setSource(record.getSource());
                         lineRecord.setTime(record.getTime());
@@ -88,6 +93,7 @@ public class LogEventHelper {
             } else {
                 jsonRecord = gson.toJson(record.toMap(config));
             }
+            LOG.log(Level.FINEST, jsonRecord);
             StringEntity entity = new StringEntity(jsonRecord, "utf-8");
             entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
             postMethod.setEntity(entity);
@@ -113,7 +119,7 @@ public class LogEventHelper {
             EntityUtils.consume(response.getEntity());
             //check if raw events is supported
             config.setRawEventEnabled(true);
-            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.GENERIC_TEXT), config);
+            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.CONSOLE_LOG), config);
             response = client.execute(post);
             SplunkJenkinsInstallation globalConfig = SplunkJenkinsInstallation.get();
             if (response.getStatusLine().getStatusCode() != 200 && globalConfig != null) {
@@ -280,13 +286,7 @@ public class LogEventHelper {
             for (Cause cause : action.getCauses()) {
                 String triggerUserName = getUsernameOrTimer(cause);
                 if (triggerUserName == null && cause instanceof Cause.UpstreamCause) {
-                    Cause.UpstreamCause upstreamCause = (Cause.UpstreamCause) cause;
-                    for (Cause upCause : upstreamCause.getUpstreamCauses()) {
-                        triggerUserName = getUsernameOrTimer(upCause);
-                        if (triggerUserName != null) {
-                            break;
-                        }
-                    }
+                    triggerUserName = getUpStreamUser((Cause.UpstreamCause) cause);
                 }
                 //check if we located the user name
                 if (triggerUserName != null) {
@@ -298,12 +298,39 @@ public class LogEventHelper {
         return userName;
     }
 
+    /**
+     * get the user name from UpstreamCause, also recursive check top level upstreams
+     * e.g.<pre>
+     * Started by upstream project "jobs_list" build number 47
+     *  originally caused by:
+     *  Started by upstream project "trigger_job" build number 2
+     *      originally caused by:
+     *      Started by user Jonh doe
+     * </pre>
+     *
+     * @param upstreamCause
+     * @return
+     */
+    private static String getUpStreamUser(Cause.UpstreamCause upstreamCause) {
+        for (Cause upCause : upstreamCause.getUpstreamCauses()) {
+            if (upCause instanceof Cause.UpstreamCause) {
+                return getUpStreamUser((Cause.UpstreamCause) upCause);
+            } else {
+                String userName = getUsernameOrTimer(upCause);
+                if (userName != null) {
+                    return userName;
+                }
+            }
+        }
+        return null;
+    }
+
     private static String getUsernameOrTimer(Cause cause) {
         if (cause instanceof Cause.UserIdCause) {
             return ((Cause.UserIdCause) cause).getUserName();
         } else if (cause instanceof TimerTrigger.TimerTriggerCause) {
             return "(timer)";
-        }else if(cause instanceof SCMTrigger.SCMTriggerCause){
+        } else if (cause instanceof SCMTrigger.SCMTriggerCause) {
             return "(scm)";
         }
         return null;
@@ -379,7 +406,13 @@ public class LogEventHelper {
         slaveInfo.put("is_idle", computer.isIdle());
         slaveInfo.put("is_online", computer.isOnline());
         if (computer.isOffline()) {
-            slaveInfo.put("offline_reason", computer.getOfflineCauseReason());
+            String offlineReason = computer.getOfflineCauseReason();
+            if (hudson.model.Messages.Hudson_NodeBeingRemoved().equals(offlineReason)) {
+                //overwrite num_executors to zero
+                slaveInfo.put("num_executors", 0);
+                slaveInfo.put("removed", "true");
+            }
+            slaveInfo.put("offline_reason", offlineReason);
             slaveInfo.put("connecting", computer.isConnecting());
         }
         slaveInfo.put("url", Jenkins.getInstance().getRootUrl() + computer.getUrl());
@@ -461,6 +494,7 @@ public class LogEventHelper {
         Collection<NodeMonitor> monitors = ComputerSet.getMonitors();
         for (Computer computer : computers) {
             Map slaveInfo = new HashMap();
+            slaveInfo.put(EVENT_CAUSED_BY, "monitor");
             slaveInfo.putAll(getComputerStatus(computer));
             for (NodeMonitor monitor : monitors) {
                 slaveInfo.putAll(getMonitorData(computer, monitor));
@@ -532,6 +566,19 @@ public class LogEventHelper {
             LOG.log(Level.SEVERE, "failed to read example.groovy", e);
         }
         return exampleText;
+    }
+
+    /**
+     * @param script
+     * @return error message if there is any
+     */
+    public static FormValidation validateGroovyScript(String script) {
+        try {
+            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(script);
+        } catch (MultipleCompilationErrorsException e) {
+            return FormValidation.error(e.getMessage());
+        }
+        return FormValidation.ok();
     }
 
 }

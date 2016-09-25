@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Map;
 
+import static com.splunk.splunkjenkins.Constants.EVENT_CAUSED_BY;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getComputerStatus;
 
@@ -20,33 +21,33 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getComputerStatus;
 public class LoggingComputerListener extends ComputerListener {
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
-        updateStatus(c);
+        updateStatus(c, "Online");
     }
 
     @Override
     public void onOffline(@Nonnull Computer c, @CheckForNull OfflineCause cause) {
-        updateStatus(c);
+        updateStatus(c, "Offline");
     }
 
     @Override
     public void onTemporarilyOnline(Computer c) {
-        updateStatus(c);
+        updateStatus(c, "Temporarily Online");
     }
 
     @Override
     public void onTemporarilyOffline(Computer c, OfflineCause cause) {
-        Map event = getComputerStatus(c);
-        event.put("temp_offline", true);
-        SplunkLogService.getInstance().send(event, SLAVE_INFO);
+        updateStatus(c, "Temporarily Offline");
     }
 
     @Override
     public void onLaunchFailure(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
-        updateStatus(c);
+        updateStatus(c, "Launch Failure");
     }
 
-    private void updateStatus(Computer c) {
-        SplunkLogService.getInstance().send(getComputerStatus(c), SLAVE_INFO);
+    private void updateStatus(Computer c, String eventSource) {
+        Map slaveInfo = getComputerStatus(c);
+        slaveInfo.put(EVENT_CAUSED_BY, eventSource);
+        SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);
     }
 
 }

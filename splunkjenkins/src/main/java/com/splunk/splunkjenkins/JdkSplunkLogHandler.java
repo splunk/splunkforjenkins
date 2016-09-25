@@ -1,7 +1,7 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.utils.LogConsumer;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
-import hudson.init.Initializer;
 import hudson.model.Computer;
 import jenkins.model.Jenkins;
 
@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.*;
 
-import static hudson.init.InitMilestone.JOB_LOADED;
 
 public class JdkSplunkLogHandler extends Handler {
     private Level filterLevel = Level.parse(System.getProperty(JdkSplunkLogHandler.class.getName() + ".level", "INFO"));
@@ -51,7 +50,7 @@ public class JdkSplunkLogHandler extends Handler {
     private class LogFilter implements Filter {
         //logger may trigger recursive call, need skip them
         private final String[] skipLoggerNames = {
-                "com.splunk.splunkjenkins.SplunkLogService", "com.splunk.splunkjenkins.utils.LogConsumer",
+                SplunkLogService.class.getName(), LogConsumer.class.getName(),
                 "jenkins.InitReactorRunner", "org.apache.http", "hudson.node_monitors"};
 
         @Override

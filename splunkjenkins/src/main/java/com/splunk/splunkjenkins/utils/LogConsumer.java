@@ -27,12 +27,13 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.buildPost;
 public class LogConsumer extends Thread {
     private static final Logger LOG = Logger.getLogger(LogConsumer.class.getName());
 
-    private HttpClient client;
-    private BlockingQueue<EventRecord> queue;
+    private final HttpClient client;
+    private final BlockingQueue<EventRecord> queue;
     private boolean acceptingTask = true;
     private AtomicLong outgoingCounter;
     private int errorCount;
     private boolean sending = false;
+    private final int RETRY_SLEEP_THRESHOLD = 1 << 10;
     private List<Class<? extends IOException>> nonretryExceptions = Arrays.asList(
             UnknownHostException.class,
             ConnectException.class,
@@ -81,7 +82,7 @@ public class LogConsumer extends Thread {
                         sending = true;
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
-                        LOG.log(Level.WARNING, "content length:"+post.getEntity().getContentLength()+" origin:" + record.getShortDescr(), ex);
+                        LOG.log(Level.WARNING, "content length:" + post.getEntity().getContentLength(), ex);
                         if (nonretryExceptions.contains(ex)) {
                             LOG.log(Level.SEVERE, "remote server error, will not retry");
                             return;
@@ -94,11 +95,11 @@ public class LogConsumer extends Thread {
                             } catch (IOException e) {
                                 content = record.getMessageString();
                             }
-                            LOG.log(Level.SEVERE, "Invalid client config, will discard data and no retry:"
-                                    + StringUtils.abbreviate(content,80));
+                            LOG.log(Level.SEVERE, "invalid client config, will discard data and no retry:{0}"
+                                    , StringUtils.abbreviate(content, 80));
                         } else {
                             //other errors
-                            LOG.log(Level.SEVERE, "will resend the message:", record.getShortDescr());
+                            LOG.log(Level.SEVERE, "will resend the message:{0}", record.getShortDescr());
                             retry(record);
                         }
                     } finally {
@@ -106,7 +107,8 @@ public class LogConsumer extends Thread {
                         post.releaseConnection();
                     }
                 } else {
-                    LOG.log(Level.SEVERE, "Failed to send " + record.getShortDescr());
+                    //message discarded
+                    LOG.log(Level.SEVERE, "failed to send " + record.getShortDescr());
                 }
             } catch (InterruptedException e) {
                 errorCount++;
@@ -126,7 +128,7 @@ public class LogConsumer extends Thread {
                 }
             }
         }
-        if(this.isAlive()){
+        if (this.isAlive()) {
             //queue.take() may block the thread
             this.interrupt();
         }
@@ -137,10 +139,13 @@ public class LogConsumer extends Thread {
      * @throws InterruptedException
      */
     private void retry(EventRecord record) throws InterruptedException {
-        record.increase();
-        this.queue.add(record);
         if (acceptingTask) {
-            Thread.sleep(100);
+            record.increase();
+            SplunkLogService.getInstance().enqueue(record);
+            if (queue.size() < RETRY_SLEEP_THRESHOLD) {
+                //We don't have much data in queue so wait a while for the service to recovery(hopefully)
+                Thread.sleep(100);
+            }
         }
     }
 

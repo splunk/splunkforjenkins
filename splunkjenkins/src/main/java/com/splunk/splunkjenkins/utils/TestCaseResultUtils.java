@@ -1,10 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
-import hudson.model.AbstractBuild;
-import hudson.model.Build;
 import hudson.model.Run;
-import hudson.scheduler.Hash;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.junit.TestResult;
@@ -32,7 +29,7 @@ public class TestCaseResultUtils {
         for (SuiteResult suite : result.getSuites()) {
             for (CaseResult testCase : suite.getCases()) {
                 group.add(testCase);
-                if (group.getTotal() > pageSize) {
+                if (group.getTotal() >= pageSize) {
                     group = new JunitTestCaseGroup();
                     testCasesCollect.add(group);
                 }

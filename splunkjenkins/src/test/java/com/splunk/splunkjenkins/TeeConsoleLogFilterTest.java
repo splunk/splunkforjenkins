@@ -17,7 +17,7 @@ import org.jvnet.hudson.test.CaptureEnvironmentBuilder;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
-import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -56,7 +56,6 @@ public class TeeConsoleLogFilterTest {
         }
         String query = "index=" + SplunkConfigUtil.INDEX_NAME + " source=" + b.getUrl() + "console";
         int expected = 5;
-        int count = waitForSplunkSearchResult(query, b.getTimeInMillis(), expected);
-        assertEquals(expected, count);
+        verifySplunkSearchResult(query, b.getTimeInMillis(), expected);
     }
 }

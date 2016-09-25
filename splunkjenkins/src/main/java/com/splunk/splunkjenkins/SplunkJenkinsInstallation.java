@@ -1,17 +1,15 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.listeners.LoggingConfigListener;
-import groovy.lang.GroovyShell;
+import com.splunk.splunkjenkins.model.EventType;
 import hudson.Extension;
 import hudson.XmlFile;
 import hudson.model.listeners.SaveableListener;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
-import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -28,11 +26,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
 import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
 import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.nonEmpty;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.verifyHttpInput;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
@@ -194,12 +191,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public FormValidation doCheckScriptContent(@QueryParameter String value) {
-        try {
-            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(value);
-        } catch (MultipleCompilationErrorsException e) {
-            return FormValidation.error(e.getMessage());
-        }
-        return FormValidation.ok();
+        return validateGroovyScript(value);
     }
 
     public FormValidation doCheckMaxEventsBatchSize(@QueryParameter int value) {
@@ -222,7 +214,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             String scheme = useSSL ? "https" : "http";
             jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT, null, null).toString();
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
-            metaDataProperties = new Properties();
+            if (metaDataProperties == null) {
+                metaDataProperties = new Properties();
+            }
+            fillDefault(metaDataProperties);
             if (metaDataConfig != null) {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
@@ -282,11 +277,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * and we can specify host,source,sourcetype,index only once in query parameter if raw event is supported,
      * instead of sending 1000 times in request body
      *
-     * @param needSplit does the text need to be logged to splunk line by line
+     * @param eventType does this type of text need to be logged to splunk line by line
      * @return true if HEC supports specify metadata in url query parameter
      */
-    public boolean isMetaDataInURLSupported(boolean needSplit) {
-        return rawEventEnabled && needSplit;
+    public boolean isMetaDataInURLSupported(EventType eventType) {
+        return rawEventEnabled && eventType.needSplit();
     }
 
     public String getToken() {
@@ -454,5 +449,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             return (String) metaDataProperties.get("host");
         }
         return getHostName();
+    }
+
+    private void fillDefault(Properties properties) {
+        properties.put(EventType.GENERIC_TEXT.getKey(EVENT_SOURCE_TYPE), "httpevent");
+        properties.put(EventType.CONSOLE_LOG.getKey(EVENT_SOURCE_TYPE), "httpevent");
+        properties.put(EventType.FILE.getKey(EVENT_SOURCE_TYPE), "httpevent");
     }
 }

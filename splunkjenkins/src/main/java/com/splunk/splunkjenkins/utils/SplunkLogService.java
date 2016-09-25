@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.google.common.base.Strings;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
@@ -25,12 +26,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 public class SplunkLogService {
-    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(InstanceHolder.class.getName());
+    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
-    private final static int QUEUE_SIZE = 1 << 18;
+    private final static int QUEUE_SIZE = 1 << 17;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
@@ -38,6 +41,7 @@ public class SplunkLogService {
     HttpClientConnectionManager connMgr;
     private AtomicLong incomingCounter = new AtomicLong();
     private AtomicLong outgoingCounter = new AtomicLong();
+    private Lock maintenanceLock =new ReentrantLock();
 
     private SplunkLogService() {
         this.logQueue = new LinkedBlockingQueue<EventRecord>(QUEUE_SIZE);
@@ -82,24 +86,24 @@ public class SplunkLogService {
     }
 
     /**
-     * @param message the message to send, will use GENERIC_TEXT's config
+     * @param message the message to send
      * @return true if enqueue successfully, false if the message is discarded
      */
     public boolean send(Object message) {
         if (message != null && message instanceof EventRecord) {
             return enqueue((EventRecord) message);
         } else {
-            return send(message, EventType.GENERIC_TEXT, null);
+            return send(message, null, null);
         }
     }
 
     /**
-     * @param message    the message to send, will use GENERIC_TEXT's config
+     * @param message    the message to send
      * @param sourceName the source for splunk metadata
      * @return true if enqueue successfully, false if the message is discarded
      */
     public boolean send(Object message, String sourceName) {
-        return send(message, EventType.GENERIC_TEXT, sourceName);
+        return send(message, null, sourceName);
     }
 
     /**
@@ -126,7 +130,7 @@ public class SplunkLogService {
             return false;
         }
         EventRecord record = new EventRecord(message, eventType);
-        if (!(sourceName == null || "".equals(sourceName))) {
+        if (!Strings.isNullOrEmpty(sourceName)) {
             record.setSource(sourceName);
         }
         return enqueue(record);
@@ -142,7 +146,23 @@ public class SplunkLogService {
         }
         boolean added = logQueue.offer(record);
         if (!added) {
-            LOG.log(Level.SEVERE, "log queue is full, workers count " + workers.size() + ",jenkins too busy or too few workers?");
+            LOG.log(Level.SEVERE, "failed to send message due to queue is full");
+            if (maintenanceLock.tryLock()) {
+                try {
+                    //clear the queue, the event in the queue may have format issue and caused congestion
+                    List<EventRecord> stuckRecords = new ArrayList<>(logQueue.size());
+                    logQueue.drainTo(stuckRecords);
+                    LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
+                    for (EventRecord queuedRecord : stuckRecords) {
+                        if(queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)){
+                            continue;
+                        }
+                        logQueue.offer(queuedRecord);
+                    }
+                } finally {
+                    maintenanceLock.unlock();
+                }
+            }
             return false;
         }
         if (workers.size() < MAX_WORKER_COUNT) {
@@ -151,7 +171,7 @@ public class SplunkLogService {
                 for (int i = 0; i < worksToCreate; i++) {
                     LogConsumer workerThread = new LogConsumer(client, logQueue, outgoingCounter);
                     workers.add(workerThread);
-                    String workerThreadName="splunkins-worker-"+workers.size();
+                    String workerThreadName = "splunkins-worker-" + workers.size();
                     workerThread.setName(workerThreadName);
                     workerThread.start();
                 }
@@ -174,8 +194,8 @@ public class SplunkLogService {
             }
             workers.clear();
         }
-        if(this.getQueueSize()!=0){
-            LOG.severe("remaining "+this.getQueueSize()+" record(s) not sent");
+        if (this.getQueueSize() != 0) {
+            LOG.severe("remaining " + this.getQueueSize() + " record(s) not sent");
         }
     }
 

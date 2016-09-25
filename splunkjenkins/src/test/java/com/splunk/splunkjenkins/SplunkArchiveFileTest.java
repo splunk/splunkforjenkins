@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.INDEX_NAME;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
-import static com.splunk.splunkjenkins.SplunkConfigUtil.waitForSplunkSearchResult;
+import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.*;
 
 public class SplunkArchiveFileTest {
@@ -54,8 +54,7 @@ public class SplunkArchiveFileTest {
         String query = "search index=" + INDEX_NAME
                 + " source=\"" + buildUrl + "process_list.txt\"";
         logger.info(query);
-        int eventCount = waitForSplunkSearchResult(query, start_time, expected);
-        assertEquals(expected, eventCount);
+        verifySplunkSearchResult(query, start_time, expected);
         return build.getUrl();
     }
 

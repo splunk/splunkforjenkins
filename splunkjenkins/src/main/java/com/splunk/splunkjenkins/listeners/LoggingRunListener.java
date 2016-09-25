@@ -40,7 +40,7 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        Map event = getCommonBuildInfo(run, false);
+        Map<String, Object> event = getCommonBuildInfo(run, false);
         event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
         //audit the start action
@@ -52,7 +52,7 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        Map event = getCommonBuildInfo(run, true);
+        Map<String, Object> event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
         float duration = run.getDuration() / 1000f;
         if (duration < 0.01f) {
@@ -89,7 +89,7 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param run
+     * @param run Jenkins job Run
      * @return the upstream job url
      */
     private String getUpStreamUrl(Run run) {
@@ -104,7 +104,7 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param run
+     * @param run Jenkins job run
      * @return causes separated by comma
      */
     private String getBuildCauses(Run run) {
@@ -120,11 +120,11 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param build
+     * @param build jenkins job build
      * @return scm information, we only support git,svn and p4
      */
-    public static Map getScmInfo(AbstractBuild build) {
-        Map event = new HashMap();
+    public static Map<String, Object> getScmInfo(AbstractBuild build) {
+        Map<String, Object> event = new HashMap<>();
         if (build.getProject().getScm() != null) {
             SCM scm = build.getProject().getScm();
             try {
@@ -132,23 +132,28 @@ public class LoggingRunListener extends RunListener<Run> {
                 String className = scm.getClass().getName();
                 //not support GIT_URL_N or SVN_URL_n
                 // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
-                if (className.equals("hudson.plugins.git.GitSCM")) {
-                    event.put("scm", "git");
-                    event.put("scm_url", getScmURL(envVars, "GIT_URL"));
-                    event.put("branch", envVars.get("GIT_BRANCH"));
-                    event.put("revision", envVars.get("GIT_COMMIT"));
-                } else if (className.equals("hudson.scm.SubversionSCM")) {
-                    event.put("scm", "svn");
-                    event.put("scm_url", getScmURL(envVars, "SVN_URL"));
-                    event.put("revision", envVars.get("SVN_REVISION"));
-                } else if (className.equals("org.jenkinsci.plugins.p4.PerforceScm")) {
-                    event.put("scm", "p4");
-                    event.put("p4_client", envVars.get("P4_CLIENT"));
-                    event.put("revision", envVars.get("P4_CHANGELIST"));
-                } else if (className.equals("hudson.scm.NullSCM")) {
-                    event.put("scm", "");
-                } else {
-                    event.put("scm", className);
+                switch (className) {
+                    case "hudson.plugins.git.GitSCM":
+                        event.put("scm", "git");
+                        event.put("scm_url", getScmURL(envVars, "GIT_URL"));
+                        event.put("branch", envVars.get("GIT_BRANCH"));
+                        event.put("revision", envVars.get("GIT_COMMIT"));
+                        break;
+                    case "hudson.scm.SubversionSCM":
+                        event.put("scm", "svn");
+                        event.put("scm_url", getScmURL(envVars, "SVN_URL"));
+                        event.put("revision", envVars.get("SVN_REVISION"));
+                        break;
+                    case "org.jenkinsci.plugins.p4.PerforceScm":
+                        event.put("scm", "p4");
+                        event.put("p4_client", envVars.get("P4_CLIENT"));
+                        event.put("revision", envVars.get("P4_CHANGELIST"));
+                        break;
+                    case "hudson.scm.NullSCM":
+                        event.put("scm", "");
+                        break;
+                    default:
+                        event.put("scm", className);
                 }
             } catch (Exception e) {
                 LOG.log(Level.SEVERE, "failed to extract scm info", e);
@@ -158,14 +163,14 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param envVars
-     * @param prefix
+     * @param envVars environment variables
+     * @param prefix  scm prefix, such as GIT_URL, SVN_URL
      * @return parsed scm urls from build env, e.g. GIT_URL_1, GIT_URL_2, ... GIT_URL_10 or GIT_URL
      */
     public static String getScmURL(EnvVars envVars, String prefix) {
         String value = envVars.get(prefix);
         if (value == null) {
-            List<String> urls = new ArrayList();
+            List<String> urls = new ArrayList<>();
             //just probe max 10 url
             for (int i = 0; i < 10; i++) {
                 String probe_url = envVars.get(prefix + "_" + i);
@@ -183,12 +188,12 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param run
+     * @param run Jenkins build run
      * @return Build event which are common both to start/complete event
      * should not reference some fields only available after build such as result or duration
      */
     private Map<String, Object> getCommonBuildInfo(Run run, boolean completed) {
-        Map event = new HashMap();
+        Map<String, Object> event = new HashMap();
         event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
@@ -239,7 +244,7 @@ public class LoggingRunListener extends RunListener<Run> {
     /**
      * Send audit information
      *
-     * @param run
+     * @param run Jenkins job run
      */
     private void recordAbortAction(Run run) {
         List<InterruptedBuildAction> actions = run.getActions(InterruptedBuildAction.class);
@@ -257,7 +262,7 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param build
+     * @param build Jenkins job build
      * @return scm change log
      */
     private List<String> getChangeLog(AbstractBuild build) {
