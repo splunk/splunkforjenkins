@@ -100,6 +100,10 @@ public class EventRecord {
         for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
             metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)));
+            if (eventType.equals(EventType.GENERIC_TEXT)) {
+                //use console log settings if not set
+                metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(EventType.CONSOLE_LOG.getKey(metaDataKey)));
+            }
             metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
         }
         return metaDataBuilder.getQueryMap();

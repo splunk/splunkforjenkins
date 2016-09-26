@@ -10,7 +10,7 @@
         <relativePath/>
     </parent>
     <artifactId>splunkjenkins</artifactId>
-    <version>0.8.1</version>
+    <version>0.8.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Splunk plugin for Jenkins</name>
