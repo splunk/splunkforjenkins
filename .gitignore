@@ -14,3 +14,7 @@ work
 .project
 .settings/
 /splunkjenkins/nbproject/
+
+#debug log
+debug.log
+debug.log.lck
