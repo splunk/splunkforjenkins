@@ -16,17 +16,18 @@
         <f:entry title="${%SSL enabled}" field="useSSL">
             <f:checkbox default="true"/>
         </f:entry>
+        <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
+            <f:checkbox default="true"/>
+        </f:entry>
         <f:entry title="${%MetaData}" field="metaDataConfig">
             <f:textarea default="${%default_metadata}"/>
         </f:entry>
+
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
                           with="host,port,token,useSSL,metaDataConfig"/>
         <f:advanced>
             <f:entry title="${%URL for splunk_app_jenkins}" field="splunkAppUrl">
                 <f:textbox/>
-            </f:entry>
-            <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
-                <f:checkbox default="true"/>
             </f:entry>
 
             <f:entry title="${%Max Events Batch Size}" field="maxEventsBatchSize">

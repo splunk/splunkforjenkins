@@ -68,7 +68,7 @@ public class RunDelegate {
      * @param includes ant glob pattern
      */
     def archive(String includes) {
-        archive(includes, null, false, "10MB");
+        archive(includes, null, false, "");
     }
 
     /**
@@ -150,11 +150,15 @@ public class RunDelegate {
      * @return
      */
     def Action getActionByClassName(String className) {
-        Class actionClz = Class.forName(className);
-        if (!actionClz instanceof Action) {
+        try {
+            Class actionClz = Class.forName(className);
+            if (!actionClz instanceof Action) {
+                return null;
+            }
+            return build.getAction(actionClz);
+        } catch (ClassNotFoundException ex) {
             return null;
         }
-        return build.getAction(actionClz);
     }
     /**
      * Gets the action (first instance to be found) of a specified type that contributed to this build.

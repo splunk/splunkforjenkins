@@ -53,7 +53,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     //for console log default cache size for 256KB
     private long maxEventsBatchSize = 1 << 18;
     private long retriesOnError = 3;
-    private boolean rawEventEnabled = false;
+    private boolean rawEventEnabled = true;
     //groovy script path
     private String scriptPath;
     private String metaDataConfig;
