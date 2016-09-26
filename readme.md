@@ -19,6 +19,7 @@ To Setup
  - Enable RawEvent support if you are using Splunk version 6.3.1511 or later
  - Click "Test Connection" to verify the config
  - Enable it and Save
+ 
    ![Screenshot](doc/images/splunk_for_jenkins_config_basic.png)
 
 ### Customize Job Data Sent to Splunk
