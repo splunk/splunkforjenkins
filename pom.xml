@@ -2,6 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
@@ -9,14 +10,14 @@
         <relativePath/>
     </parent>
 
-    <groupId>org.jenkins-ci.plugins.splunk</groupId>
+    <groupId>com.splunk.splunkins</groupId>
     <artifactId>pom</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Splunk for Jenkins main module</name>
-    <description>The module that constitutes the main Splunk for Jekninsr</description>
-
+    <name>Splunk Plugin Main Module</name>
+    <description>The module that constitutes the main module of Splunk Plugin</description>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/Splunk+plugin+for+Jenkins</url>
     <licenses>
         <license>
             <name>The MIT license</name>
@@ -26,8 +27,8 @@
     </licenses>
 
     <modules>
-        <module>pipeline-support</module>
-        <module>splunkjenkins</module>
+        <module>splunk-devops</module>
+        <module>splunk-devops-extend</module>
     </modules>
 
     <scm>

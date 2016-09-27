@@ -4,16 +4,19 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jenkins-ci.plugins.splunk</groupId>
+        <groupId>com.splunk.splunkins</groupId>
         <artifactId>pom</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>splunkjenkins</artifactId>
+    <artifactId>splunk-devops</artifactId>
     <packaging>hpi</packaging>
 
-    <name>Splunk plugin for Jenkins</name>
-    <description>A Jenkins plugin for forwarding test results and build logs to Splunk</description>
+    <name>Splunk Plugin</name>
+    <description>
+        Splunk plugin for Jenkins provides deep insights into your Jenkins master and slave infrastructure, job and
+        build details such as console logs, status, artifacts, and an incredibly efficient way to analyze test results.
+    </description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Splunk+plugin+for+Jenkins</url>
     <licenses>
         <license>
@@ -131,5 +134,5 @@
             </exclusions>
         </dependency>
     </dependencies>
-    
+
 </project>

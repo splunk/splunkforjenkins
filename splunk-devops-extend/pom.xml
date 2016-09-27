@@ -3,18 +3,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-
     <parent>
-        <groupId>org.jenkins-ci.plugins.splunk</groupId>
+        <groupId>com.splunk.splunkins</groupId>
         <artifactId>pom</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>pipeline-support</artifactId>
+    <artifactId>splunk-devops-extend</artifactId>
     <packaging>hpi</packaging>
 
-    <name>Splunkjenkins Pipeline Support Plugin</name>
-    <description>Extract Pipeline Job information and send to splunk</description>
+    <name>Splunk Plugin Extension</name>
+    <description>Support Extracting Pipeline Stage Node</description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/Splunk+plugin+for+Jenkins</url>
     <licenses>
         <license>
@@ -36,7 +35,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>splunkjenkins</artifactId>
+            <artifactId>splunk-devops</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
