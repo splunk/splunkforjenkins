@@ -4,17 +4,17 @@ Splunk for Jenkins
 To Install
 ----
  - clone the repo
- - `$ cd splunkjenkins`
  - `$ mvn package`
- -  That should produce `target/splunkjenkins.hpi` which you can install into Jenkins with either the web interface or by putting it in the `JENKINS_HOME/plugins` folder.
- - `$ mvn clean verify -Dsplunk-token-setup=true -Dsplunk-host=localhost -Dsplunk-username=admin -Dsplunk-passwd=changeme` to run tests against splunk instance 
+ -  That should produce `splunk-devops/target/splunk-devops.hpi` which you can install into Jenkins with either the web interface or by putting it in the `JENKINS_HOME/plugins` folder.
+ - `$ mvn clean verify -Dsplunk-token-setup=true -Dsplunk-host=localhost -Dsplunk-username=admin -Dsplunk-passwd=changeme`
+   to run tests against local splunk instance
 
 
 To Setup
 ----
 ### Configure plugin
 
- - Go to https://<jenkins-url>/configure
+ - Go to https://jenkins-url/configure
  - Enter Hostname, Port, and Token
  - Enable RawEvent support if you are using Splunk version 6.3.1511 or later
  - Click "Test Connection" to verify the config
@@ -37,7 +37,7 @@ To Setup
 - `getAction(Class type)` is an alias of ` build.getAction(type)`
 - `getActionByClassName(String className)` same as `getAction(Class type)` but no need to import the class before use
 - `hasPublisherName(String className)` check whether the publisher is configured for the build (applied to AbstractBuild only)
-- Sample code
+- Here is the default settings for post job data processing
 
 ```java
 	//send job metadata and junit reports with page size set to 100 (each event contains max 100 test cases)
@@ -59,16 +59,18 @@ To Setup
 Dashboard
 ----
 
-you can get the "Splunk App for Jenkins version" App from [splunk base](https://splunkbase.splunk.com/)
-and configure the plugin to use below metadata TODO:update link
+you can get the "Splunk App for Jenkins" App from [splunk base](https://splunkbase.splunk.com/app/3332/)
+and configure the plugin to use below metadata
 
-	source=jenkins
-	host=your-host-name
-	index=jenkins_statistics
-	build_report.index=jenkins
-	file.index=jenkins_artifact
-	console_log.index=jenkins_console
-	
+```
+source=jenkins
+host=your-host-name
+index=jenkins_statistics
+build_report.index=jenkins
+file.index=jenkins_artifact
+console_log.index=jenkins_console
+
+```
 you can also let the plugin to monitor Jenkins config changes (jobs, plugins etc.)
 
 	jenkins_config.monitoring=true

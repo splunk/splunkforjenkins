@@ -432,7 +432,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public String getAppUrlOrHelp() {
         String url = getSplunkAppUrl();
         if (isEmpty(url)) {
-            return "/plugin/splunkjenkins/help-splunkAppUrl.html?";
+            return "/plugin/splunk-devops/help-splunkAppUrl.html?";
         }
         return url;
     }

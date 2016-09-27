@@ -1,8 +1,8 @@
-//send job metadata and junit reports with page size set to 100 (each event contains max 100 test cases)
+//send job metadata and junit reports with page size set to 50 (each event contains max 50 test cases)
 def results = getJunitReport(50)
 def buildEvent = getBuildEvent()
 results.eachWithIndex { junitResult, idx ->
-    Map pagedEvent = event + ["testsuite": junitResult, "page_num": idx + 1]
+    Map pagedEvent = buildEvent + ["testsuite": junitResult, "page_num": idx + 1]
     send(pagedEvent)
 }
 
