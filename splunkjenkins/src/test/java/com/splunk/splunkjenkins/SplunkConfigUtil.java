@@ -3,12 +3,11 @@ package com.splunk.splunkjenkins;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.splunk.*;
+import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -49,17 +48,15 @@ public class SplunkConfigUtil {
 
     public static synchronized boolean checkTokenAvailable() {
         String token = System.getProperty("splunk-token");
-        String host = "127.0.0.1";
-        try {
-            host = System.getProperty("splunk-host", InetAddress.getLocalHost().getHostAddress());
-        } catch (UnknownHostException e) {
-            //ignore
-        }
+        String host = System.getProperty("splunk-host", "127.0.0.1");
         boolean useAutoConfig = Boolean.getBoolean("splunk-token-setup");
         if (token == null && useAutoConfig) {
             Service service = getSplunkServiceInstance();
             try {
-                service.getIndexes().create(INDEX_NAME);
+                Index myIndex = service.getIndexes().get(INDEX_NAME);
+                if (myIndex == null) {
+                    service.getIndexes().create(INDEX_NAME);
+                }
             } catch (com.splunk.HttpException ex) {
                 int statusCode = ex.getStatus();
                 if (!(statusCode == 409 || statusCode == 201)) {
@@ -144,6 +141,7 @@ public class SplunkConfigUtil {
             com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
             eventCount = job.getEventCount();
             if (eventCount < minNumber) {
+                LOG.info("remaining:" + SplunkLogService.getInstance().getQueueSize());
                 Thread.sleep(10000);
             } else {
                 break;
