@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <version>1.632</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.jenkins-ci.plugins.splunk</groupId>
+    <artifactId>pom</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Splunk for Jenkins main module</name>
+    <description>The module that constitutes the main Splunk for Jekninsr</description>
+
+    <licenses>
+        <license>
+            <name>The MIT license</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>pipeline-support</module>
+        <module>splunkjenkins</module>
+    </modules>
+
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/splunkforjenkins.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/splunkforjenkins.git</developerConnection>
+        <url>https://github.com/jenkinsci/jenkins</url>
+    </scm>
+
+    <properties>
+        <!-- *.html files are in UTF-8, and *.properties are in iso-8859-1, so this configuration is acturally incorrect,
+        but this suppresses a warning from Maven, and as long as we don't do filtering we should be OK. -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <build.type>private</build.type>
+
+        <!-- configuration for patch tracker plugin  -->
+        <project.patchManagement.system>github</project.patchManagement.system>
+        <patch.request.organisation>jenkinsci</patch.request.organisation>
+        <patch.request.repository>jenkins</patch.request.repository>
+        <project.patchManagement.url>https://api.github.com</project.patchManagement.url>
+        <patch.tracker.serverId>jenkins-jira</patch.tracker.serverId>
+        <findbugs-maven-plugin.version>3.0.1</findbugs-maven-plugin.version>
+        <java.level>7</java.level>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    <dependencies>
+        <dependency>
+            <groupId>com.splunk</groupId>
+            <artifactId>splunk</artifactId>
+            <version>1.4.0.0</version>
+            <scope>test</scope> <!--only used to setup token and execute search-->
+        </dependency>
+    </dependencies>
+    <profiles>
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <distributionManagement>
+                <repository>
+                    <id>local-artifactory</id>
+                    <name>Local Repository</name>
+                    <url>http://local_repo:8080/artifactory/Developer</url>
+                </repository>
+                <snapshotRepository>
+                    <id>local-artifactory</id>
+                    <name>Local Repository Snapshots</name>
+                    <url>http://local_repo:8080/artifactory/Developer</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
+    </profiles>
+</project>

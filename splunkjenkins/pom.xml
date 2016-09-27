@@ -4,13 +4,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>1.632</version>
-        <relativePath/>
+        <groupId>org.jenkins-ci.plugins.splunk</groupId>
+        <artifactId>pom</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
+
     <artifactId>splunkjenkins</artifactId>
-    <version>0.8.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <name>Splunk plugin for Jenkins</name>
@@ -34,9 +33,6 @@
             <email>kjotwani@splunk.com</email>
         </developer>
     </developers>
-    <!-- Assuming you want to host on @jenkinsci: <scm> <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-        <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url> </scm> -->
 
     <build>
         <plugins>
@@ -92,39 +88,8 @@
         </plugins>
     </build>
 
-    <repositories>
-        <repository>
-            <id>central</id>
-            <name>public</name>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-        <repository>
-            <id>jenkins-releases</id>
-            <url>http://repo.jenkins-ci.org/releases/</url>
-        </repository>
-        <repository>
-            <id>splunk</id>
-            <name>splunk-releases</name>
-            <url>http://splunk.artifactoryonline.com/splunk/ext-releases-local</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
     <!-- If you want to depend on other plugins: -->
     <dependencies>
-        <!--right now splunk logging did not support send complex json object, only string is supported
-        <dependency>
-            <groupId>com.splunk.logging</groupId>
-            <artifactId>splunk-library-javalogging</artifactId>
-            <version>1.5.1</version>
-        </dependency>
-         -->
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
@@ -165,25 +130,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.splunk</groupId>
-            <artifactId>splunk</artifactId>
-            <version>1.4.0.0</version>
-            <scope>test</scope> <!--only used to setup token and execute search-->
-        </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <repository>
-            <id>qti-artifactory</id>
-            <name>qti-artifactory-releases</name>
-            <url>http://10.222.25.132:8080/artifactory/Developer</url>
-        </repository>
-        <snapshotRepository>
-            <id>qti-artifactory</id>
-            <name>qti-artifactory-snapshots</name>
-            <url>http://10.222.25.132:8080/artifactory/Developer</url>
-        </snapshotRepository>
-    </distributionManagement>
-
+    
 </project>
