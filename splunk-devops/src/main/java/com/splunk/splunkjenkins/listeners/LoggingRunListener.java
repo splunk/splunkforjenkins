@@ -18,10 +18,7 @@ import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -108,15 +105,18 @@ public class LoggingRunListener extends RunListener<Run> {
      * @return causes separated by comma
      */
     private String getBuildCauses(Run run) {
-        StringBuilder buf = new StringBuilder(100);
+        Set<String> causes=new LinkedHashSet<>();
         for (CauseAction action : run.getActions(CauseAction.class)) {
-            for (Cause cause : action.getCauses()) {
-                //append all causes
-                if (buf.length() > 0) buf.append(", ");
-                buf.append(cause.getShortDescription());
+            for(Cause cause:action.getCauses()){
+                causes.add(cause.getShortDescription());
             }
         }
-        return buf.toString();
+        for (InterruptedBuildAction action : run.getActions(InterruptedBuildAction.class)) {
+            for(CauseOfInterruption cause:action.getCauses()){
+                causes.add(cause.getShortDescription());
+            }
+        }
+        return StringUtils.join(causes,", ");
     }
 
     /**
