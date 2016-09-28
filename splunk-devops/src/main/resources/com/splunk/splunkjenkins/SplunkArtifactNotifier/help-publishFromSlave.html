@@ -1,0 +1,26 @@
+<div>
+    Publish log files directly from the slave, instead of proxying the process to the master.
+    When publish from slave is selected, Jenkins master will transfer the plugin and its dependence to slave and
+    initiate
+    the publishing process from the slave.
+    Take below into consideration:
+    <ul>
+        <li>slave and master load
+        </li>
+        <li>
+            log file size
+        </li>
+        <li>
+            slave type, long lived slave or one time use slave
+        </li>
+    </ul>
+    Rule of thumb for selecting publish type:
+
+    <ul>
+        <li> a. if log files size is less thn 5MB, publish from master is preferred.</li>
+        <li> b. if Splunk instance is in an isolated network which is not reachable from slave, you need publish from
+            master.
+        </li>
+    </ul>
+
+</div>

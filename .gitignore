@@ -18,3 +18,10 @@ work
 #debug log
 debug.log
 debug.log.lck
+
+# OS X
+.DS_Store
+
+# mvn versions:set
+pom.xml.versionsBackup
+pom.xml.releaseBackup

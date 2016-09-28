@@ -7,13 +7,15 @@
         <f:entry title="${%Hostname}" field="host">
             <f:textbox clazz="required"/>
         </f:entry>
-        <f:entry title="${%HTTP Input Port}" field="port">
+        <f:entry title="${%HTTP Input Port}" field="port"
+                 help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
             <f:number clazz="positive-number" max="65535" default="8088"/>
         </f:entry>
         <f:entry title="${%HTTP Input Token}" field="token">
             <f:textbox clazz="required"/>
         </f:entry>
-        <f:entry title="${%SSL enabled}" field="useSSL">
+        <f:entry title="${%SSL enabled}" field="useSSL"
+                 help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
             <f:checkbox default="true"/>
         </f:entry>
         <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
