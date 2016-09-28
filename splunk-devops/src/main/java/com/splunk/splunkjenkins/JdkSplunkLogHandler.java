@@ -47,7 +47,7 @@ public class JdkSplunkLogHandler extends Handler {
 
     }
 
-    private class LogFilter implements Filter {
+    private static class LogFilter implements Filter {
         //logger may trigger recursive call, need skip them
         private final String[] skipLoggerNames = {
                 SplunkLogService.class.getName(), LogConsumer.class.getName(),
@@ -55,9 +55,6 @@ public class JdkSplunkLogHandler extends Handler {
 
         @Override
         public boolean isLoggable(LogRecord record) {
-            if (!SplunkJenkinsInstallation.loaded) {
-                return false;
-            }
             String logSource = record.getSourceClassName();
             String loggerName = record.getLoggerName();
             if (logSource == null || loggerName == null) {
@@ -73,7 +70,7 @@ public class JdkSplunkLogHandler extends Handler {
         }
     }
 
-    private class LogEventFormatter extends Formatter {
+    private static class LogEventFormatter extends Formatter {
         @Override
         public String format(LogRecord record) {
             return formatMessage(record);

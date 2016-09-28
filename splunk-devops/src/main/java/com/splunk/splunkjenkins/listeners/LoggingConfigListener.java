@@ -24,6 +24,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
  * send config content to splunk
  */
 
+@edu.umd.cs.findbugs.annotations.SuppressFBWarnings("VA_FORMAT_STRING_USES_NEWLINE")
 @Extension
 public class LoggingConfigListener extends SaveableListener {
     private static final String XML_COMMENT = "<!--<![CDATA[%s]]>-->\n";
@@ -49,7 +50,7 @@ public class LoggingConfigListener extends SaveableListener {
         }
         try {
             String configContent = file.asString();
-            String checkSum=DigestUtils.md5Hex(configPath+configContent);
+            String checkSum = DigestUtils.md5Hex(configPath + configContent);
             if (cached.containsKey(checkSum)) {
                 //Save a job can trigger multiple SaveableListener, depends on jenkins versions
                 // e.g. AbstractProject.submit may call setters which can trigger save()

@@ -149,7 +149,7 @@ public class SplunkLogService {
             LOG.log(Level.SEVERE, "failed to send message due to queue is full");
             if (maintenanceLock.tryLock()) {
                 try {
-                    //clear the queue, the event in the queue may have format issue and caused congestion
+                    //the event in the queue may have format issue and caused congestion, remove non-critical failed events
                     List<EventRecord> stuckRecords = new ArrayList<>(logQueue.size());
                     logQueue.drainTo(stuckRecords);
                     LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
@@ -157,7 +157,10 @@ public class SplunkLogService {
                         if(queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)){
                             continue;
                         }
-                        logQueue.offer(queuedRecord);
+                        boolean enqueued=logQueue.offer(queuedRecord);
+                        if(!enqueued){
+                            LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescr());
+                        }
                     }
                 } finally {
                     maintenanceLock.unlock();

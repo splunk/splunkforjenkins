@@ -9,6 +9,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class EventRecord {
     private final static String METADATA_KEYS[] = {"index", "source", "host", EVENT_SOURCE_TYPE};
@@ -51,7 +52,7 @@ public class EventRecord {
 
     public String getMessageString() {
         if (message instanceof byte[]) {
-            return new String((byte[]) message);
+            return new String((byte[]) message,UTF_8);
         } else {
             return message.toString();
         }

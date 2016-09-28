@@ -1,10 +1,12 @@
 package com.splunk.splunkjenkins.model;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.tasks.junit.CaseResult;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressFBWarnings("URF_UNREAD_FIELD")
 public class JunitTestCaseGroup {
     int failures;
     int passes;

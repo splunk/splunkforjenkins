@@ -1,8 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
-import com.splunk.splunkjenkins.model.EventRecord;
-import com.splunk.splunkjenkins.model.EventType;
 import hudson.FilePath;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ByteArrayOutputStream2;
@@ -17,10 +15,12 @@ import java.util.logging.Level;
 
 import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.FILE;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
+    private static final long serialVersionUID = 5303809353063980298L;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogFileCallable.class.getName());
-    private static final int LOOKAHEAD_NEW_LINE=151;
+    private static final int LOOKAHEAD_NEW_LINE = 151;
     private static final String TIMEOUT_NAME = LogFileCallable.class.getName() + ".timeout";
     private final int WAIT_MINUTES = Integer.getInteger(TIMEOUT_NAME, 5);
     private final String baseName;
@@ -36,7 +36,7 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         this.eventCollectorProperty = eventCollectorProperty;
         this.buildUrl = buildUrl;
         this.sendFromSlave = sendFromSlave;
-        this.maxFileSize=maxFileSize;
+        this.maxFileSize = maxFileSize;
     }
 
     public int sendFiles(FilePath[] paths) {
@@ -68,34 +68,34 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
 
     public Integer send(String fileName, InputStream input) throws IOException, InterruptedException {
         //always use unix style path because windows slave maybe launched by ssh
-        String sourceName = fileName.replace("\\","/");
-        String ws_posix_path =baseName.replace("\\","/");
+        String sourceName = fileName.replace("\\", "/");
+        String ws_posix_path = baseName.replace("\\", "/");
         if (sourceName.startsWith(ws_posix_path)) {
             sourceName = sourceName.substring(ws_posix_path.length() + 1);
         }
         sourceName = buildUrl + sourceName;
         ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
-        long totalSize=0;
+        long totalSize = 0;
         Integer count = 0;
         int c;
         while ((c = input.read()) >= 0) {
             totalSize++;
-            if(maxFileSize!=0 && totalSize>maxFileSize){
+            if (maxFileSize != 0 && totalSize > maxFileSize) {
                 logText.reset();
-                logText.write(("file truncated to size:"+maxFileSize).getBytes());
-                SplunkLogService.getInstance().send(sourceName+" too large", "large_file");
+                logText.write(("file truncated to size:" + maxFileSize).getBytes(UTF_8));
+                SplunkLogService.getInstance().send(sourceName + " too large", "large_file");
                 break;
             }
             logText.write(c);
-            long throttleSize= SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
-            if(!SplunkJenkinsInstallation.get().isRawEventEnabled()){
+            long throttleSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
+            if (!SplunkJenkinsInstallation.get().isRawEventEnabled()) {
                 //if raw event is not supported, we need split the content line by line and append metadata to each line
-                throttleSize=throttleSize/2;
+                throttleSize = throttleSize / 2;
             }
             if (c == '\n') {
                 throttleSize = throttleSize - LOOKAHEAD_NEW_LINE;
             }
-            if (logText.size() >= throttleSize ) {
+            if (logText.size() >= throttleSize) {
                 flushLog(sourceName, logText);
                 count++;
             }
@@ -123,12 +123,18 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             e.printStackTrace();
         }
         //only use one thread on slave
-        SplunkLogService.getInstance().MAX_WORKER_COUNT=1;
+        SplunkLogService.getInstance().MAX_WORKER_COUNT = 1;
         enabledSplunkConfig = true;
     }
 
     private void flushLog(String source, ByteArrayOutputStream out) {
-        SplunkLogService.getInstance().send(out.toString(), FILE, source);
+        try {
+            String text = out.toString("UTF-8");
+            SplunkLogService.getInstance().send(text, FILE, source);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         out.reset();
     }
 
@@ -148,9 +154,9 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             while (SplunkLogService.getInstance().getQueueSize() > 0 && System.currentTimeMillis() < expireTime) {
                 Thread.sleep(500);
             }
-            if(System.currentTimeMillis()>expireTime){
-                LOG.log(Level.SEVERE, "sending file timeout in "+WAIT_MINUTES+" minutes," +
-                        " please adjust the value by passing -D"+TIMEOUT_NAME +"=minutes to slave jvm parameter");
+            if (System.currentTimeMillis() > expireTime) {
+                LOG.log(Level.SEVERE, "sending file timeout in " + WAIT_MINUTES + " minutes," +
+                        " please adjust the value by passing -D" + TIMEOUT_NAME + "=minutes to slave jvm parameter");
             }
             SplunkLogService.getInstance().stopWorker();
             SplunkLogService.getInstance().releaseConnection();

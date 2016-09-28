@@ -18,6 +18,7 @@ import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -90,7 +91,6 @@ public class LoggingRunListener extends RunListener<Run> {
      * @return the upstream job url
      */
     private String getUpStreamUrl(Run run) {
-        StringBuilder buf = new StringBuilder(100);
         for (CauseAction action : run.getActions(CauseAction.class)) {
             Cause.UpstreamCause upstreamCause = action.findCause(Cause.UpstreamCause.class);
             if (upstreamCause != null) {
@@ -105,18 +105,18 @@ public class LoggingRunListener extends RunListener<Run> {
      * @return causes separated by comma
      */
     private String getBuildCauses(Run run) {
-        Set<String> causes=new LinkedHashSet<>();
+        Set<String> causes = new LinkedHashSet<>();
         for (CauseAction action : run.getActions(CauseAction.class)) {
-            for(Cause cause:action.getCauses()){
+            for (Cause cause : action.getCauses()) {
                 causes.add(cause.getShortDescription());
             }
         }
         for (InterruptedBuildAction action : run.getActions(InterruptedBuildAction.class)) {
-            for(CauseOfInterruption cause:action.getCauses()){
+            for (CauseOfInterruption cause : action.getCauses()) {
                 causes.add(cause.getShortDescription());
             }
         }
-        return StringUtils.join(causes,", ");
+        return StringUtils.join(causes, ", ");
     }
 
     /**
@@ -155,8 +155,10 @@ public class LoggingRunListener extends RunListener<Run> {
                     default:
                         event.put("scm", className);
                 }
-            } catch (Exception e) {
-                LOG.log(Level.SEVERE, "failed to extract scm info", e);
+            } catch (InterruptedException e) {
+                LOG.log(Level.SEVERE, "InterruptedException failed to extract scm info", e);
+            } catch (IOException e) {
+                LOG.log(Level.SEVERE, "IOException failed to extract scm info", e);
             }
         }
         return event;

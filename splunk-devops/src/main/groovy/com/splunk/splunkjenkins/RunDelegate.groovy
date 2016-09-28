@@ -152,7 +152,7 @@ public class RunDelegate {
     def Action getActionByClassName(String className) {
         try {
             Class actionClz = Class.forName(className);
-            if (!actionClz instanceof Action) {
+            if (!(Action.isAssignableFrom(actionClz))) {
                 return null;
             }
             return build.getAction(actionClz);

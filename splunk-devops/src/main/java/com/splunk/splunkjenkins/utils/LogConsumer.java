@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
+import hudson.Util;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -34,7 +35,7 @@ public class LogConsumer extends Thread {
     private int errorCount;
     private boolean sending = false;
     private final int RETRY_SLEEP_THRESHOLD = 1 << 10;
-    private List<Class<? extends IOException>> nonretryExceptions = Arrays.asList(
+    private List<Class<? extends IOException>> giveUpExceptions = Arrays.asList(
             UnknownHostException.class,
             ConnectException.class,
             SSLException.class);
@@ -83,7 +84,8 @@ public class LogConsumer extends Thread {
                         client.execute(post, responseHandler);
                     } catch (Exception ex) {
                         LOG.log(Level.WARNING, "content length:" + post.getEntity().getContentLength(), ex);
-                        if (nonretryExceptions.contains(ex)) {
+                        boolean needRetry = Util.filter(giveUpExceptions, ex.getClass()).isEmpty();
+                        if (!needRetry) {
                             LOG.log(Level.SEVERE, "remote server error, will not retry");
                             return;
                         }

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.NODE_NAME;
+import static com.splunk.splunkjenkins.Constants.NODE_NAME;
 import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;

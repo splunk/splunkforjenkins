@@ -34,15 +34,15 @@ import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 
+
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
-    transient static boolean loaded = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
     public transient static final int MIN_BUFFER_SIZE = 2048;
     private transient static final int MAX_BUFFER_SIZE = 1 << 21;
 
-    private transient static SplunkJenkinsInstallation cachedConfig;
+    private transient volatile static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
     // Defaults plugin global config values:
     private boolean enabled = false;
@@ -100,7 +100,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                 }
                 this.updateCache();
                 this.updateConfigListener();
-                loaded = true;
             }
         }
     }
@@ -138,7 +137,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         } else {
             this.scriptPath = null;
         }
-        this.cachedConfig = null;
         updateCache();
         updateConfigListener();
         save();

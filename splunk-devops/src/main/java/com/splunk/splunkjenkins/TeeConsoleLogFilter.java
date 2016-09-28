@@ -9,16 +9,15 @@ import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.util.ByteArrayOutputStream2;
 
-import java.io.FilterOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -36,6 +35,7 @@ import java.util.logging.Logger;
 @SuppressWarnings("nouse")
 public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializable {
     private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilter.class.getName());
+    private static final long serialVersionUID = 1091734060617902662L;
 
     //backwards compatibility
     @Override
@@ -119,9 +119,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             lineCounter++;
             //ISO 8601 datetime, and build url and line number
             String prefix = sdf.format(new Date()) + "  ";
-            logText.write(prefix.getBytes());
+            logText.write(prefix.getBytes(UTF_8));
             if (requireLineNumber) {
-                logText.write(("line:" + lineCounter + "  ").getBytes());
+                logText.write(("line:" + lineCounter + "  ").getBytes(UTF_8));
             }
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
             if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
@@ -132,9 +132,12 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         }
 
         private void flushLog() {
-            EventRecord record = new EventRecord(logText.toString(), CONSOLE_LOG);
-            record.setSource(this.sourceName);
-            SplunkLogService.getInstance().enqueue(record);
+            try {
+                String logs = logText.toString("UTF-8");
+                SplunkLogService.getInstance().send(logs, CONSOLE_LOG, sourceName);
+            } catch (UnsupportedEncodingException e) {//this should not happen, since is utf-8 is an known charset
+                e.printStackTrace();
+            }
             logText.reset();
         }
     }
