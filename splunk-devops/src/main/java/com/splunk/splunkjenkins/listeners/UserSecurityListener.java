@@ -46,10 +46,6 @@ public class UserSecurityListener extends SecurityListener {
     private String getFullName(String username) {
         //user may not exists when user failed to login
         User user = User.get(username);
-        if (user != null) {
-            return user.getFullName();
-        } else {
-            return username;
-        }
+        return user.getFullName();
     }
 }
