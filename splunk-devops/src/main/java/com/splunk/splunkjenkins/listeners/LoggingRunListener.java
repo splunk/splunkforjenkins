@@ -82,7 +82,7 @@ public class LoggingRunListener extends RunListener<Run> {
             updateSlaveInfoAsync((String) event.get(NODE_NAME_KEY));
         }
         //remove cached values
-        LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
+        LoggingQueueListener.expire(run.getQueueId());
         recordAbortAction(run);
     }
 
@@ -200,13 +200,14 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
         event.put(Constants.USER_NAME_KEY, getTriggerUserName(run));
-        Float queueTime = LoggingQueueListener.getInstance().getQueueTime(run.getQueueId());
-        if (queueTime != null) {
-            event.put("queue_time", queueTime);
-        } else {
-            event.put("queue_time", 0);
+        long queueId = run.getQueueId();
+        Float queueTime = LoggingQueueListener.getQueueTime(queueId);
+        if (queueTime == null) {
+            //the queue has been garbage collected
+            queueTime = 0f;
         }
-        event.put("queue_id", run.getQueueId());
+        event.put("queue_time", queueTime);
+        event.put("queue_id", queueId);
         event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
         event.put("job_started_at", run.getTimestampString2());

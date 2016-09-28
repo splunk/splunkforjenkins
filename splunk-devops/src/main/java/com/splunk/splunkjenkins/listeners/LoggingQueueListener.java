@@ -29,8 +29,8 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 @SuppressWarnings("unused")
 @Extension
 public class LoggingQueueListener extends QueueListener {
-    Cache<Long, Float> cache = CacheBuilder.newBuilder()
-            .maximumSize(3000).weakKeys().build();
+    private final static Cache<Long, Float> cache = CacheBuilder.newBuilder()
+            .maximumSize(3000).build();
 
     @Override
     public void onEnterWaiting(Queue.WaitingItem wi) {
@@ -44,13 +44,15 @@ public class LoggingQueueListener extends QueueListener {
 
     @Override
     public void onLeft(Queue.LeftItem li) {
+        float queueTime = (System.currentTimeMillis() - li.getInQueueSince()) / 1000f;
+        cache.put(li.getId(), queueTime);
         String name = getTaskName(li.task);
         Map event = getMasterStats();
         event.put("item", name);
         event.put(Constants.TAG, Constants.QUEUE_TAG_NAME);
+        event.put("queue_id", li.getId());
+        event.put("queue_time", queueTime);
         event.put("type", "dequeue");
-        float queueTime = (System.currentTimeMillis() - li.getInQueueSince()) / 1000f;
-        cache.put(li.getId(), queueTime);
         SplunkLogService.getInstance().send(event, QUEUE_INFO);
     }
 
@@ -68,15 +70,12 @@ public class LoggingQueueListener extends QueueListener {
         }
     }
 
-    public Float getQueueTime(Long Id) {
+    public static Float getQueueTime(Long Id) {
         return cache.getIfPresent(Id);
     }
 
-    public void expire(Long Id) {
+    public static void expire(Long Id) {
         cache.invalidate(Id);
     }
 
-    public static LoggingQueueListener getInstance() {
-        return all().get(LoggingQueueListener.class);
-    }
 }

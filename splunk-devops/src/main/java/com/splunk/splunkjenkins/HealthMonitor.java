@@ -72,7 +72,7 @@ public class HealthMonitor extends AsyncPeriodicWork {
         for (int i = 0; i < items.length; i++) {
             Queue.Item item = items[i];
             Map queueItem = new HashMap();
-            queueItem.put("id", item.getId());
+            queueItem.put("queue_id", item.getId());
             queueItem.put("queue_time", (System.currentTimeMillis() - item.getInQueueSince()) / 1000f);
             queueItem.put("stuck", item.isStuck());
             queueItem.put("block_reason", item.getWhy());
