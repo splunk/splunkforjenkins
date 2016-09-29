@@ -23,7 +23,7 @@ public class EventRecord {
     public EventRecord(Object message, EventType eventType) {
         this.retryCount = 0;
         if (eventType == null) {
-            this.eventType = EventType.GENERIC_TEXT;
+            this.eventType = EventType.CONSOLE_LOG;
         } else {
             this.eventType = eventType;
         }
@@ -103,7 +103,7 @@ public class EventRecord {
         for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
             metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)));
-            if (eventType.equals(EventType.GENERIC_TEXT)) {
+            if (eventType.equals(EventType.CONSOLE_LOG)) {
                 //use console log settings if not set
                 metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(EventType.CONSOLE_LOG.getKey(metaDataKey)));
             }

@@ -410,7 +410,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     private void fillDefault(Properties properties) {
-        properties.put(EventType.GENERIC_TEXT.getKey(EVENT_SOURCE_TYPE), "httpevent");
         properties.put(EventType.CONSOLE_LOG.getKey(EVENT_SOURCE_TYPE), "httpevent");
         properties.put(EventType.FILE.getKey(EVENT_SOURCE_TYPE), "httpevent");
     }

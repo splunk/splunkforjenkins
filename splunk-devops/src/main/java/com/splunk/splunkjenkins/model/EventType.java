@@ -7,8 +7,7 @@ public enum EventType {
     JENKINS_CONFIG(false),
     CONSOLE_LOG(true),
     FILE(true),
-    SLAVE_INFO(false),
-    GENERIC_TEXT(false) //generic text is the default type if not specified
+    SLAVE_INFO(false)
     ;
 
     /**

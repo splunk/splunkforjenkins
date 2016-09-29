@@ -105,7 +105,7 @@ public class LogEventHelper {
     }
 
     public static FormValidation verifyHttpInput(SplunkJenkinsInstallation config) {
-        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin", EventType.GENERIC_TEXT), config);
+        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin", EventType.CONSOLE_LOG), config);
         HttpClient client = SplunkLogService.getInstance().getClient();
         try {
             HttpResponse response = client.execute(post);
