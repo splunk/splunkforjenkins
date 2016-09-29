@@ -1,10 +1,8 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.listeners.LoggingConfigListener;
 import com.splunk.splunkjenkins.model.EventType;
 import hudson.Extension;
 import hudson.XmlFile;
-import hudson.model.listeners.SaveableListener;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
@@ -15,7 +13,6 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -27,9 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
-import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
-import static com.splunk.splunkjenkins.Constants.JSON_ENDPOINT;
-import static com.splunk.splunkjenkins.Constants.RAW_ENDPOINT;
+import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
@@ -76,31 +71,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             if (file.exists()) {
                 try {
                     String xmlText = file.asString();
-                    if (xmlText.contains("com.splunk.splunkjenkins.SplunkJenkinsInstallation_-Descriptor")) {
-                        //migration from previous version because file format changed
-                        SplunkJenkinsInstallation.Descriptor desc = (SplunkJenkinsInstallation.Descriptor) file.read();
-                        this.host = desc.host;
-                        this.port = Integer.parseInt(desc.httpInputPort);
-                        this.token = desc.httpInputToken;
-                        this.useSSL = "https".equalsIgnoreCase(desc.scheme);
-                        this.enabled = true;
-                        this.metaDataConfig = "source=" + desc.sourceName + "\n"
-                                + "console_log.source=" + desc.sourceName + ":console" + "\n"
-                                + "host=" + getHostName();
-                        if (nonEmpty(desc.indexName)) {
-                            this.metaDataConfig = this.metaDataConfig + "\nindex=" + desc.indexName;
-                        }
-                        if (nonEmpty(desc.sourceTypeName)) {
-                            this.metaDataConfig = this.metaDataConfig + "\nsourcetype=" + desc.sourceTypeName;
-                        }
-                    } else {
-                        file.getXStream().fromXML(xmlText, this);
-                    }
+                    file.getXStream().fromXML(xmlText, this);
                 } catch (IOException ex) {
                     LOG.log(Level.SEVERE, "failed to read " + getId() + ".xml", ex);
                 }
                 this.updateCache();
-                this.updateConfigListener();
             }
         }
     }
@@ -139,21 +114,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             this.scriptPath = null;
         }
         updateCache();
-        updateConfigListener();
         save();
         return true;
-    }
-
-    /**
-     * toggle enable/disable for config listener
-     */
-    private void updateConfigListener() {
-        LoggingConfigListener configListener = SaveableListener.all().get(LoggingConfigListener.class);
-        if (configListener != null) {
-            boolean enabled = this.enabled
-                    && "true".equals(metaDataProperties.getProperty("jenkins_config.monitoring"));
-            configListener.setEnabled(enabled);
-        }
     }
 
     /*
@@ -406,13 +368,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         map.put("metaDataConfig", metaDataConfig);
         map.put("retriesOnError", retriesOnError);
         return map;
-    }
-
-    /**
-     * retaining backward compatibility, before v5.0.1
-     */
-    protected static class Descriptor {
-        protected String host, httpInputToken, httpInputPort, indexName, scheme, sourceName, sourceTypeName;
     }
 
     public String getScriptOrDefault() {

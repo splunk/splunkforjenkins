@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.listeners;
 
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -37,7 +38,7 @@ public class LoggingConfigListener extends SaveableListener {
     @Override
     public void onChange(Saveable saveable, XmlFile file) {
         String configPath = file.getFile().getAbsolutePath();
-        if (saveable == null || !isEnabled() || IGNORED.matcher(configPath).find()) {
+        if (saveable == null || IGNORED.matcher(configPath).find()) {
             return;
         }
         if (saveable instanceof User) {
@@ -45,7 +46,8 @@ public class LoggingConfigListener extends SaveableListener {
             return;
         }
         String user = getUserName();
-        if ("SYSTEM".equals(user)) {
+        if ("SYSTEM".equals(user) || SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
+            //ignore changes made by daemons or background jobs
             return;
         }
         try {
@@ -69,13 +71,5 @@ public class LoggingConfigListener extends SaveableListener {
         } catch (IOException e) {
             //just ignore
         }
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 }
