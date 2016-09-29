@@ -29,6 +29,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 
 @Restricted(NoExternalUse.class)
@@ -380,7 +381,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public String getSplunkAppUrl() {
-        if (splunkAppUrl == null && host != null) {
+        if (isEmpty(splunkAppUrl) && isNotEmpty(host)) {
             return "http://" + host + ":8000/en-US/app/splunk_app_jenkins/";
         }
         return splunkAppUrl;

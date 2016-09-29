@@ -29,7 +29,7 @@
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
                           with="host,port,token,useSSL,metaDataConfig"/>
         <f:advanced>
-            <f:entry title="${%URL for splunk_app_jenkins}" field="splunkAppUrl">
+            <f:entry title="${%Splunk App for Jenkins Link}" field="splunkAppUrl">
                 <f:textbox/>
             </f:entry>
 
