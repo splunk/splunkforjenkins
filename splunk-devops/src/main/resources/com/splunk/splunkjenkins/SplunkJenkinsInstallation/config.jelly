@@ -15,11 +15,11 @@
         <f:entry title="${%HTTP Input Token}" field="token">
             <f:textbox clazz="required"/>
         </f:entry>
-        <f:entry title="${%SSL enabled}" field="useSSL"
+        <f:entry title="${%SSL Enabled}" field="useSSL"
                  help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry title="${%RawEvent supported}" field="rawEventEnabled">
+        <f:entry title="${%Raw Events Supported}" field="rawEventEnabled">
             <f:checkbox default="true"/>
         </f:entry>
         <f:entry title="${%MetaData}" field="metaDataConfig">
