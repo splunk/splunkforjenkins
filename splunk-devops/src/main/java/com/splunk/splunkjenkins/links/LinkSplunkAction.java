@@ -4,7 +4,7 @@ package com.splunk.splunkjenkins.links;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.model.Action;
 
-import static com.splunk.splunkjenkins.Messages.SplunkIconName;
+import com.splunk.splunkjenkins.Messages;
 
 public class LinkSplunkAction implements Action {
     String query;
@@ -19,7 +19,7 @@ public class LinkSplunkAction implements Action {
 
     @Override
     public String getIconFileName() {
-        return SplunkIconName();
+        return Messages.SplunkIconName();
     }
 
     @Override

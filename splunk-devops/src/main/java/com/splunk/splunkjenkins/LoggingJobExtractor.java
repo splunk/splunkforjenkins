@@ -23,7 +23,7 @@ public abstract class LoggingJobExtractor<R extends Run> implements ExtensionPoi
     public abstract Map<String, Object> extract(R r, boolean completed);
 
     /**
-     * Returns all the registered {@link LoggingJobExtractor}s.
+     * @return Returns all the registered {@link LoggingJobExtractor}s
      */
     public static ExtensionList<LoggingJobExtractor> all() {
         return ExtensionList.lookup(LoggingJobExtractor.class);

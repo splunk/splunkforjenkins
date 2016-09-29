@@ -8,6 +8,7 @@ import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import groovy.lang.GroovyShell;
 import hudson.FilePath;
 import hudson.Util;
@@ -274,7 +275,7 @@ public class LogEventHelper {
     }
 
     /**
-     * @param run
+     * @param run Jenkins Run
      * @return the user who triggered the build or upstream build
      */
     public static String getTriggerUserName(Run run) {
@@ -534,6 +535,7 @@ public class LogEventHelper {
         SplunkLogService.getInstance().send(logInfo, JENKINS_CONFIG, AUDIT_SOURCE);
     }
 
+    @SuppressFBWarnings("RV_RETURN_VALUE_IGNORED_BAD_PRACTICE")
     public static void updateSlaveInfoAsync(final String nodeName) {
         Computer.threadPoolForRemoting.submit(new Runnable() {
             @Override
@@ -553,7 +555,7 @@ public class LogEventHelper {
     }
 
     /**
-     * @param configPath
+     * @param configPath the absolute path
      * @return the relative path to <tt>JENKINS_HOME</tt> directory
      */
     public static String getRelativeJenkinsHomePath(String configPath) {
@@ -577,7 +579,7 @@ public class LogEventHelper {
     }
 
     /**
-     * @param script
+     * @param script user input script to validate
      * @return error message if there is any
      */
     public static FormValidation validateGroovyScript(String script) {

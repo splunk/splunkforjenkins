@@ -1,17 +1,16 @@
 package com.splunk.splunkjenkins.links;
 
+import com.splunk.splunkjenkins.Messages;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import hudson.Extension;
 import hudson.model.ManagementLink;
-
-import static com.splunk.splunkjenkins.Messages.SplunkIconName;
 
 @SuppressWarnings("unused")
 @Extension
 public class HealthLinkAction extends ManagementLink {
     @Override
     public String getIconFileName() {
-        return SplunkIconName();
+        return Messages.SplunkIconName();
     }
 
     @Override

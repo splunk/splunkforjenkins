@@ -18,9 +18,9 @@ public class TestCaseResultUtils {
     /**
      * split test result into groups, each contains maximum pageSize testcases
      *
-     * @param result
-     * @param pageSize
-     * @return
+     * @param result   Junit Test Result
+     * @param pageSize how many test cases to hold in one page
+     * @return A list of JunitTestCaseGroup
      */
     public static List<JunitTestCaseGroup> split(TestResult result, int pageSize) {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
@@ -39,9 +39,9 @@ public class TestCaseResultUtils {
     }
 
     /**
-     * @param resultAction
-     * @param pageSize
-     * @return
+     * @param resultAction Junit Test Result Action
+     * @param pageSize     how many test cases to hold in one page
+     * @return A list of JunitTestCaseGroup
      */
     public static List<JunitTestCaseGroup> splitRaw(AbstractTestResultAction resultAction, int pageSize) {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
@@ -64,8 +64,8 @@ public class TestCaseResultUtils {
     /**
      * split aggregated test result into groups, each contains maximum pageSize testcases
      *
-     * @param aggregatedResult
-     * @param pageSize
+     * @param aggregatedResult AggregatedTestResultAction used by Maven
+     * @param pageSize         how many test cases to hold in one page
      * @return
      */
     public static List<JunitTestCaseGroup> split(AggregatedTestResultAction aggregatedResult, int pageSize) {
@@ -93,9 +93,9 @@ public class TestCaseResultUtils {
      * Get the Junit report  from build
      * Extract from either TestResultAction or AggregatedTestResultAction
      *
-     * @param build
-     * @param pageSize
-     * @return
+     * @param build    Jenkins build
+     * @param pageSize how many test cases to hold in one page
+     * @return A list of JunitTestCaseGroup
      */
     public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize) {
         List<JunitTestCaseGroup> junitReports = new ArrayList<>();
@@ -119,7 +119,7 @@ public class TestCaseResultUtils {
     }
 
     /**
-     * @param build
+     * @param build Jenkins build
      * @return summary of failures,passes,skips, total and duration
      */
     public static Map<String, Object> getSummary(Run build) {
