@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
@@ -10,19 +9,17 @@ import hudson.model.Run;
 import hudson.util.ByteArrayOutputStream2;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 import static java.nio.charset.StandardCharsets.UTF_8;
-
-import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 /**
@@ -55,14 +52,10 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     }
 
     private OutputStream teeOutput(OutputStream output, String source, boolean addLineNumber) {
-        if (SplunkJenkinsInstallation.get().isValid()) {
-            return new TeeOutputStream(output, addLineNumber, source);
-        } else {
-            if (SplunkJenkinsInstallation.get().isEnabled()) {
-                LOG.log(Level.WARNING, "invalid splunk config, skipped sending logs for " + source);
-            }
+        if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
             return output;
         }
+        return new TeeOutputStream(output, addLineNumber, source);
     }
 
     public static class TeeOutputStream extends FilterOutputStream {

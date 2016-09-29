@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins.listeners;
 
 import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.LoggingJobExtractor;
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import com.splunk.splunkjenkins.utils.TestCaseResultUtils;
@@ -38,6 +39,9 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT)) {
+            return;
+        }
         Map<String, Object> event = getCommonBuildInfo(run, false);
         event.put("type", "started");
         SplunkLogService.getInstance().send(event, BUILD_EVENT);
@@ -50,6 +54,9 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT)) {
+            return;
+        }
         Map<String, Object> event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
         float duration = run.getDuration() / 1000f;

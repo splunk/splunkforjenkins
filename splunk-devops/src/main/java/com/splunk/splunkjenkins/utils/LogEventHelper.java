@@ -524,6 +524,9 @@ public class LogEventHelper {
     }
 
     public static void logUserAction(String user, String message) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
+            return;
+        }
         Map logInfo = new HashMap<>();
         logInfo.put(TAG, "audit_trail");
         logInfo.put("message", message);

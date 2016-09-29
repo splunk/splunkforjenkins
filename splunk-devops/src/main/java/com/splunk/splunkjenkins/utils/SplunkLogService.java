@@ -30,6 +30,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
+import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
+
 public class SplunkLogService {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
@@ -41,7 +43,7 @@ public class SplunkLogService {
     HttpClientConnectionManager connMgr;
     private AtomicLong incomingCounter = new AtomicLong();
     private AtomicLong outgoingCounter = new AtomicLong();
-    private Lock maintenanceLock =new ReentrantLock();
+    private Lock maintenanceLock = new ReentrantLock();
 
     private SplunkLogService() {
         this.logQueue = new LinkedBlockingQueue<EventRecord>(QUEUE_SIZE);
@@ -137,11 +139,8 @@ public class SplunkLogService {
     }
 
     public boolean enqueue(EventRecord record) {
-        if (!SplunkJenkinsInstallation.get().isEnabled()) {
-            return false;
-        }
-        if (!SplunkJenkinsInstallation.get().isValid()) {
-            LOG.log(Level.SEVERE, "Splunk plugin config is not invalid, can not send " + record.getShortDescr());
+        if (SplunkJenkinsInstallation.get().isEventDisabled(record.getEventType())) {
+            LOG.log(Level.FINE, "config invalid or eventType {0} is disabled, can not send {1}", new String[]{record.getEventType().toString(), record.getShortDescr()});
             return false;
         }
         boolean added = logQueue.offer(record);
@@ -154,11 +153,11 @@ public class SplunkLogService {
                     logQueue.drainTo(stuckRecords);
                     LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
                     for (EventRecord queuedRecord : stuckRecords) {
-                        if(queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)){
+                        if (queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)) {
                             continue;
                         }
-                        boolean enqueued=logQueue.offer(queuedRecord);
-                        if(!enqueued){
+                        boolean enqueued = logQueue.offer(queuedRecord);
+                        if (!enqueued) {
                             LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescr());
                         }
                     }

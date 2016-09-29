@@ -4,6 +4,7 @@ import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.utils.LogEventHelper;
 import org.apache.commons.lang.StringUtils;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -52,7 +53,7 @@ public class EventRecord {
 
     public String getMessageString() {
         if (message instanceof byte[]) {
-            return new String((byte[]) message,UTF_8);
+            return new String((byte[]) message, UTF_8);
         } else {
             return message.toString();
         }
@@ -87,6 +88,7 @@ public class EventRecord {
     /**
      * @return the event type
      */
+    @Nonnull
     public EventType getEventType() {
         return eventType;
     }

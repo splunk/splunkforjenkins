@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.listeners;
 
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Computer;
@@ -45,6 +46,9 @@ public class LoggingComputerListener extends ComputerListener {
     }
 
     private void updateStatus(Computer c, String eventSource) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(SLAVE_INFO)) {
+            return;
+        }
         Map slaveInfo = getComputerStatus(c);
         slaveInfo.put(EVENT_CAUSED_BY, eventSource);
         SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);

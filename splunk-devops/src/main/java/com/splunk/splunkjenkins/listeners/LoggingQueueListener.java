@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins.listeners;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.splunk.splunkjenkins.Constants;
+import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Queue;
@@ -34,6 +35,9 @@ public class LoggingQueueListener extends QueueListener {
 
     @Override
     public void onEnterWaiting(Queue.WaitingItem wi) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(QUEUE_INFO)) {
+            return;
+        }
         String name = getTaskName(wi.task);
         Map event = getMasterStats();
         event.put("item", name);
@@ -44,6 +48,9 @@ public class LoggingQueueListener extends QueueListener {
 
     @Override
     public void onLeft(Queue.LeftItem li) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(QUEUE_INFO)) {
+            return;
+        }
         float queueTime = (System.currentTimeMillis() - li.getInQueueSince()) / 1000f;
         cache.put(li.getId(), queueTime);
         String name = getTaskName(li.task);

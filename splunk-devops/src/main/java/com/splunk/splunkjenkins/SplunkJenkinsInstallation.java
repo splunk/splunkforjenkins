@@ -15,6 +15,7 @@ import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -308,6 +309,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public boolean isEventDisabled(EventType eventType) {
+        return !isValid() || "false".equals(metaDataProperties.getProperty(eventType.getKey("enabled")));
     }
 
     public void setEnabled(boolean enabled) {
