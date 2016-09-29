@@ -32,7 +32,6 @@ public class LoggingConfigListener extends SaveableListener {
     //queue.xml or nodes/*/config.xml
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats" +
             "|fingerprints|nodes|build)(.*?xml)", Pattern.CASE_INSENSITIVE);
-    private boolean enabled = false;
     private WeakHashMap cached = new WeakHashMap(512);
 
     @Override

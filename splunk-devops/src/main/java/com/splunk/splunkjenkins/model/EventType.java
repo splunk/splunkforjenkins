@@ -7,8 +7,8 @@ public enum EventType {
     JENKINS_CONFIG(false),
     CONSOLE_LOG(true),
     FILE(true),
-    SLAVE_INFO(false)
-    ;
+    SLAVE_INFO(false),
+    LOG(false);
 
     /**
      * whether the data need to be split by line breaker before send
@@ -20,7 +20,9 @@ public enum EventType {
     }
 
     /**
-     * need spit the content line by line if raw event not supported
+     * Need spit the content line by line if raw event not supported
+     * Only applied for non-structural data, such as file and console text.
+     * It doesn't applied for json data or xml data
      *
      * @return <code>true</code> if need spit the contents line by line if raw event not supported;
      * <code>false</code> otherwise.
@@ -30,7 +32,7 @@ public enum EventType {
     }
 
     /**
-     * @param suffix
+     * @param suffix the config metadata, can be either index, source or sourcetype
      * @return return name.suffix
      */
     public String getKey(String suffix) {

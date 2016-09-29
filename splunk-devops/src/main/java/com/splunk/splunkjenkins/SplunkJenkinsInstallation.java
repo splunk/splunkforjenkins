@@ -178,7 +178,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             if (metaDataProperties == null) {
                 metaDataProperties = new Properties();
             }
-            fillDefault(metaDataProperties);
             if (metaDataConfig != null) {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
@@ -407,10 +406,5 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             return (String) metaDataProperties.get("host");
         }
         return getHostName();
-    }
-
-    private void fillDefault(Properties properties) {
-        properties.put(EventType.CONSOLE_LOG.getKey(EVENT_SOURCE_TYPE), "httpevent");
-        properties.put(EventType.FILE.getKey(EVENT_SOURCE_TYPE), "httpevent");
     }
 }

@@ -105,7 +105,7 @@ public class LogEventHelper {
     }
 
     public static FormValidation verifyHttpInput(SplunkJenkinsInstallation config) {
-        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin", EventType.CONSOLE_LOG), config);
+        HttpPost post = buildPost(new EventRecord("ping from jenkins plugin", EventType.LOG), config);
         HttpClient client = SplunkLogService.getInstance().getClient();
         try {
             HttpResponse response = client.execute(post);
@@ -120,7 +120,7 @@ public class LogEventHelper {
             EntityUtils.consume(response.getEntity());
             //check if raw events is supported
             config.setRawEventEnabled(true);
-            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.CONSOLE_LOG), config);
+            post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.LOG), config);
             response = client.execute(post);
             SplunkJenkinsInstallation globalConfig = SplunkJenkinsInstallation.get();
             if (response.getStatusLine().getStatusCode() != 200 && globalConfig != null) {

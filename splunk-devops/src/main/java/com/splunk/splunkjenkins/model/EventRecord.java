@@ -10,7 +10,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 
 public class EventRecord {
     private final static String METADATA_KEYS[] = {"index", "source", "host", EVENT_SOURCE_TYPE};
@@ -23,11 +23,14 @@ public class EventRecord {
     public EventRecord(Object message, EventType eventType) {
         this.retryCount = 0;
         if (eventType == null) {
-            this.eventType = EventType.CONSOLE_LOG;
+            this.eventType = EventType.LOG;
         } else {
             this.eventType = eventType;
         }
         this.time = System.currentTimeMillis();
+        if (message == null) {
+            throw new RuntimeException("null message not allowed");
+        }
         this.message = message;
     }
 
@@ -47,26 +50,24 @@ public class EventRecord {
         this.time = time;
     }
 
+    @Nonnull
     public Object getMessage() {
         return message;
     }
 
     public String getMessageString() {
-        if (message instanceof byte[]) {
-            return new String((byte[]) message, UTF_8);
-        } else {
-            return message.toString();
-        }
+        return message.toString();
+    }
+
+    private boolean isString() {
+        return (message instanceof String);
     }
 
     /**
      * @return short message, to be showed in debug message
      */
     public String getShortDescr() {
-        if (message == null) { //should not happen
-            return "NULL message";
-        }
-        if (message instanceof String) {
+        if (isString()) {
             return "{length:" + ((String) message).length() + " " + StringUtils.substring((String) message, 0, 160) + " ...}";
         } else {
             return "{raw data" + StringUtils.abbreviate("" + message, 160) + "}";
@@ -100,14 +101,21 @@ public class EventRecord {
     private Map<String, String> getMetaData(SplunkJenkinsInstallation config) {
         LogEventHelper.UrlQueryBuilder metaDataBuilder = new LogEventHelper.UrlQueryBuilder();
         metaDataBuilder.putIfAbsent("source", source);
+        //default settings
+        if (eventType == EventType.LOG) { //prefer console log's index
+            metaDataBuilder.putIfAbsent("index", config.getMetaData(CONSOLE_LOG.getKey("index")));
+        }
+        if (isString()) {
+            //just plain text, not complex object, prefer "httpevent" as sourcetype
+            metaDataBuilder
+                    .putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(eventType.getKey("sourcetype_text")))
+                    .putIfAbsent(EVENT_SOURCE_TYPE, "httpevent");
+        }
         for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
-            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)));
-            if (eventType.equals(EventType.CONSOLE_LOG)) {
-                //use console log settings if not set
-                metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(EventType.CONSOLE_LOG.getKey(metaDataKey)));
-            }
-            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
+            metaDataBuilder
+                    .putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)))
+                    .putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
         }
         return metaDataBuilder.getQueryMap();
     }

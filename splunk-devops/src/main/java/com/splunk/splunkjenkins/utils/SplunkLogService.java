@@ -109,7 +109,7 @@ public class SplunkLogService {
     }
 
     /**
-     * @param message   the message to send, will use GENERIC_TEXT's config
+     * @param message   the message to send, will use CONSOLE_LOG's config
      * @param eventType the type of event, @see EventType
      * @return true if enqueue successfully, false if the message is discarded
      */
@@ -127,7 +127,7 @@ public class SplunkLogService {
         if (message == null) {
             LOG.warning("null message discarded");
             return false;
-        } else if (message instanceof String && "".equals(message)) {
+        } else if ( (message instanceof String) && ((String) message).length() == 0) {
             LOG.warning("empty message discarded");
             return false;
         }

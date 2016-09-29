@@ -135,13 +135,13 @@ public class SplunkConfigUtil {
             query = "search " + query;
         }
         query = query + "|head " + minNumber;
-        LOG.info("running query " + query);
+        LOG.fine("running query " + query);
         int eventCount = 0;
         for (int i = 0; i < 20; i++) {
             com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
             eventCount = job.getEventCount();
             if (eventCount < minNumber) {
-                LOG.info("remaining:" + SplunkLogService.getInstance().getQueueSize());
+                LOG.fine("remaining:" + SplunkLogService.getInstance().getQueueSize());
                 Thread.sleep(10000);
             } else {
                 break;
