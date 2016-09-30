@@ -1,7 +1,7 @@
 Splunk for Jenkins
 ---------
 
-To Install
+To Install Develop Version
 ----
  - clone the repo
  - `$ mvn package`
@@ -71,7 +71,8 @@ file.index=jenkins_artifact
 console_log.index=jenkins_console
 
 ```
-you can also let the plugin to monitor Jenkins config changes (jobs, plugins etc.)
 
-	jenkins_config.monitoring=true
-
+System Requirement
+-----
+You need enable "HTTP Event Collector" In Splunk to use the plugin,
+please checkout [HTTP Event Collector](http://dev.splunk.com/view/event-collector/SP-CAAAE7G)
