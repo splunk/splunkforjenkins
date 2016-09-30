@@ -122,9 +122,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     /*
      * Form validation methods
      */
-    public FormValidation doCheckHost(@QueryParameter("value") String value) {
-        if (StringUtils.isBlank(value)) {
+    public FormValidation doCheckHost(@QueryParameter("value") String hostName) {
+        if (StringUtils.isBlank(hostName)) {
             return FormValidation.warning(Messages.PleaseProvideHost());
+        }else if(hostName.endsWith("cloud.splunk.com") &&
+                !(hostName.startsWith("input-")|| hostName.startsWith("http-inputs-"))){
+            return FormValidation.warning(Messages.CloudHostPrefix(hostName));
         }
         return FormValidation.ok();
     }
