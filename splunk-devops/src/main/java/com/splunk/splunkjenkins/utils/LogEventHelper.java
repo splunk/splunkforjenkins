@@ -447,16 +447,21 @@ public class LogEventHelper {
                 slaveInfo.put("running_builds", builds);
             }
         }
+        slaveInfo.put("uptime",getUpTime(computer));
+        return slaveInfo;
+    }
+
+    @SuppressFBWarnings("DE_MIGHT_IGNORE")
+    private static Object getUpTime(Computer computer){
         Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
         if (method != null) {
-            try { //cloud slave may defined getUptime method
-                Object uptime = method.invoke(computer, new Object[0]);
-                slaveInfo.put("uptime", uptime);
+            try { //cloud slave defined getUptime method
+                return method.invoke(computer, new Object[0]);
             } catch (Exception e) {
                 //just ignore
             }
         }
-        return slaveInfo;
+        return null;
     }
 
     private static Map<String, Object> getMonitorData(Computer computer, NodeMonitor monitor) {

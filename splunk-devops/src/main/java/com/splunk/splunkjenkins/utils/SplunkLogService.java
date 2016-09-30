@@ -59,12 +59,7 @@ public class SplunkLogService {
     private HttpClientConnectionManager buildConnectionManager() {
         SSLContext sslContext = null;
         try {
-            TrustStrategy acceptingTrustStrategy = new TrustStrategy() {
-                public boolean isTrusted(X509Certificate[] certificate,
-                                         String type) {
-                    return true;
-                }
-            };
+            TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
             sslContext = SSLContexts.custom().loadTrustMaterial(
                     null, acceptingTrustStrategy).build();
         } catch (Exception e) {
@@ -226,5 +221,11 @@ public class SplunkLogService {
         sbr.append("remaining:").append(this.getQueueSize()).append(" ")
                 .append("sent:").append(this.getSentCount());
         return sbr.toString();
+    }
+    static class TrustAllStrategy implements TrustStrategy{
+        public boolean isTrusted(X509Certificate[] certificate,
+                                 String type) {
+            return true;
+        }
     }
 }
