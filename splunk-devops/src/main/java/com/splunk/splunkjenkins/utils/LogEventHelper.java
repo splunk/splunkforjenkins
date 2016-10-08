@@ -223,9 +223,8 @@ public class LogEventHelper {
         return event;
     }
 
-    public static int sendFiles(AbstractBuild build, Map<String, String> envVars, TaskListener listener,
+    public static int sendFiles(Run build, FilePath ws,Map<String, String> envVars, TaskListener listener,
                                 String includes, String excludes, boolean sendFromSlave, long maxFileSize) {
-        FilePath ws = build.getWorkspace();
         int eventCount = 0;
         if (ws == null) {
             return eventCount;

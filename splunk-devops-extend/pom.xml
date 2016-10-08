@@ -21,15 +21,13 @@
         </license>
     </licenses>
 
-    <!-- If you want this to appear on the wiki page:
     <developers>
       <developer>
-        <id>bhacker</id>
-        <name>Bob Q. Hacker</name>
-        <email>bhacker@nowhere.net</email>
+        <id>fengxx</id>
+        <name>Ted Xiao</name>
+        <email>xiao.xj@outlook.com</email>
       </developer>
     </developers>
-    -->
 
     <dependencies>
         <dependency>

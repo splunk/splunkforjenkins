@@ -1,16 +1,17 @@
 package com.splunk.splunkjenkins;
 
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
+import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -21,7 +22,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.parseFileSize;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles;
 
 @SuppressWarnings("unused")
-public class SplunkArtifactNotifier extends Notifier {
+public class SplunkArtifactNotifier extends Notifier implements SimpleBuildStep {
     /**
      * {@link org.apache.tools.ant.types.FileSet} "includes" string, like "foo/bar/*.xml"
      */
@@ -47,7 +48,8 @@ public class SplunkArtifactNotifier extends Notifier {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public void perform(@Nonnull Run<?, ?> build, @Nonnull FilePath workspace,
+                           @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
         Map<String, String> envVars = new HashMap<>();
         try {
             envVars = build.getEnvironment(listener);
@@ -56,10 +58,8 @@ public class SplunkArtifactNotifier extends Notifier {
         }
         long maxFileSize=parseFileSize(sizeLimit);
         listener.getLogger().println("sending files at job level, includes:" + includeFiles + " excludes:" + excludeFiles);
-        int eventCount = sendFiles(build, envVars, listener, includeFiles, excludeFiles, publishFromSlave, maxFileSize);
+        int eventCount = sendFiles(build, workspace, envVars, listener, includeFiles, excludeFiles, publishFromSlave, maxFileSize);
         Logger.getLogger(this.getClass().getName()).log(Level.FINE,"sent "+eventCount+" events with file size limit "+maxFileSize);
-        //do not mark build as failed even archive file failed
-        return true;
     }
 
     @Extension
