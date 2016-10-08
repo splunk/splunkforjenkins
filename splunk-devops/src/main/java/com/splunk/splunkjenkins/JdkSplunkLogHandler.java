@@ -33,7 +33,11 @@ public class JdkSplunkLogHandler extends Handler {
         if (!isLoggable(record)) {
             return;
         }
-        SplunkLogService.getInstance().send(splunkFormatter.getEvent(record), "logger://" + record.getLoggerName());
+        Map logEvent = splunkFormatter.getEvent(record);
+        if (logEvent == null || logEvent.isEmpty()) {
+            return;
+        }
+        SplunkLogService.getInstance().send(logEvent, "logger://" + record.getLoggerName());
     }
 
     @Override
@@ -96,7 +100,33 @@ public class JdkSplunkLogHandler extends Handler {
                 PrintWriter pw = new PrintWriter(sw);
                 record.getThrown().printStackTrace(pw);
                 pw.close();
-                event.put("log_thrown", sw.toString());
+                String logStackTrace = sw.toString();
+                /* Nested call, may happen when jenkins failed to load some plugin
+                    at java.util.logging.Logger.log(Logger.java:830)
+                    at hudson.ExtensionFinder$GuiceFinder$FaultTolerantScope$1.error(ExtensionFinder.java:440)
+                    at hudson.ExtensionFinder$GuiceFinder$FaultTolerantScope$1.get(ExtensionFinder.java:429)
+                    at com.google.inject.internal.InternalFactoryToProviderAdapter.get(InternalFactoryToProviderAdapter.java:41)
+                    at com.google.inject.internal.InjectorImpl$3$1.call(InjectorImpl.java:1005)
+                ....
+                    at hudson.DescriptorExtensionList.load(DescriptorExtensionList.java:185)
+                    at hudson.ExtensionList.ensureLoaded(ExtensionList.java:287)
+                    at hudson.ExtensionList.iterator(ExtensionList.java:156)
+                    at hudson.ExtensionList.get(ExtensionList.java:147)
+                    at com.splunk.splunkjenkins.SplunkJenkinsInstallation.get(SplunkJenkinsInstallation.java:93)
+                    at com.splunk.splunkjenkins.utils.SplunkLogService.enqueue(SplunkLogService.java:137)
+                    at com.splunk.splunkjenkins.utils.SplunkLogService.send(SplunkLogService.java:133)
+                    at com.splunk.splunkjenkins.utils.SplunkLogService.send(SplunkLogService.java:103)
+                    at com.splunk.splunkjenkins.JdkSplunkLogHandler.publish(JdkSplunkLogHandler.java:36)
+                    at java.util.logging.Logger.log(Logger.java:738)
+                    at java.util.logging.Logger.doLog(Logger.java:765)
+                    at java.util.logging.Logger.log(Logger.java:830)
+                    at hudson.ExtensionFinder$GuiceFinder$FaultTolerantScope$1.error(ExtensionFinder.java:440)
+                **/
+                if (logStackTrace.contains("com.splunk.splunkjenkins.utils.SplunkLogService.enqueue")) {
+                    SplunkLogService.LOG.log(Level.SEVERE, "discard recursive log\n{0}", logStackTrace);
+                    return null;
+                }
+                event.put("log_thrown", logStackTrace);
             }
             return event;
         }

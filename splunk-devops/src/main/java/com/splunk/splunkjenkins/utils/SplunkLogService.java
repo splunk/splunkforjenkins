@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 
 public class SplunkLogService {
-    private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
+    public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
     private final static int QUEUE_SIZE = 1 << 17;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
