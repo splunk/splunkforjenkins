@@ -32,9 +32,9 @@
     </modules>
 
     <scm>
-        <connection>scm:git:git://github.com/jenkinsci/splunkforjenkins.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/splunkforjenkins.git</developerConnection>
-        <url>https://github.com/jenkinsci/jenkins</url>
+        <connection>scm:git:git://github.com/jenkinsci/splunk-devops-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/splunk-devops-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/splunk-devops-plugin</url>
     </scm>
 
     <properties>
