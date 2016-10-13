@@ -1,27 +1,17 @@
 <div>
-    <p>Specifiy index, host, source, soucetype for the events, This can be used in Splunk query language such as
-        <b> index="main" source="jenkins" host="jenkins.domain" sourcetype="_json" </b>
+    <p>Specify index, host, source, soucetype for the events. </p>
+    </p> index is a data repository in Splunk, please create the 4 indexes in Splunk:
+    <span class="warning">
+    jenkins, jenkins_statistics, jenkins_console and jenkins_artifact
+    </span>
     </p>
-    <p>The index in Splunk to which the events will be indexed to. Defaults to "main" index in Splunk.
-        Note: If using a custom index, that index must be already exist on your Splunk instance. Splunk-Jenkins will not
-        create it for you.</p>
-    <p>The metadata can be customized for each event prefix: <b>test_result, console_log, queue_info, file,
-        xml_config</b>
-        e.g.
-     <pre>
-    #index
-    index=main #this is global level
-    console_log.index=ci_log #only for console_log
-    #source
-    source=sandbox
-    #sourcetype
-    sourcetype=_json
-    #host
-    host=sandbox
-    </pre>
-    will set index as ci_log for console_log event, main as index for others. jenkins_job as source for console_log
-    event,
-    sandbox as source for others
-    <br/>Note: double quote is not needed for values.
-    </pre>
+    <p>
+        host is used to identify which Jenkins master is the source of the data.
+        the metadata can be used in Splunk query language such as <br/>
+        index="jenkins" host="servername" sourcetype="json:jenkins" <br/>
+    </p>
+
+    <p>
+        <a href="https://wiki.jenkins-ci.org/display/JENKINS/Splunk+Plugin+for+Jenkins">See more details</a>
+    </p>
 </div>

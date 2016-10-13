@@ -23,7 +23,7 @@
             <f:checkbox default="true"/>
         </f:entry>
         <f:entry title="${%MetaData}" field="metaDataConfig">
-            <f:textarea default="${%default_metadata}"/>
+            <f:textarea default="${%default_metadata(instance.getLocalHostName())}"/>
         </f:entry>
 
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"

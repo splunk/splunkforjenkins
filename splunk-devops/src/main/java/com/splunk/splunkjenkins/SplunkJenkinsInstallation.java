@@ -2,7 +2,6 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.EventType;
 import hudson.Extension;
-import hudson.XmlFile;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import net.sf.json.JSONObject;
@@ -15,8 +14,11 @@ import org.kohsuke.stapler.StaplerRequest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -68,16 +70,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
-            XmlFile file = getConfigFile();
-            if (file.exists()) {
-                try {
-                    String xmlText = file.asString();
-                    file.getXStream().fromXML(xmlText, this);
-                } catch (IOException ex) {
-                    LOG.log(Level.SEVERE, "failed to read " + getId() + ".xml", ex);
-                }
-                this.updateCache();
+            super.load();
+            //load default metadata
+            try (InputStream metaInput = this.getClass().getClassLoader().getResourceAsStream("metadata.properties")) {
+                metaDataProperties.load(metaInput);
+            } catch (IOException e) {
+                //ignore
             }
+            this.updateCache();
         }
     }
 
@@ -125,8 +125,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public FormValidation doCheckHost(@QueryParameter("value") String hostName) {
         if (StringUtils.isBlank(hostName)) {
             return FormValidation.warning(Messages.PleaseProvideHost());
-        }else if(hostName.endsWith("cloud.splunk.com") &&
-                !(hostName.startsWith("input-")|| hostName.startsWith("http-inputs-"))){
+        } else if (hostName.endsWith("cloud.splunk.com") &&
+                !(hostName.startsWith("input-") || hostName.startsWith("http-inputs-"))) {
             return FormValidation.warning(Messages.CloudHostPrefix(hostName));
         }
         return FormValidation.ok();
@@ -151,7 +151,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         config.token = token;
         config.useSSL = useSSL;
         config.metaDataConfig = metaDataConfig;
+        config.enabled=true;
         config.updateCache();
+        if (!config.isValid()) {
+            return FormValidation.error("Invalid config, please check Hostname or Token");
+        }
         return verifyHttpInput(config);
     }
 
@@ -186,7 +190,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, "invalid Splunk url ", e);
+            LOG.log(Level.SEVERE, "Invalid Splunk host " + host, e);
         }
     }
 
@@ -410,5 +414,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             return (String) metaDataProperties.get("host");
         }
         return getHostName();
+    }
+
+    public String getLocalHostName(){
+        try {
+            return InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            return "yourhostname";
+        }
     }
 }

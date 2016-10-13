@@ -109,7 +109,7 @@ public class EventRecord {
             //just plain text, not complex object, prefer "httpevent" as sourcetype
             metaDataBuilder
                     .putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(eventType.getKey("sourcetype_text")))
-                    .putIfAbsent(EVENT_SOURCE_TYPE, "httpevent");
+                    .putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData("sourcetype_text"));
         }
         for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
