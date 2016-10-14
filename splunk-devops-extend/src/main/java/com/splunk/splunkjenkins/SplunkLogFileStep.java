@@ -1,4 +1,4 @@
-package com.splunk.splunkins;
+package com.splunk.splunkjenkins;
 
 import hudson.EnvVars;
 import hudson.Extension;
@@ -77,7 +77,7 @@ public class SplunkLogFileStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "sendSplunk";
+            return "sendSplunkFile";
         }
 
         @Nonnull

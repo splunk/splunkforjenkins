@@ -1,4 +1,4 @@
-package com.splunk.splunkins;
+package com.splunk.splunkjenkins;
 
 import com.cloudbees.workflow.rest.external.ErrorExt;
 import com.cloudbees.workflow.rest.external.RunExt;
