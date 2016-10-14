@@ -18,12 +18,10 @@ import java.util.logging.Logger
 public class UserActionDSL {
     static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
-    public void perform(Run build, TaskListener listener) {
+    public void perform(Run build, TaskListener listener, String scriptText) {
         try {
             EnvVars enVars = build.getEnvironment(listener);
-            SplunkJenkinsInstallation splunkConfig = SplunkJenkinsInstallation.get();
-
-            if (splunkConfig != null && StringUtils.isNotEmpty(splunkConfig.getScript())) {
+            if (StringUtils.isNotEmpty(scriptText)) {
                 RunDelegate delegate = new RunDelegate(build, enVars, listener);
                 CompilerConfiguration cc = new CompilerConfiguration();
                 cc.scriptBaseClass = ClosureScript.class.name;
@@ -31,7 +29,6 @@ public class UserActionDSL {
                 ic.addStaticStars(LogEventHelper.class.name)
                 ic.addStarImport("jenkins.model")
                 cc.addCompilationCustomizers(ic)
-                String scriptText = splunkConfig.getScript();
                 ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader, new Binding(), cc)
                         .parse(scriptText)
                 dslScript.setDelegate(delegate);

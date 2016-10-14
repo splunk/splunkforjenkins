@@ -6,6 +6,7 @@ import com.splunk.splunkjenkins.model.JunitTestCaseGroup
 import com.splunk.splunkjenkins.utils.SplunkLogService
 import com.splunk.splunkjenkins.utils.TestCaseResultUtils
 import hudson.EnvVars
+import hudson.FilePath
 import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.Run
@@ -81,24 +82,23 @@ public class RunDelegate {
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      */
     def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
-        SplunkArtifactNotifier notifier = null;
+        def workspace;
         if (build instanceof AbstractBuild) {
-            notifier = ((AbstractBuild) build).getProject().getPublishersList().get(SplunkArtifactNotifier.class)
-        }
-        if (notifier != null) {
-            //already defined on job level
-            if (notifier.skipGlobalSplunkArchive) {
-                return;
-            } else {
-                //do not send duplicate files
-                if (excludes == null) {
-                    excludes = notifier.includeFiles;
-                } else {
-                    excludes = excludes + "," + notifier.includeFiles;
+            workspace = build.getWorkspace();
+            def notifier = build.project.getPublishersList().get(SplunkArtifactNotifier)
+            if (notifier != null) {
+                //already defined on job level
+                if (notifier.skipGlobalSplunkArchive) {
+                    return;
                 }
             }
+        } else {
+            //getWorkspace defined
+            if (build.metaClass.respondsTo(build, "getWorkspace")) {
+                workspace = build.workspace;
+            }
         }
-        return sendFiles(build, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
+        return sendFiles(build, workspace, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 
     def getJunitReport() {
