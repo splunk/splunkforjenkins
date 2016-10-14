@@ -22,7 +22,13 @@ public class UserActionDSL {
         try {
             EnvVars enVars = build.getEnvironment(listener);
             if (StringUtils.isNotEmpty(scriptText)) {
-                RunDelegate delegate = new RunDelegate(build, enVars, listener);
+                def workSpace;
+                if (build.metaClass.respondsTo(build, "getWorkspace")) {
+                    //getWorkspace defined in build
+                    workSpace = build.workspace;
+                }
+                RunDelegate delegate = new RunDelegate(build: build, workSpace: workSpace,
+                        env: enVars, listener: listener);
                 CompilerConfiguration cc = new CompilerConfiguration();
                 cc.scriptBaseClass = ClosureScript.class.name;
                 ImportCustomizer ic = new ImportCustomizer()

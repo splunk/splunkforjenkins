@@ -13,8 +13,7 @@ results.eachWithIndex { junitResult, idx ->
     Map pagedEvent = buildEvent + ["testsuite": junitResult, "page_num": idx + 1]
     send(pagedEvent)
 }
-//archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit)
-archive("**/*.log",null,false,500MB)
+archive(includes: "**/*.log",fileSizeLimit:"500MB")
 
 </code></pre>
         you can reference below variables or methods
@@ -26,10 +25,7 @@ Action getActionByClassName(String className);
 //send message to splunk
 boolean send(Object message);
 //Archive all configured artifacts from slave, with each file size limit to 10MB, using ant patterns defined in http://ant.apache.org/manual/Types/fileset.html
-def archive(String includes) {
-    archive(includes, null, true, "10MB");
-}
-archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit)
+archive(String includes, String excludes = null, boolean uploadFromSlave = false, String fileSizeLimit = "")
 //will send build parameters as metadata and with the object returned from closure to splunk
 sendReport(Closure closure)
 //a junit report with summary of passes,failures,skips and details of testcase

@@ -7,4 +7,4 @@ results.eachWithIndex { junitResult, idx ->
 }
 
 //send all logs from workspace to splunk, with each file size limits to 10MB
-archive("**/*.log", null, false, "10MB")
+archive(includes: "**/*.log", fileSizeLimit: "10MB")

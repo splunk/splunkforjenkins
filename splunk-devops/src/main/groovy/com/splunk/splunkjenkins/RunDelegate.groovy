@@ -31,7 +31,11 @@ public class RunDelegate {
 
     Run build;
     Map env;
-    TaskListener listener
+    TaskListener listener;
+    FilePath workSpace;
+
+    RunDelegate() {
+    }
 
     public RunDelegate(Run build, EnvVars enVars, TaskListener listener) {
         this.build = build;
@@ -62,15 +66,6 @@ public class RunDelegate {
         getOut().println("sending build report with source name " + eventSourceName)
         return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT, eventSourceName);
     }
-    /**
-     * Archive all configured artifacts from a build, using ant patterns defined in
-     * @see <a href="http://ant.apache.org/manual/Types/fileset.html">the Ant glob syntax</a>
-     * such as  {@code *&#42;&#47;build/*.log }
-     * @param includes ant glob pattern
-     */
-    def archive(String includes) {
-        archive(includes, null, false, "");
-    }
 
     /**
      * Archive all configured artifacts from a build, using ant patterns defined in
@@ -81,10 +76,8 @@ public class RunDelegate {
      * @param uploadFromSlave <code>true</code> if need upload directly from the slave
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      */
-    def archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit) {
-        def workspace;
+    def archive(String includes, String excludes = null, boolean uploadFromSlave = false, String fileSizeLimit = "") {
         if (build instanceof AbstractBuild) {
-            workspace = build.getWorkspace();
             def notifier = build.project.getPublishersList().get(SplunkArtifactNotifier)
             if (notifier != null) {
                 //already defined on job level
@@ -92,13 +85,8 @@ public class RunDelegate {
                     return;
                 }
             }
-        } else {
-            //getWorkspace defined
-            if (build.metaClass.respondsTo(build, "getWorkspace")) {
-                workspace = build.workspace;
-            }
         }
-        return sendFiles(build, workspace, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
+        return sendFiles(build, workSpace, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 
     def getJunitReport() {
