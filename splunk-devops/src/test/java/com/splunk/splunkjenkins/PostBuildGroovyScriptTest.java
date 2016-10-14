@@ -78,7 +78,7 @@ public class PostBuildGroovyScriptTest {
     @Test
     public void paginationResult() throws Exception {
         String report_id = UUID.randomUUID().toString();
-        int pageSize = 100;
+        int pageSize = 49;
         String groovyScript = "def report_id=\"" + report_id + "\"\n" +
                 "def suites=getJunitReport(" + pageSize + ")\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.suites=suites\n" +

@@ -66,7 +66,7 @@ public class TestCaseResultUtils {
      *
      * @param aggregatedResult AggregatedTestResultAction used by Maven
      * @param pageSize         how many test cases to hold in one page
-     * @return
+     * @return pagination result
      */
     public static List<JunitTestCaseGroup> split(AggregatedTestResultAction aggregatedResult, int pageSize) {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
@@ -102,9 +102,14 @@ public class TestCaseResultUtils {
         if (build == null) {
             return junitReports;
         }
-        TestResultAction resultAction = build.getAction(TestResultAction.class);
-        if (resultAction != null) {
-            return split(resultAction.getResult(), pageSize);
+        try {
+            TestResultAction resultAction = build.getAction(TestResultAction.class);
+            if (resultAction != null) {
+                return split(resultAction.getResult(), pageSize);
+            }
+        } catch (NoClassDefFoundError ex) {
+            //inside pipeline job, the junit plugin not loaded
+            return junitReports;
         }
         AggregatedTestResultAction aggAction = build.getAction(AggregatedTestResultAction.class);
         if (aggAction != null) {

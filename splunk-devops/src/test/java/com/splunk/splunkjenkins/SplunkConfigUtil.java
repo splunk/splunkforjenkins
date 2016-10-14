@@ -3,6 +3,8 @@ package com.splunk.splunkjenkins;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.splunk.*;
+import com.splunk.splunkjenkins.model.*;
+import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.apache.commons.io.IOUtils;
 
@@ -13,6 +15,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
 public class SplunkConfigUtil {
@@ -34,7 +37,7 @@ public class SplunkConfigUtil {
         serviceArgs.setUsername(System.getProperty("splunk-username", "admin"));
         serviceArgs.setPassword(System.getProperty("splunk-passwd", "changeme"));
         serviceArgs.setHost(host);
-        serviceArgs.setPort(8089);
+        serviceArgs.setPort(Integer.parseInt(System.getProperty("splunk-port", "8089")));
         // Create a Service instance and log in with the argument map
         splunkService = Service.connect(serviceArgs);
         //create index if not exists
@@ -47,10 +50,15 @@ public class SplunkConfigUtil {
     }
 
     public static synchronized boolean checkTokenAvailable() {
+        String password = System.getProperty("splunk-passwd");
+        if (password == null) {
+            System.err.println("please use mvn -Dsplunk-password=AdminPassword -Dsplunk-host=ip-address to run the test\n" +
+                    "and you can also put this to global vm settings in IDE");
+            return false;
+        }
         String token = System.getProperty("splunk-token");
         String host = System.getProperty("splunk-host", "127.0.0.1");
-        boolean useAutoConfig = Boolean.getBoolean("splunk-token-setup");
-        if (token == null && useAutoConfig) {
+        if (token == null) {
             Service service = getSplunkServiceInstance();
             try {
                 Index myIndex = service.getIndexes().get(INDEX_NAME);
@@ -92,11 +100,6 @@ public class SplunkConfigUtil {
                 LOG.log(Level.SEVERE, "failed to get token", e);
             }
         }
-        if (token == null) {
-            System.err.println("please use mvn -Dsplunk-token=eventcollctor-token -Dsplunk-host=ip-address to run the test\n" +
-                    "and you can also putIfAbsent this to global vm settings in IDE");
-            return false;
-        }
         return setupSender(host, token);
     }
 
@@ -106,7 +109,10 @@ public class SplunkConfigUtil {
         String metadataConfig = "";
         try (InputStream input = SplunkConfigUtil.class.getClassLoader().getResourceAsStream("splunk_metadata.properties")) {
             metadataConfig = IOUtils.toString(input);
-            metadataConfig += "\nindex=" + INDEX_NAME;
+            metadataConfig += "\nindex=" + INDEX_NAME + "\n";
+            for (EventType type : EventType.values()) {
+                metadataConfig = metadataConfig.concat(type.getKey("index") + "=" + INDEX_NAME + "\n");
+            }
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "failed to read meta config", e);
         }
@@ -120,7 +126,7 @@ public class SplunkConfigUtil {
         config.setScriptContent(null);
         config.setMetaDataConfig(metadataConfig);
         config.updateCache();
-        LOG.fine("update splunkins config");
+        LOG.fine("update splunkjenkins config");
         config.save();
         boolean isValid = config.isValid();
         LOG.fine("splunk httpinput collector config is valid ?" + isValid);
@@ -131,22 +137,28 @@ public class SplunkConfigUtil {
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
         jobargs.put("earliest_time", startTime / 1000);
+        if (!query.contains("index=")) {
+            query = "index=" + SplunkConfigUtil.INDEX_NAME + " " + query;
+        }
         if (!query.startsWith("search")) {
             query = "search " + query;
         }
-        query = query + "|head " + minNumber;
-        LOG.fine("running query " + query);
+        query = query + "|stats count| where count>=" + minNumber;
+        LOG.info("running query:\n" + query);
         int eventCount = 0;
         for (int i = 0; i < 20; i++) {
             com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
             eventCount = job.getEventCount();
-            if (eventCount < minNumber) {
+            if (eventCount == 0) {
                 LOG.fine("remaining:" + SplunkLogService.getInstance().getQueueSize());
-                Thread.sleep(10000);
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ex) {
+                }
             } else {
                 break;
             }
         }
-        assertEquals("event not reached using:" + query, minNumber, eventCount);
+        assertTrue("event not reached using:" + query, eventCount > 0);
     }
 }

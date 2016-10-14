@@ -22,6 +22,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -37,6 +38,7 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
+    public static final transient AtomicBoolean loaded = new AtomicBoolean();
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
     public transient static final int MIN_BUFFER_SIZE = 2048;
     private transient static final int MAX_BUFFER_SIZE = 1 << 21;
@@ -77,6 +79,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             } catch (IOException e) {
                 //ignore
             }
+            loaded.getAndSet(true);
             this.updateCache();
         }
     }
@@ -89,9 +92,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (cachedConfig != null) {
             return cachedConfig;
         } else {
-            LOG.fine("init SplunkJenkinsInstallation on master");
-            cachedConfig = GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
-            return cachedConfig;
+            return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
         }
     }
 
@@ -151,7 +152,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         config.token = token;
         config.useSSL = useSSL;
         config.metaDataConfig = metaDataConfig;
-        config.enabled=true;
+        config.enabled = true;
         config.updateCache();
         if (!config.isValid()) {
             return FormValidation.error("Invalid config, please check Hostname or Token");
@@ -416,7 +417,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return getHostName();
     }
 
-    public String getLocalHostName(){
+    public String getLocalHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
