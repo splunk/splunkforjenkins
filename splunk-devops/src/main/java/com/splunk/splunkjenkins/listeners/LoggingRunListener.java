@@ -2,7 +2,7 @@ package com.splunk.splunkjenkins.listeners;
 
 
 import com.splunk.splunkjenkins.Constants;
-import com.splunk.splunkjenkins.LoggingJobExtractor;
+import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
@@ -236,16 +236,14 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         event.put(NODE_NAME_KEY, nodeName);
-        for (LoggingJobExtractor extendListener : LoggingJobExtractor.all()) {
-            if (extendListener.targetType.isInstance(run)) {
-                try {
-                    Map<String, Object> extend = extendListener.extract(run, completed);
-                    if (extend != null && !extend.isEmpty()) {
-                        event.putAll(extend);
-                    }
-                } catch (Exception e) {
-                    LOG.log(Level.SEVERE, "failed to extract job info", e);
+        for (LoggingJobExtractor extendListener : LoggingJobExtractor.canApply(run)) {
+            try {
+                Map<String, Object> extend = extendListener.extract(run, completed);
+                if (extend != null && !extend.isEmpty()) {
+                    event.putAll(extend);
                 }
+            } catch (Exception e) {
+                LOG.log(Level.SEVERE, "failed to extract job info", e);
             }
         }
         return event;

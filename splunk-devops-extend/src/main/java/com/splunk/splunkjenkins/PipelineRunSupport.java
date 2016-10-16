@@ -3,7 +3,7 @@ package com.splunk.splunkjenkins;
 import com.cloudbees.workflow.rest.external.ErrorExt;
 import com.cloudbees.workflow.rest.external.RunExt;
 import com.cloudbees.workflow.rest.external.StageNodeExt;
-import com.splunk.splunkjenkins.LoggingJobExtractor;
+import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import hudson.Extension;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
