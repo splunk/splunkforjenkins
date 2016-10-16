@@ -1,13 +1,10 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.splunk.splunkjenkins.model.AbstractTestResultAdapter;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
 import hudson.model.Run;
-import hudson.tasks.junit.CaseResult;
-import hudson.tasks.junit.SuiteResult;
-import hudson.tasks.junit.TestResult;
-import hudson.tasks.junit.TestResultAction;
+import hudson.tasks.test.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
-import hudson.tasks.test.AggregatedTestResultAction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,21 +15,19 @@ public class TestCaseResultUtils {
     /**
      * split test result into groups, each contains maximum pageSize testcases
      *
-     * @param result   Junit Test Result
+     * @param results  Test Results
      * @param pageSize how many test cases to hold in one page
      * @return A list of JunitTestCaseGroup
      */
-    public static List<JunitTestCaseGroup> split(TestResult result, int pageSize) {
+    public static <T extends TestResult> List<JunitTestCaseGroup> split(List<T> results, int pageSize) {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
         JunitTestCaseGroup group = new JunitTestCaseGroup();
         testCasesCollect.add(group);
-        for (SuiteResult suite : result.getSuites()) {
-            for (CaseResult testCase : suite.getCases()) {
-                group.add(testCase);
-                if (group.getTotal() >= pageSize) {
-                    group = new JunitTestCaseGroup();
-                    testCasesCollect.add(group);
-                }
+        for (T testCase : results) {
+            group.add(testCase);
+            if (group.getTotal() >= pageSize) {
+                group = new JunitTestCaseGroup();
+                testCasesCollect.add(group);
             }
         }
         return testCasesCollect;
@@ -47,43 +42,15 @@ public class TestCaseResultUtils {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
         JunitTestCaseGroup group = new JunitTestCaseGroup();
         testCasesCollect.add(group);
-        List<CaseResult> results = new ArrayList<>();
+        List<TestResult> results = new ArrayList<>();
         results.addAll(resultAction.getFailedTests());
         results.addAll(resultAction.getSkippedTests());
         results.addAll(resultAction.getPassedTests());
-        for (CaseResult testCase : results) {
+        for (TestResult testCase : results) {
             group.add(testCase);
             if (group.getTotal() > pageSize) {
                 group = new JunitTestCaseGroup();
                 testCasesCollect.add(group);
-            }
-        }
-        return testCasesCollect;
-    }
-
-    /**
-     * split aggregated test result into groups, each contains maximum pageSize testcases
-     *
-     * @param aggregatedResult AggregatedTestResultAction used by Maven
-     * @param pageSize         how many test cases to hold in one page
-     * @return pagination result
-     */
-    public static List<JunitTestCaseGroup> split(AggregatedTestResultAction aggregatedResult, int pageSize) {
-        List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
-        JunitTestCaseGroup group = new JunitTestCaseGroup();
-        testCasesCollect.add(group);
-        for (AggregatedTestResultAction.ChildReport childReport : aggregatedResult.getChildReports()) {
-            if (childReport.result instanceof TestResult) {
-                TestResult testResult = (TestResult) childReport.result;
-                for (SuiteResult suite : testResult.getSuites()) {
-                    for (CaseResult testCase : suite.getCases()) {
-                        group.add(testCase);
-                        if (group.getTotal() > pageSize) {
-                            group = new JunitTestCaseGroup();
-                            testCasesCollect.add(group);
-                        }
-                    }
-                }
             }
         }
         return testCasesCollect;
@@ -102,23 +69,14 @@ public class TestCaseResultUtils {
         if (build == null) {
             return junitReports;
         }
-        try {
-            TestResultAction resultAction = build.getAction(TestResultAction.class);
-            if (resultAction != null) {
-                return split(resultAction.getResult(), pageSize);
+        List<TestResult> results = AbstractTestResultAdapter.getTestResult(build);
+        junitReports = split(results, pageSize);
+        if (junitReports.isEmpty()) {
+            //last resort, try AbstractTestResultAction
+            AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
+            if (abstractTestResultAction != null) {
+                return splitRaw(abstractTestResultAction, pageSize);
             }
-        } catch (NoClassDefFoundError ex) {
-            //inside pipeline job, the junit plugin not loaded
-            return junitReports;
-        }
-        AggregatedTestResultAction aggAction = build.getAction(AggregatedTestResultAction.class);
-        if (aggAction != null) {
-            return split(aggAction, pageSize);
-        }
-        //last resort, try AbstractTestResultAction
-        AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
-        if (abstractTestResultAction != null) {
-            return splitRaw(abstractTestResultAction, pageSize);
         }
         return junitReports;
     }

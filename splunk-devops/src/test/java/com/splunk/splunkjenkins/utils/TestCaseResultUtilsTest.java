@@ -1,7 +1,11 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.splunk.splunkjenkins.model.JunitResultAdapter;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
+import hudson.model.Run;
+import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.TestResult;
+import hudson.tasks.junit.TestResultAction;
 import org.junit.Test;
 
 import java.io.File;
@@ -36,7 +40,10 @@ public class TestCaseResultUtilsTest {
         assertEquals(1, result.getFailCount());
 
         int pageSize = 5;
-        List<JunitTestCaseGroup> suites = TestCaseResultUtils.split(result, pageSize);
+        TestResultAction action = new TestResultAction((Run) null, result, null);
+        JunitResultAdapter adapter = new JunitResultAdapter();
+        List<JunitTestCaseGroup> suites = TestCaseResultUtils.split(adapter.getTestResult(action)
+                , pageSize);
         int remained = (total % pageSize == 0) ? 0 : 1;
         int pageCount = total / pageSize + remained;
         assertEquals(pageCount, suites.size());

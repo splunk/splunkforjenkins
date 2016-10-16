@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.model;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.tasks.junit.CaseResult;
+import hudson.tasks.test.TestResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,9 +19,9 @@ public class JunitTestCaseGroup {
     float time;
     //backward compatible with junit3 xml which has errors field
     int errors = 0;
-    List<CaseResult> testcase = new ArrayList<>();
+    List<TestResult> testcase = new ArrayList<>();
 
-    public void add(CaseResult result) {
+    public void add(TestResult result) {
         this.failures += result.getFailCount();
         this.passes += result.getPassCount();
         this.skips += result.getSkipCount();
@@ -52,7 +53,7 @@ public class JunitTestCaseGroup {
         return duration;
     }
 
-    public List<CaseResult> getTestcase() {
+    public List<TestResult> getTestcase() {
         return testcase;
     }
 }

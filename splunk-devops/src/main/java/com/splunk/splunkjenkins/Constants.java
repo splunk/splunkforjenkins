@@ -21,4 +21,5 @@ public class Constants {
     public static final String EVENT_CAUSED_BY="event_src";
     public static final String EVENT_SOURCE_TYPE="sourcetype";
     public static final String NODE_NAME = "node_name";
+    public static final String ERROR_MESSAGE_NA="(none)";
 }
