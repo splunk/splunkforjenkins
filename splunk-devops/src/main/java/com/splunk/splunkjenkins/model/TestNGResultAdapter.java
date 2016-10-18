@@ -27,11 +27,9 @@ public class TestNGResultAdapter extends AbstractTestResultAdapter<TestNGTestRes
                     TestCaseResult testCaseResult = new TestCaseResult();
                     testCaseResult.setTestName(methodResult.getName());
                     testCaseResult.setUniqueName(methodResult.getSafeName());
-                    testCaseResult.setStatus(methodResult.getStatus());
                     testCaseResult.setDuration(methodResult.getDuration());
                     testCaseResult.setClassName(methodResult.getClassName());
                     String status = Util.fixNull(methodResult.getStatus()).toLowerCase();
-                    testCaseResult.setStatus(status);
                     switch (status) {
                         case "fail":
                             MethodResultException exception = methodResult.getException();
@@ -51,9 +49,14 @@ public class TestNGResultAdapter extends AbstractTestResultAdapter<TestNGTestRes
                                 int failedSince = getFailedSince(run, methodResult.getId());
                                 testCaseResult.setFailedSince(failedSince);
                             }
+                            testCaseResult.setStatus(TestStatus.FAILURE);
                             break;
                         case "skip":
                             testCaseResult.setSkipped(true);
+                            testCaseResult.setStatus(TestStatus.SKIPPED);
+                            break;
+                        case "pass":
+                            testCaseResult.setStatus(TestStatus.PASSED);
                             break;
                     }
                     testCaseResult.setSkippedMessage(methodResult.getDescription());

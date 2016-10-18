@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins.model;
 
-import hudson.Util;
 import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
 
@@ -15,7 +14,7 @@ public class TestCaseResult extends TestResult {
     private String stdout, stderr;
     private int failedSince;
     private String uniqueName;
-    private String status;
+    private TestStatus status;
 
     @Override
     public TestObject getParent() {
@@ -126,11 +125,26 @@ public class TestCaseResult extends TestResult {
         this.uniqueName = uniqueName;
     }
 
-    public String getStatus() {
+    public TestStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
-        this.status = Util.fixNull(status).toLowerCase();
+    public void setStatus(TestStatus status) {
+        this.status = status;
+    }
+
+    @Override
+    public int getPassCount() {
+        return TestStatus.PASSED == status ? 1 : 0;
+    }
+
+    @Override
+    public int getFailCount() {
+        return TestStatus.FAILURE == status ? 1 : 0;
+    }
+
+    @Override
+    public int getSkipCount() {
+        return TestStatus.SKIPPED == status ? 1 : 0;
     }
 }
