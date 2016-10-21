@@ -7,6 +7,7 @@ import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.TestResult;
 import org.jvnet.tiger_types.Types;
 
+import javax.annotation.Nonnull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -32,6 +33,7 @@ public abstract class AbstractTestResultAdapter<A extends AbstractTestResultActi
         return getAction(build) != null;
     }
 
+    @Nonnull
     public static List<TestResult> getTestResult(Run build) {
         List<AbstractTestResultAdapter> adapters = ExtensionList.lookup(AbstractTestResultAdapter.class);
         for (AbstractTestResultAdapter adapter : adapters) {

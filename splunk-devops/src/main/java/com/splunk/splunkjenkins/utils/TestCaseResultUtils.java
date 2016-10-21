@@ -6,6 +6,7 @@ import hudson.model.Run;
 import hudson.tasks.test.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +20,11 @@ public class TestCaseResultUtils {
      * @param pageSize how many test cases to hold in one page
      * @return A list of JunitTestCaseGroup
      */
-    public static <T extends TestResult> List<JunitTestCaseGroup> split(List<T> results, int pageSize) {
+    public static <T extends TestResult> List<JunitTestCaseGroup> split(@Nonnull List<T> results, int pageSize) {
         List<JunitTestCaseGroup> testCasesCollect = new ArrayList<>();
+        if (results.isEmpty()) {
+            return testCasesCollect;
+        }
         JunitTestCaseGroup group = new JunitTestCaseGroup();
         testCasesCollect.add(group);
         for (T testCase : results) {
@@ -64,6 +68,7 @@ public class TestCaseResultUtils {
      * @param pageSize how many test cases to hold in one page
      * @return A list of JunitTestCaseGroup
      */
+    @Nonnull
     public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize) {
         List<JunitTestCaseGroup> junitReports = new ArrayList<>();
         if (build == null) {
