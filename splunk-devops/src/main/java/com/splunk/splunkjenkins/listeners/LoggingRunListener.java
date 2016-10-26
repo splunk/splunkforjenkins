@@ -134,38 +134,32 @@ public class LoggingRunListener extends RunListener<Run> {
         Map<String, Object> event = new HashMap<>();
         if (build.getProject().getScm() != null) {
             SCM scm = build.getProject().getScm();
-            try {
-                EnvVars envVars = build.getEnvironment(TaskListener.NULL);
-                String className = scm.getClass().getName();
-                //not support GIT_URL_N or SVN_URL_n
-                // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
-                switch (className) {
-                    case "hudson.plugins.git.GitSCM":
-                        event.put("scm", "git");
-                        event.put("scm_url", getScmURL(envVars, "GIT_URL"));
-                        event.put("branch", envVars.get("GIT_BRANCH"));
-                        event.put("revision", envVars.get("GIT_COMMIT"));
-                        break;
-                    case "hudson.scm.SubversionSCM":
-                        event.put("scm", "svn");
-                        event.put("scm_url", getScmURL(envVars, "SVN_URL"));
-                        event.put("revision", envVars.get("SVN_REVISION"));
-                        break;
-                    case "org.jenkinsci.plugins.p4.PerforceScm":
-                        event.put("scm", "p4");
-                        event.put("p4_client", envVars.get("P4_CLIENT"));
-                        event.put("revision", envVars.get("P4_CHANGELIST"));
-                        break;
-                    case "hudson.scm.NullSCM":
-                        event.put("scm", "");
-                        break;
-                    default:
-                        event.put("scm", className);
-                }
-            } catch (InterruptedException e) {
-                LOG.log(Level.SEVERE, "InterruptedException failed to extract scm info", e);
-            } catch (IOException e) {
-                LOG.log(Level.SEVERE, "IOException failed to extract scm info", e);
+            EnvVars envVars =new EnvVars();
+            scm.buildEnvVars(build,envVars);
+            String className = scm.getClass().getName();
+            //not support GIT_URL_N or SVN_URL_n
+            // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
+            switch (className) {
+                case "hudson.plugins.git.GitSCM":
+                    event.put("scm", "git");
+                    event.put("scm_url", getScmURL(envVars, "GIT_URL"));
+                    event.put("branch", envVars.get("GIT_BRANCH"));
+                    event.put("revision", envVars.get("GIT_COMMIT"));
+                    break;
+                case "hudson.scm.SubversionSCM":
+                    event.put("scm", "svn");
+                    event.put("scm_url", getScmURL(envVars, "SVN_URL"));
+                    event.put("revision", envVars.get("SVN_REVISION"));
+                    break;
+                case "org.jenkinsci.plugins.p4.PerforceScm":
+                    event.put("scm", "p4");
+                    event.put("p4_client", envVars.get("P4_CLIENT"));
+                    event.put("revision", envVars.get("P4_CHANGELIST"));
+                    break;
+                case "hudson.scm.NullSCM":
+                    break;
+                default:
+                    event.put("scm", className);
             }
         }
         return event;

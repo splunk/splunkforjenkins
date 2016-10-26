@@ -10,6 +10,7 @@ import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import groovy.lang.GroovyShell;
+import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.console.ConsoleNote;
@@ -223,7 +224,7 @@ public class LogEventHelper {
         return event;
     }
 
-    public static int sendFiles(Run build, FilePath ws,Map<String, String> envVars, TaskListener listener,
+    public static int sendFiles(Run build, FilePath ws, Map<String, String> envVars, TaskListener listener,
                                 String includes, String excludes, boolean sendFromSlave, long maxFileSize) {
         int eventCount = 0;
         if (ws == null) {
@@ -446,12 +447,12 @@ public class LogEventHelper {
                 slaveInfo.put("running_builds", builds);
             }
         }
-        slaveInfo.put("uptime",getUpTime(computer));
+        slaveInfo.put("uptime", getUpTime(computer));
         return slaveInfo;
     }
 
     @SuppressFBWarnings("DE_MIGHT_IGNORE")
-    private static Object getUpTime(Computer computer){
+    private static Object getUpTime(Computer computer) {
         Method method = getAccessibleMethod(computer.getClass(), "getUptime", new Class<?>[0]);
         if (method != null) {
             try { //cloud slave defined getUptime method
@@ -513,16 +514,51 @@ public class LogEventHelper {
         return slaveStatusMap;
     }
 
-    public static Map<String, Object> getBuildVariables(Run run) {
-        Map<String, Object> values = new HashMap<>();
-        ParametersAction parameters = run.getAction(ParametersAction.class);
-        if (parameters != null) {
+    /**
+     * @param run the build
+     * @return build env with masked password variables
+     */
+    public static EnvVars getEnvironment(Run run) {
+        EnvVars vars;
+        Map<String, String> maskPasswords = new HashMap<>();
+        List<ParametersAction> parameterActions = run.getActions(ParametersAction.class);
+        for (ParametersAction parameters : parameterActions) {
             for (ParameterValue p : parameters) {
-                values.put(p.getName(), p.getValue());
+                if ((p instanceof PasswordParameterValue)) {
+                    maskPasswords.put(p.getName(), MASK_PASSWORD);
+                }
             }
         }
-        if (!values.keySet().contains("scm_repo") && run instanceof AbstractBuild) {
-            values.put("scm_repo", getScmInfo((AbstractBuild) run));
+        try {
+            vars = run.getEnvironment(BuildListener.NULL);
+            //overwrite with masked password
+            vars.putAll(maskPasswords);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "failed to get build environment for build {}", run.getUrl());
+            vars = new EnvVars();
+        }
+        return vars;
+    }
+
+    /**
+     * @param run the build
+     * @return build variables with password masked
+     */
+    public static Map<String, Object> getBuildVariables(Run run) {
+        Map<String, Object> values = new HashMap<>();
+        List<ParametersAction> parameterActions = run.getActions(ParametersAction.class);
+        for (ParametersAction parameters : parameterActions) {
+            for (ParameterValue p : parameters) {
+                if (p == null) continue;
+                if (!(p instanceof PasswordParameterValue)) {
+                    values.put(p.getName(), p.getValue());
+                } else {
+                    values.put(p.getName(), MASK_PASSWORD);
+                }
+            }
+        }
+        if (run instanceof AbstractBuild) {
+            values.putAll(getScmInfo((AbstractBuild) run));
         }
         return values;
     }
