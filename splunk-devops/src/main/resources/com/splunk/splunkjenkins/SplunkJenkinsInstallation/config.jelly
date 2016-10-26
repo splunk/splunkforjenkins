@@ -5,7 +5,7 @@
         <f:entry title="${%Enable}" field="enabled">
             <f:checkbox/>
         </f:entry>
-        <f:entry title="${%Hostname}" field="host">
+        <f:entry title="${%Indexer hostname}" field="host">
             <f:textbox clazz="required"/>
         </f:entry>
         <f:entry title="${%HTTP Input Port}" field="port"
