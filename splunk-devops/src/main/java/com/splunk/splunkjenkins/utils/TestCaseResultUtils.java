@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.model.AbstractTestResultAdapter;
+import com.splunk.splunkjenkins.model.EmptyTestCaseGroup;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
 import hudson.model.Run;
 import hudson.tasks.test.TestResult;
@@ -82,6 +83,9 @@ public class TestCaseResultUtils {
             if (abstractTestResultAction != null) {
                 return splitRaw(abstractTestResultAction, pageSize);
             }
+        }
+        if(junitReports.isEmpty()){
+            junitReports.add(new EmptyTestCaseGroup());
         }
         return junitReports;
     }
