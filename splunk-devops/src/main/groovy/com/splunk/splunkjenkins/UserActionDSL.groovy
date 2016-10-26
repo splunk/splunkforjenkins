@@ -15,12 +15,15 @@ import org.codehaus.groovy.control.customizers.ImportCustomizer
 import java.util.logging.Level
 import java.util.logging.Logger
 
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getBuildVariables
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getEnvironment
+
 public class UserActionDSL {
     static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
     public void perform(Run build, TaskListener listener, String scriptText) {
         try {
-            EnvVars enVars = build.getEnvironment(listener);
+            Map buildParameters = getBuildVariables(build);
             if (StringUtils.isNotEmpty(scriptText)) {
                 def workSpace;
                 if (build.metaClass.respondsTo(build, "getWorkspace")) {
@@ -28,7 +31,7 @@ public class UserActionDSL {
                     workSpace = build.workspace;
                 }
                 RunDelegate delegate = new RunDelegate(build: build, workSpace: workSpace,
-                        env: enVars, listener: listener);
+                        env: buildParameters, listener: listener);
                 CompilerConfiguration cc = new CompilerConfiguration();
                 cc.scriptBaseClass = ClosureScript.class.name;
                 ImportCustomizer ic = new ImportCustomizer()
