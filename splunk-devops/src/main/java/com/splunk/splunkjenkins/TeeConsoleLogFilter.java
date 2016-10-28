@@ -27,8 +27,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * only need to tee the write(int b) method, leave write(byte b[], int off, int len)
  * and public void write(byte b[]) alone since they will call write(int b)
  * the filter apply order is determined by descent ordinal order
+ * <p>
+ * Some log filter's flush or close function is no-op, causes TeeConsoleLogFilter cache not flushed.
+ * User an higher oridial so it wil be created at last and will be the outermost filter,
+ * the feed log will be un-filtered.
  */
-@Extension(ordinal = 1)
+@Extension(ordinal = Integer.MAX_VALUE - 1)
 @SuppressWarnings("nouse")
 public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializable {
     private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilter.class.getName());
@@ -83,6 +87,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         @Override
         public void close() throws IOException {
             super.close();
+            if (logText.size() > 0) {
+                flushLog();
+            }
             logText.close();
             branch.close();
         }
