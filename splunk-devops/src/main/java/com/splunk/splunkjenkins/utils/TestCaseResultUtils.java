@@ -19,6 +19,7 @@ public class TestCaseResultUtils {
      *
      * @param results  Test Results
      * @param pageSize how many test cases to hold in one page
+     * @param <T> generic sub types of TestResult
      * @return A list of JunitTestCaseGroup
      */
     public static <T extends TestResult> List<JunitTestCaseGroup> split(@Nonnull List<T> results, int pageSize) {
