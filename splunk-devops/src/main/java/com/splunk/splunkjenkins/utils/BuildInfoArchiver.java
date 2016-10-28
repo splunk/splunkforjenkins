@@ -12,11 +12,17 @@ import jenkins.model.Jenkins;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 
 public class BuildInfoArchiver {
+    Set<String> processedJob = Collections.newSetFromMap(
+            new WeakHashMap<String, Boolean>());
+
     /**
      * Send existing build
      *
@@ -70,7 +76,13 @@ public class BuildInfoArchiver {
             RunList<Run> runList = project.getBuilds();
             LoggingRunListener runListener = RunListener.all().get(LoggingRunListener.class);
             for (Run run : runList) {
-                if (run.getStartTimeInMillis() > startTime && run.getStartTimeInMillis() + run.getDuration() < endTime) {
+                if (processedJob.contains(run.getUrl())) {
+                    continue;
+                }
+                processedJob.add(run.getUrl());
+                long jobTimestamp = run.getStartTimeInMillis() + run.getDuration();
+                //check whether the build is in the time range
+                if (jobTimestamp >= startTime && jobTimestamp < endTime) {
                     count++;
                     //resend build event
                     runListener.onCompleted(run, TaskListener.NULL);
@@ -87,6 +99,9 @@ public class BuildInfoArchiver {
                     } catch (IOException e) {
                         //just ignore
                     }
+                } else if (run.getStartTimeInMillis() < startTime) {
+                    //Job builds is ordered by start time(build id)
+                    break;
                 }
             }
         }
