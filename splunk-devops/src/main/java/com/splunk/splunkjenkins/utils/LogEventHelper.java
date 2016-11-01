@@ -182,6 +182,11 @@ public class LogEventHelper {
         return emptyToNull(value) != null;
     }
 
+    /**
+     * This method may trigger load user operations.
+     *
+     * @return User display name
+     */
     public static String getUserName() {
         User user = User.current();
         if (user == null) {

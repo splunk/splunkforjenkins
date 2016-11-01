@@ -13,10 +13,12 @@ public class LoggingInitStep {
     private final static String rootLoggerName = "";
 
     @Initializer(after = JOB_LOADED)
-    public static void forwardJdkLog() {
+    public static void setupSplunkJenkins() {
         //only log warning message for HealthMonitor which runs every 20s
         Logger.getLogger(HealthMonitor.class.getName()).setLevel(Level.WARNING);
         Logger.getLogger(rootLoggerName).addHandler(JdkSplunkLogHandler.LogHolder.LOG_HANDLER);
+        //init plugin
+        SplunkJenkinsInstallation.markComplete(true);
     }
 
 }

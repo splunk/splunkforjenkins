@@ -55,11 +55,11 @@ public class JdkSplunkLogHandler extends Handler {
         //logger may trigger recursive call, need skip them
         private final String[] skipLoggerNames = {
                 SplunkLogService.class.getName(), LogConsumer.class.getName(),
-                "jenkins.InitReactorRunner", "org.apache.http", "hudson.node_monitors", "hudson.ExtensionList"};
+                "jenkins.InitReactorRunner", "org.apache.http", "hudson.node_monitors", "hudson.Extension"};
 
         @Override
         public boolean isLoggable(LogRecord record) {
-            if (SplunkJenkinsInstallation.loaded.get()) {
+            if (! SplunkJenkinsInstallation.isLoadCompleted()) {
                 return false;
             }
             String logSource = record.getSourceClassName();

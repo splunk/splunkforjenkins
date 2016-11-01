@@ -8,6 +8,7 @@ import hudson.model.Item;
 import hudson.model.Saveable;
 import hudson.model.User;
 import hudson.model.listeners.SaveableListener;
+import jenkins.model.Jenkins;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
@@ -36,6 +37,9 @@ public class LoggingConfigListener extends SaveableListener {
 
     @Override
     public void onChange(Saveable saveable, XmlFile file) {
+        if (!SplunkJenkinsInstallation.isLoadCompleted()) {
+            return;
+        }
         String configPath = file.getFile().getAbsolutePath();
         if (saveable == null || IGNORED.matcher(configPath).find()) {
             return;
@@ -44,8 +48,7 @@ public class LoggingConfigListener extends SaveableListener {
             //we use SecurityListener to capture login/logout events
             return;
         }
-        String user = getUserName();
-        if ("SYSTEM".equals(user) || SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
+        if ("SYSTEM".equals(Jenkins.getAuthentication().getName()) || SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
             //ignore changes made by daemons or background jobs
             return;
         }

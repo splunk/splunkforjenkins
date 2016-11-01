@@ -50,6 +50,7 @@ public class SplunkConfigUtil {
     }
 
     public static synchronized boolean checkTokenAvailable() {
+        SplunkJenkinsInstallation.markComplete(false);
         String password = System.getProperty("splunk-passwd");
         if (password == null) {
             System.err.println("please use mvn -Dsplunk-password=AdminPassword -Dsplunk-host=ip-address to run the test\n" +
@@ -130,6 +131,7 @@ public class SplunkConfigUtil {
         config.save();
         boolean isValid = config.isValid();
         LOG.fine("splunk httpinput collector config is valid ?" + isValid);
+        SplunkJenkinsInstallation.markComplete(true);
         return isValid;
     }
 

@@ -4,6 +4,7 @@ import com.splunk.splunkjenkins.model.EventType;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -22,7 +23,6 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -38,14 +38,14 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
-    public static final transient AtomicBoolean loaded = new AtomicBoolean();
+    private static transient boolean loadCompleted = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
     public transient static final int MIN_BUFFER_SIZE = 2048;
     private transient static final int MAX_BUFFER_SIZE = 1 << 21;
 
     private transient volatile static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
-    // Defaults plugin global config values:
+    // Defaults plugin global config values
     private boolean enabled = false;
     private String host;
     private String token;
@@ -79,7 +79,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             } catch (IOException e) {
                 //ignore
             }
-            loaded.getAndSet(true);
             this.updateCache();
         }
     }
@@ -94,6 +93,21 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         } else {
             return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
         }
+    }
+
+    /**
+     * @return true if the plugin had been setup by Jenkins (constructor had been called)
+     */
+    public static boolean isLoadCompleted() {
+        return loadCompleted && Jenkins.getInstance() != null;
+    }
+
+    /**
+     * mark this plugin as initiated
+     * @param completed mark the init as initiate completed
+     */
+    public static void markComplete(boolean completed) {
+        loadCompleted = completed;
     }
 
     /**
