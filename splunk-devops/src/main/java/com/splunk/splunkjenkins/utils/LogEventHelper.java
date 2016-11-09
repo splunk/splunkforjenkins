@@ -18,9 +18,11 @@ import hudson.model.*;
 import hudson.model.Queue;
 import hudson.model.queue.WorkUnit;
 import hudson.node_monitors.NodeMonitor;
+import hudson.tasks.Publisher;
 import hudson.triggers.SCMTrigger;
 import hudson.triggers.TimerTrigger;
 import hudson.util.ByteArrayOutputStream2;
+import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
@@ -635,4 +637,29 @@ public class LogEventHelper {
         return FormValidation.ok();
     }
 
+    /**
+     * check if the project has publisher
+     *
+     * @param shortClassName , common used publishers are
+     * @return
+     */
+    public static boolean hasPublisherName(String shortClassName, Run build) {
+        boolean found = false;
+        if (!(build instanceof AbstractBuild)) {
+            return found;
+        }
+        Descriptor<Publisher> publisherDescriptor = Jenkins.getInstance().getPublisher(shortClassName);
+        if (publisherDescriptor == null) {
+            return found;
+        }
+        Class clazz = publisherDescriptor.clazz;
+        DescribableList<Publisher, Descriptor<Publisher>> publishers = ((AbstractBuild) build).getProject().getPublishersList();
+        for (Publisher publisher : publishers) {
+            if (clazz.isInstance(publisher)) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
 }

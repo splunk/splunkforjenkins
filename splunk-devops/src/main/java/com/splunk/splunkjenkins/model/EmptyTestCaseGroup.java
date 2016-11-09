@@ -5,8 +5,10 @@ import hudson.tasks.test.TestResult;
 import java.util.Collections;
 import java.util.List;
 
+import static com.splunk.splunkjenkins.Constants.NO_TEST_REPORT_FOUND;
+
 public class EmptyTestCaseGroup extends JunitTestCaseGroup {
-    private String message = "no test case found";
+    private String message;
 
     public String getMessage() {
         return message;
@@ -40,5 +42,9 @@ public class EmptyTestCaseGroup extends JunitTestCaseGroup {
     @Override
     public List<TestResult> getTestcase() {
         return Collections.emptyList();
+    }
+
+    public void setWarning(boolean flag) {
+        this.message = flag?NO_TEST_REPORT_FOUND:null;
     }
 }

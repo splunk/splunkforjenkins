@@ -3,9 +3,13 @@ package com.splunk.splunkjenkins.utils;
 import com.splunk.splunkjenkins.model.AbstractTestResultAdapter;
 import com.splunk.splunkjenkins.model.EmptyTestCaseGroup;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
+import hudson.model.Descriptor;
+import hudson.model.Result;
 import hudson.model.Run;
+import hudson.tasks.Publisher;
 import hudson.tasks.test.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
+import hudson.util.DescribableList;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
@@ -13,13 +17,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.splunk.splunkjenkins.utils.LogEventHelper.hasPublisherName;
+
 public class TestCaseResultUtils {
     /**
      * split test result into groups, each contains maximum pageSize testcases
      *
      * @param results  Test Results
      * @param pageSize how many test cases to hold in one page
-     * @param <T> generic sub types of TestResult
+     * @param <T>      generic sub types of TestResult
      * @return A list of JunitTestCaseGroup
      */
     public static <T extends TestResult> List<JunitTestCaseGroup> split(@Nonnull List<T> results, int pageSize) {
@@ -82,11 +88,16 @@ public class TestCaseResultUtils {
             //last resort, try AbstractTestResultAction
             AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
             if (abstractTestResultAction != null) {
-                return splitRaw(abstractTestResultAction, pageSize);
+                junitReports = splitRaw(abstractTestResultAction, pageSize);
             }
         }
-        if(junitReports.isEmpty()){
-            junitReports.add(new EmptyTestCaseGroup());
+        if (junitReports.isEmpty()) {
+            EmptyTestCaseGroup emptyReport = new EmptyTestCaseGroup();
+            if (build.getResult() != Result.SUCCESS &&
+                    (hasPublisherName("junit.JUnitResultArchiver", build) || hasPublisherName("testng.Publisher", build))) {
+                emptyReport.setWarning(true);
+            }
+            junitReports.add(emptyReport);
         }
         return junitReports;
     }

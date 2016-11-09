@@ -18,9 +18,12 @@ public class Constants {
     public static final String JENKINS_CONFIG_PREFIX = "jenkins://";
     public static final String AUDIT_SOURCE = "audit_trail";
     public static final String USER_NAME_KEY = "user";
-    public static final String EVENT_CAUSED_BY="event_src";
-    public static final String EVENT_SOURCE_TYPE="sourcetype";
+    public static final String EVENT_CAUSED_BY = "event_src";
+    public static final String EVENT_SOURCE_TYPE = "sourcetype";
     public static final String NODE_NAME = "node_name";
-    public static final String ERROR_MESSAGE_NA="(none)";
+    public static final String ERROR_MESSAGE_NA = "(none)";
     public static final String MASK_PASSWORD = "***";
+    public static final String NO_TEST_REPORT_FOUND="No TestResult";
+    public static final String TEST_REPORT_NOT_CONFIGURED = "Junit or xUnit report not configured";
+
 }

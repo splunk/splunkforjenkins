@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins
 import com.splunk.splunkjenkins.listeners.LoggingRunListener
 import com.splunk.splunkjenkins.model.EventType
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup
+import com.splunk.splunkjenkins.utils.LogEventHelper
 import com.splunk.splunkjenkins.utils.SplunkLogService
 import com.splunk.splunkjenkins.utils.TestCaseResultUtils
 import hudson.EnvVars
@@ -11,7 +12,6 @@ import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.Run
 import hudson.model.TaskListener
-import hudson.tasks.Publisher
 
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -158,24 +158,14 @@ public class RunDelegate {
     public Action getAction(Class<? extends Action> type) {
         return build.getAction(type);
     }
+
     /**
      * check if the project has publisher
-     * @param className , common used publishers are
+     * @param shortClassName , common used publishers are junit.JUnitResultArchiver, testng.Publisher
      * @return
      */
-    def boolean hasPublisherName(String className) {
-        boolean found = false;
-        if (build instanceof AbstractBuild) {
-            return found;
-        }
-        Class publisherClazz = Class.forName(className);
-        for (Publisher publisher : ((AbstractBuild) build).getProject().getPublishersList()) {
-            if (publisherClazz.isInstance(publisher)) {
-                found = true;
-                break;
-            }
-        }
-        return found;
+    def boolean hasPublisherName(String shortClassName) {
+        return LogEventHelper.hasPublisherName(shortClassName, build);
     }
 
     @Override
