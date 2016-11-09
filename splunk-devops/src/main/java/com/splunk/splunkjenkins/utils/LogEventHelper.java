@@ -555,7 +555,7 @@ public class LogEventHelper {
         for (ParametersAction parameters : parameterActions) {
             for (ParameterValue p : parameters) {
                 if (p == null) continue;
-                if (!(p instanceof PasswordParameterValue)) {
+                if (!p.isSensitive()) {
                     values.put(p.getName(), p.getValue());
                 } else {
                     values.put(p.getName(), MASK_PASSWORD);
