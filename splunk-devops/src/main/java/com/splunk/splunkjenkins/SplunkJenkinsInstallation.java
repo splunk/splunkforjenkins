@@ -199,14 +199,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             String scheme = useSSL ? "https" : "http";
             jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT, null, null).toString();
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
-            if (metaDataProperties == null) {
-                metaDataProperties = new Properties();
-            }
+            //discard previous metadata cache and load new one
+            metaDataProperties = new Properties();
             if (metaDataConfig != null) {
                 metaDataProperties.load(new StringReader(metaDataConfig));
             }
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, "Invalid Splunk host " + host, e);
+            LOG.log(Level.SEVERE, "update cache failed, splunk host:" + host, e);
         }
     }
 
