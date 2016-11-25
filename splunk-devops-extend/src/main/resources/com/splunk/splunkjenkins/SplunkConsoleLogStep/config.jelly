@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core">
+    Forwarding pipeline console log to Splunk
+</j:jelly>

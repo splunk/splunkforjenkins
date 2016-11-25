@@ -11,7 +11,7 @@
 
     <groupId>com.splunk.splunkins</groupId>
     <artifactId>pom</artifactId>
-    <version>1.3.2-SNAPSHOT</version>
+    <version>1.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Splunk Plugin Main Module</name>

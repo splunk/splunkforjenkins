@@ -16,7 +16,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
-import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -37,22 +36,46 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializable {
     private static final Logger LOG = Logger.getLogger(TeeConsoleLogFilter.class.getName());
     private static final long serialVersionUID = 1091734060617902662L;
+    private static final String SUFFIX = "console";
+    private String source;
+
+    public TeeConsoleLogFilter(String source) {
+        this.source = source;
+    }
+
+    public TeeConsoleLogFilter(Run run) {
+        if (run != null) {
+            this.source = run.getUrl() + SUFFIX;
+        }
+    }
+
+    public TeeConsoleLogFilter() {
+        this.source = "Jobconsole";
+    }
 
     //backwards compatibility
     @Override
     public OutputStream decorateLogger(AbstractBuild build, OutputStream output) throws IOException, InterruptedException {
-        return teeOutput(output, build.getUrl() + "console", true);
+        return decorateLogger((Run) build, output);
     }
 
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Run build, OutputStream output) throws IOException, InterruptedException {
-        return teeOutput(output, build.getUrl() + "console", true);
+        String logSource = this.source;
+        if (build != null) {
+            logSource = build.getUrl() + SUFFIX;
+        }
+        return teeOutput(output, logSource, true);
 
     }
 
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Computer computer, OutputStream logger) throws IOException, InterruptedException {
-        return teeOutput(logger, computer.getUrl() + "log", false);
+        String logSource = this.source;
+        if (computer != null) {
+            logSource = computer.getUrl() + SUFFIX;
+        }
+        return teeOutput(logger, logSource, false);
     }
 
     private OutputStream teeOutput(OutputStream output, String source, boolean addLineNumber) {
@@ -70,7 +93,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         //holds data received, will be cleared when \n received
         private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(512);
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
-        private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
+        private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(SplunkJenkinsInstallation.MIN_BUFFER_SIZE);
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
 
         public TeeOutputStream(OutputStream out, String sourceName) {

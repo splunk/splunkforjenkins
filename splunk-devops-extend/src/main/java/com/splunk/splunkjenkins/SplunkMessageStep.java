@@ -56,7 +56,7 @@ public class SplunkMessageStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "sendSplunk";
+            return "sendSplunkScript";
         }
 
         @Nonnull
