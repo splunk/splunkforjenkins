@@ -1,35 +1,35 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.EventType;
+import com.splunk.splunkjenkins.model.MetaDataConfigItem;
 import hudson.Extension;
+import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
+import jenkins.model.JenkinsLocationConfiguration;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.UnknownHostException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.net.*;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
-import static hudson.Util.getHostName;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
@@ -62,6 +62,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String scriptContent;
     //the app-jenkins link
     private String splunkAppUrl;
+    private String metadataHost;
+    //below are all transient properties
     public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
     private transient String jsonUrl;
@@ -69,6 +71,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient File scriptFile;
     private transient long scriptTimestamp;
     private transient String postActionScript;
+    private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
@@ -79,6 +82,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             } catch (IOException e) {
                 //ignore
             }
+            this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
             this.updateCache();
         }
     }
@@ -104,6 +108,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     /**
      * mark this plugin as initiated
+     *
      * @param completed mark the init as initiate completed
      */
     public static void markComplete(boolean completed) {
@@ -122,6 +127,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        this.metadataItemSet = null; // otherwise bindJSON will never clear it once set
         req.bindJSON(this, formData);
         //handle choice
         if ("file".equals(formData.get("commandsOrFileInSplunkins"))) {
@@ -424,18 +430,45 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         this.splunkAppUrl = splunkAppUrl;
     }
 
-    public String getMetadataHost() {
-        if (metaDataProperties != null && metaDataProperties.containsKey("host")) {
-            return (String) metaDataProperties.get("host");
-        }
-        return getHostName();
-    }
-
     public String getLocalHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            return "yourhostname";
+            return "jenkins";
         }
+    }
+
+    public Set<MetaDataConfigItem> getMetadataItemSet() {
+        return metadataItemSet;
+    }
+
+    public String getMetadataHost() {
+        if (metadataHost != null) {
+            return metadataHost;
+        } else {
+            //backwards compatible
+            if (metaDataProperties != null && metaDataProperties.containsKey("host")) {
+                return metaDataProperties.getProperty("host");
+            } else {
+                String url = JenkinsLocationConfiguration.get().getUrl();
+                if (url != null && !url.startsWith("http://localhost")) {
+                    try {
+                        return (new URL(url)).getHost();
+                    } catch (MalformedURLException e) {
+                        //do not care,just ignore
+                    }
+                }
+                return getLocalHostName();
+            }
+        }
+    }
+
+    public void setMetadataHost(String metadataHost) {
+        this.metadataHost = metadataHost;
+    }
+
+    public void setMetadataItemSet(Set<MetaDataConfigItem> metadataItemSet) {
+        this.metadataItemSet = metadataItemSet;
+        this.metaDataConfig = MetaDataConfigItem.toString(metadataItemSet);
     }
 }

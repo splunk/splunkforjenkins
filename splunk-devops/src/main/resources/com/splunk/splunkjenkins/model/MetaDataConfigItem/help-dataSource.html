@@ -1,0 +1,37 @@
+<table>
+    <tr>
+        <td> build_report</td>
+        <td> Junit or other Reports sent by calling "send(message)" DSL script
+        </td>
+    </tr>
+    <tr>
+        <td> build_event</td>
+        <td> Sent when job are started and completed
+        </td>
+    </tr>
+    <tr>
+        <td> queue_info</td>
+        <td> Basic queue information and Jenkins health metrics
+        </td>
+    </tr>
+    <tr>
+        <td> console_log</td>
+        <td> Build console log, e.g. job/abc/123/console, slave log and Jenkins master log (jenkins.log)
+        </td>
+    </tr>
+    <tr>
+        <td> file</td>
+        <td> Artifact contents, send by calling "archive(includes)" DSL script
+        </td>
+    </tr>
+    <tr>
+        <td> slave_info</td>
+        <td> The slave(agent) monitor data
+        </td>
+    </tr>
+    <tr>
+        <td> jenkins_config</td>
+        <td> The contents of Jenkins configuration items, e.g. config.xml, sent when the config file get updated.
+        </td>
+    </tr>
+</table>

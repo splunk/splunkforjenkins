@@ -19,16 +19,20 @@
                  help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
             <f:checkbox default="true"/>
         </f:entry>
-        <f:entry title="${%Raw Events Supported}" field="rawEventEnabled">
-            <f:checkbox default="true"/>
+        <f:entry title="${%Jenkins Master Hostname}" field="metadataHost">
+            <f:textbox clazz="required"/>
         </f:entry>
-        <f:entry title="${%MetaData}" field="metaDataConfig">
-            <f:textarea default="${%default_metadata(instance.getLocalHostName())}"/>
-        </f:entry>
-
         <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testHttpInput"
                           with="host,port,token,useSSL,metaDataConfig"/>
         <f:advanced>
+            <f:entry title="${%Raw Events Supported}" field="rawEventEnabled">
+                <f:checkbox default="true"/>
+            </f:entry>
+            <f:entry title="${%Custom Data Source}">
+                <f:repeatable field="metadataItemSet">
+                    <st:include page="config.jelly" class="${descriptor.clazz}"/>
+                </f:repeatable>
+            </f:entry>
             <f:entry title="${%Splunk App for Jenkins Link}" field="splunkAppUrl">
                 <f:textbox/>
             </f:entry>

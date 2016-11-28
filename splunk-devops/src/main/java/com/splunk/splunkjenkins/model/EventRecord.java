@@ -13,7 +13,7 @@ import static com.splunk.splunkjenkins.Constants.EVENT_SOURCE_TYPE;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 
 public class EventRecord {
-    private final static String METADATA_KEYS[] = {"index", "source", "host", EVENT_SOURCE_TYPE};
+    private final static String METADATA_KEYS[] = {"index", "source", EVENT_SOURCE_TYPE};
     private long time;
     private int retryCount;
     private Object message;
@@ -117,6 +117,7 @@ public class EventRecord {
                     .putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)))
                     .putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
         }
+        metaDataBuilder.putIfAbsent("host", config.getMetadataHost());
         return metaDataBuilder.getQueryMap();
     }
 
