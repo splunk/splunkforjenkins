@@ -28,10 +28,13 @@
             <f:entry title="${%Raw Events Supported}" field="rawEventEnabled">
                 <f:checkbox default="true"/>
             </f:entry>
-            <f:entry title="${%Custom Data Source}">
+            <f:entry title="${%Custom Metadata}">
                 <f:repeatable field="metadataItemSet">
                     <st:include page="config.jelly" class="${descriptor.clazz}"/>
                 </f:repeatable>
+            </f:entry>
+            <f:entry title="${%Event Source}" field="metadataSource">
+                <f:textbox default="jenkins"/>
             </f:entry>
             <f:entry title="${%Splunk App for Jenkins Link}" field="splunkAppUrl">
                 <f:textbox/>

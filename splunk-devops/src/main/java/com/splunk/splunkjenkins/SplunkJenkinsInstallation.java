@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins;
 import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.model.MetaDataConfigItem;
 import hudson.Extension;
+import hudson.Util;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
@@ -60,6 +61,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     //the app-jenkins link
     private String splunkAppUrl;
     private String metadataHost;
+    private String metadataSource;
+
     //below are all transient properties
     public transient Properties metaDataProperties = new Properties();
     //cached values, will not be saved to disk!
@@ -69,17 +72,19 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient long scriptTimestamp;
     private transient String postActionScript;
     private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
+    private transient static String defaultMetaData;
+
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
             super.load();
+            this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
             //load default metadata
             try (InputStream metaInput = this.getClass().getClassLoader().getResourceAsStream("metadata.properties")) {
-                metaDataProperties.load(metaInput);
+                defaultMetaData=IOUtils.toString(metaInput);
             } catch (IOException e) {
                 //ignore
             }
-            this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
             this.updateCache();
         }
     }
@@ -126,6 +131,9 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
         this.metadataItemSet = null; // otherwise bindJSON will never clear it once set
         req.bindJSON(this, formData);
+        if (this.metadataItemSet == null) {
+            this.metaDataConfig = "";
+        }
         //handle choice
         if ("file".equals(formData.get("commandsOrFileInSplunkins"))) {
             this.scriptContent = null;
@@ -147,7 +155,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             try {
                 URI uri = new URI(hostName);
                 String domain = uri.getHost();
-                return FormValidation.warning(Messages.HostNameNoHTTP(domain));
+                return FormValidation.warning(Messages.HostNameSchemaWarning(domain));
             } catch (URISyntaxException e) {
                 return FormValidation.warning(Messages.HostNameInvalid());
             }
@@ -155,6 +163,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                 || hostName.endsWith("splunktrial.com")) &&
                 !(hostName.startsWith("input-") || hostName.startsWith("http-inputs-"))) {
             return FormValidation.warning(Messages.CloudHostPrefix(hostName));
+        } else if (hostName.contains(",")) {
+            return FormValidation.warning(Messages.HostNameListWarning());
         } else {
             return FormValidation.ok();
         }
@@ -213,8 +223,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
             //discard previous metadata cache and load new one
             metaDataProperties = new Properties();
-            if (metaDataConfig != null) {
-                metaDataProperties.load(new StringReader(metaDataConfig));
+            String combinedMetaData= Util.fixNull(defaultMetaData)+Util.fixNull(metaDataConfig);
+            if (!isEmpty(combinedMetaData)) {
+                metaDataProperties.load(new StringReader(combinedMetaData));
+            }
+            if (isNotEmpty(metadataSource)) {
+                metaDataProperties.put("source", metadataSource);
             }
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "update cache failed, splunk host:" + host, e);
@@ -399,8 +413,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         map.put("host", host);
         map.put("port", port);
         map.put("useSSL", useSSL);
-        map.put("metaDataConfig", metaDataConfig);
+        map.put("metaDataConfig", Util.fixNull(defaultMetaData)+Util.fixNull(metaDataConfig));
         map.put("retriesOnError", retriesOnError);
+        map.put("metadataHost",metadataHost);
+        map.put("metadataSource",metadataSource);
         return map;
     }
 
@@ -476,5 +492,19 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public void setMetadataItemSet(Set<MetaDataConfigItem> metadataItemSet) {
         this.metadataItemSet = metadataItemSet;
         this.metaDataConfig = MetaDataConfigItem.toString(metadataItemSet);
+    }
+
+    public String getMetadataSource() {
+        if (metadataSource != null) {
+            return metadataSource;
+        } else if (metaDataProperties != null && metaDataProperties.containsKey("source")) {
+            return metaDataProperties.getProperty("source");
+        } else {
+            return "";
+        }
+    }
+
+    public void setMetadataSource(String metadataSource) {
+        this.metadataSource = metadataSource;
     }
 }
