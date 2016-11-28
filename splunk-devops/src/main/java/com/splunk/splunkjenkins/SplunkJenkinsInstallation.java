@@ -3,7 +3,6 @@ package com.splunk.splunkjenkins;
 import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.model.MetaDataConfigItem;
 import hudson.Extension;
-import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
@@ -13,11 +12,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -146,12 +143,21 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public FormValidation doCheckHost(@QueryParameter("value") String hostName) {
         if (StringUtils.isBlank(hostName)) {
             return FormValidation.warning(Messages.PleaseProvideHost());
+        } else if (hostName.startsWith("http://") || hostName.startsWith("https://")) {
+            try {
+                URI uri = new URI(hostName);
+                String domain = uri.getHost();
+                return FormValidation.warning(Messages.HostNameNoHTTP(domain));
+            } catch (URISyntaxException e) {
+                return FormValidation.warning(Messages.HostNameInvalid());
+            }
         } else if ((hostName.endsWith("cloud.splunk.com") || hostName.endsWith("splunkcloud.com")
                 || hostName.endsWith("splunktrial.com")) &&
                 !(hostName.startsWith("input-") || hostName.startsWith("http-inputs-"))) {
             return FormValidation.warning(Messages.CloudHostPrefix(hostName));
+        } else {
+            return FormValidation.ok();
         }
-        return FormValidation.ok();
     }
 
     public FormValidation doCheckToken(@QueryParameter("value") String value) {
@@ -430,7 +436,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         this.splunkAppUrl = splunkAppUrl;
     }
 
-    public String getLocalHostName() {
+    private String getLocalHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
