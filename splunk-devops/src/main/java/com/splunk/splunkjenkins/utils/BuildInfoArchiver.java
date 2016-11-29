@@ -40,13 +40,16 @@ public class BuildInfoArchiver {
     }
 
     /**
-     * @param jobName   the job name, e.g. folder/jobname or job/folder/job/jobname
+     * @param jobName   the job name, e.g. /folder/jobname or /job/folder/job/jobname
      * @param startTime the start time window of build
      * @param endTime   the end time window of build
      * @return total number of builds whose result or log was resent
      */
     public int run(String jobName, long startTime, long endTime) {
-        String jobPath = jobName.replace("/job/", "");
+        if (!jobName.startsWith("/")) {
+            jobName = "/" + jobName;
+        }
+        String jobPath = jobName.replace("/job/", "/");
         Item item = Jenkins.getInstance().getItem(jobPath, (ItemGroup) null);
         return run(item, startTime, endTime);
     }
@@ -68,7 +71,7 @@ public class BuildInfoArchiver {
             ItemGroup group = (ItemGroup) item;
             for (Object subItem : group.getItems()) {
                 if (subItem instanceof Item) {
-                    count = count + run(((Item) subItem).getName(), startTime, endTime);
+                    count = count + run(((Item) subItem).getFullName(), startTime, endTime);
                 }
             }
         } else if (item instanceof Project) {
@@ -77,6 +80,8 @@ public class BuildInfoArchiver {
             LoggingRunListener runListener = RunListener.all().get(LoggingRunListener.class);
             for (Run run : runList) {
                 if (processedJob.contains(run.getUrl())) {
+                    continue;
+                } else if (run.isBuilding() || run.getResult() == null) {
                     continue;
                 }
                 processedJob.add(run.getUrl());
