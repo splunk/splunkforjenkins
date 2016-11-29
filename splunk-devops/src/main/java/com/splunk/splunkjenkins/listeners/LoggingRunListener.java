@@ -24,8 +24,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.splunk.splunkjenkins.Constants.BUILD_REPORT_ENV_TAG;
-import static com.splunk.splunkjenkins.Constants.JOB_RESULT;
+import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.model.EventType.BUILD_EVENT;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 
@@ -44,7 +43,8 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         Map<String, Object> event = getCommonBuildInfo(run, false);
         event.put("type", "started");
-        SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        String sourceName=SplunkJenkinsInstallation.get().getMetadataSource()+JENKINS_SOURCE_SEP+JOB_EVENT_TAG_NAME;
+        SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
         //audit the start action
         if (event.get(Constants.USER_NAME_KEY) != null) {
             logUserAction((String) event.get(Constants.USER_NAME_KEY), Messages.audit_start_job(event.get(Constants.BUILD_ID)));
@@ -80,7 +80,8 @@ public class LoggingRunListener extends RunListener<Run> {
             }
             event.putAll(getScmInfo(build));
         }
-        SplunkLogService.getInstance().send(event, BUILD_EVENT);
+        String sourceName=SplunkJenkinsInstallation.get().getMetadataSource()+JENKINS_SOURCE_SEP+JOB_EVENT_TAG_NAME;
+        SplunkLogService.getInstance().send(event, BUILD_EVENT,sourceName);
         //custom event processing dsl
         postJobAction.perform(run, listener,SplunkJenkinsInstallation.get().getScript());
 
@@ -197,7 +198,7 @@ public class LoggingRunListener extends RunListener<Run> {
      */
     private Map<String, Object> getCommonBuildInfo(Run run, boolean completed) {
         Map<String, Object> event = new HashMap();
-        event.put(Constants.TAG, Constants.JOB_EVENT_TAG_NAME);
+        event.put(Constants.TAG, JOB_EVENT_TAG_NAME);
         event.put("build_number", run.getNumber());
         event.put("trigger_by", getBuildCauses(run));
         event.put(Constants.USER_NAME_KEY, getTriggerUserName(run));
