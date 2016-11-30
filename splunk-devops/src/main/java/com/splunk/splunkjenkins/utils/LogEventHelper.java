@@ -436,7 +436,7 @@ public class LogEventHelper {
             slaveInfo.put("connect_time", 0);
         }
         if (!computer.isIdle()) {
-            List<String> builds = new ArrayList<>();
+            List<Map> builds = new ArrayList<>();
             for (Computer.DisplayExecutor displayExecutor : computer.getDisplayExecutors()) {
                 if (displayExecutor.getExecutor().isBusy()) {
                     WorkUnit workUnit = displayExecutor.getExecutor().getCurrentWorkUnit();
@@ -446,7 +446,10 @@ public class LogEventHelper {
                     }
                     if (executable != null && executable instanceof Run) {
                         Run run = (Run) executable;
-                        builds.add(run.getUrl());
+                        Map buildInfo = new HashMap();
+                        buildInfo.put("job_name", run.getUrl());
+                        buildInfo.put("job_duration", getRunDuration(run));
+                        builds.add(buildInfo);
                     }
                 }
             }
@@ -661,5 +664,19 @@ public class LogEventHelper {
             }
         }
         return found;
+    }
+
+    /**
+     * @param run an execution of job
+     * @return job duration
+     */
+    public static float getRunDuration(Run run) {
+        float duration = run.getDuration() / 1000f;
+        if (duration < 0.01f) {
+            //workflow job duration is updated after job completed
+            //not available in onCompleted listener
+            duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 100f);
+        }
+        return duration;
     }
 }

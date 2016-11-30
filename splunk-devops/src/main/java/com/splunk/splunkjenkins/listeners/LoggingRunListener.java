@@ -59,12 +59,7 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         Map<String, Object> event = getCommonBuildInfo(run, true);
         event.put("type", "completed");
-        float duration = run.getDuration() / 1000f;
-        if (duration < 0.01f) {
-            //workflow job duration is updated after job completed
-            //not available in onCompleted listener
-            duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 100f);
-        }
+        float duration = getRunDuration(run);
         event.put("job_duration", duration);
         event.put(JOB_RESULT, run.getResult().toString());
         Map testSummary = TestCaseResultUtils.getSummary(run);
