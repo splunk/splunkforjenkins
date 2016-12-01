@@ -1,6 +1,5 @@
 package com.splunk.splunkjenkins;
 
-import com.splunk.splunkjenkins.UserActionDSL;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
@@ -33,7 +32,11 @@ public class SplunkMessageStep extends AbstractStepImpl {
     }
 
     public String getScriptText() {
-        return scriptText;
+        if (scriptText != null) {
+            return scriptText;
+        } else {
+            return "";
+        }
     }
 
     public void setScriptText(String scriptText) {
@@ -84,9 +87,9 @@ public class SplunkMessageStep extends AbstractStepImpl {
             UserActionDSL scriptJobAction = new UserActionDSL();
             String dslScript;
             if (step.globalScriptEnabled) {
-                dslScript = step.scriptText + "\n" + step.scriptText;
+                dslScript = SplunkJenkinsInstallation.get().getScript() + "\n" + step.getScriptText();
             } else {
-                dslScript = step.scriptText;
+                dslScript = step.getScriptText();
             }
             scriptJobAction.perform(build, listener, dslScript);
             return null;
