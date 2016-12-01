@@ -1,12 +1,11 @@
 package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
-import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
 import hudson.tasks.junit.JUnitResultArchiver;
-import org.junit.*;
-import org.jvnet.hudson.test.JenkinsRule;
+import org.junit.Assert;
+import org.junit.Test;
 import org.jvnet.hudson.test.TouchBuilder;
 import org.jvnet.hudson.test.recipes.LocalData;
 
@@ -15,16 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
-public class PostBuildGroovyScriptTest {
+public class PostBuildGroovyScriptTest extends BaseTest {
     private static final Logger LOG = Logger.getLogger(PostBuildGroovyScriptTest.class.getName());
     //test cases are stored in zip file named using project name
     private final String simple_project = "simple_tests";
@@ -33,23 +29,9 @@ public class PostBuildGroovyScriptTest {
     private final int large_project_cases = 95358;
     public static Map buildEvent = null;
     public static List<JunitTestCaseGroup> suites = null;
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
     private FreeStyleProject project;
     private FreeStyleBuild build;
 
-    @Before
-    public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable());
-        LOG.log(Level.INFO, "jenkins home {0}", j.getInstance().getRootDir());
-        SplunkJenkinsInstallation.get().updateCache();
-    }
-
-    @After
-    public void tearDown() {
-        SplunkLogService.getInstance().stopWorker();
-        SplunkLogService.getInstance().releaseConnection();
-    }
 
     /**
      * We have a PostBuildGroovyScriptTest.zip contains a junit result file

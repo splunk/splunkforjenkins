@@ -643,9 +643,11 @@ public class LogEventHelper {
     /**
      * check if the project has publisher
      *
-     * @param shortClassName , common used publishers are
-     * @return
+     * @param shortClassName common used publishers are
+     * @param build          jenkins build
+     * @return true if the publisher is defined, false otherwise
      */
+
     public static boolean hasPublisherName(String shortClassName, Run build) {
         boolean found = false;
         if (!(build instanceof AbstractBuild)) {

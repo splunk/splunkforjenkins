@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.BaseTest;
 import hudson.model.AbstractBuild;
 import hudson.model.FreeStyleProject;
 import org.junit.Before;
@@ -15,17 +16,7 @@ import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
 
-public class TestResultAdapterTest {
-    @Rule
-    public JenkinsRule j = new JenkinsRule();
-
-    @Before
-    public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable());
-        SplunkJenkinsInstallation.get().setScriptContent(getPostJobSample());
-        SplunkJenkinsInstallation.get().updateCache();
-    }
-
+public class TestResultAdapterTest extends BaseTest {
     @LocalData
     @Test
     public void verifyTestNG() throws ExecutionException, InterruptedException {

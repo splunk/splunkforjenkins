@@ -19,23 +19,9 @@ import org.jvnet.hudson.test.JenkinsRule;
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class SplunkLogServiceTest {
+public class SplunkLogServiceTest extends BaseTest{
     private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
     private static final int BATCH_COUNT = 1000;
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
-
-    @Before
-    public void setUp() {
-        org.junit.Assume.assumeTrue(checkTokenAvailable());
-    }
-
-    @After
-    public void tearDown() {
-        SplunkLogService.getInstance().stopWorker();
-        SplunkLogService.getInstance().releaseConnection();
-    }
-
     /**
      * Test of update method, of class SplunkLogService.
      */

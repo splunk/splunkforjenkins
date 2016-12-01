@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.model.AbstractTestResultAdapter;
+import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 import com.splunk.splunkjenkins.model.EmptyTestCaseGroup;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
 import hudson.model.Descriptor;

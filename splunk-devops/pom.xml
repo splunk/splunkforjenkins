@@ -34,6 +34,11 @@
             <name>Kashyap Jotwani</name>
             <email>kjotwani@splunk.com</email>
         </developer>
+        <developer>
+            <id>fengxx</id>
+            <name>Ted Xiao</name>
+            <email>txiao@splunk.com</email>
+        </developer>
     </developers>
 
     <build>
@@ -143,6 +148,24 @@
             <artifactId>cucumber-testresult-plugin</artifactId>
             <version>0.9.7</version>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>clover</artifactId>
+            <version>4.7.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>cobertura</artifactId>
+            <version>1.9.8</version>
+            <optional>true</optional>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.sonatype.sisu</groupId>
+                    <artifactId>sisu-guice</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.main</groupId>

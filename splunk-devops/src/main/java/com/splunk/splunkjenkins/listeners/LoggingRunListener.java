@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.listeners;
 
 
 import com.splunk.splunkjenkins.Constants;
+import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.UserActionDSL;
@@ -43,7 +44,7 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         Map<String, Object> event = getCommonBuildInfo(run, false);
         event.put("type", "started");
-        String sourceName=SplunkJenkinsInstallation.get().getMetadataSource()+JENKINS_SOURCE_SEP+JOB_EVENT_TAG_NAME;
+        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource() + JENKINS_SOURCE_SEP + JOB_EVENT_TAG_NAME;
         SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
         //audit the start action
         if (event.get(Constants.USER_NAME_KEY) != null) {
@@ -66,6 +67,11 @@ public class LoggingRunListener extends RunListener<Run> {
         if (!testSummary.isEmpty()) {
             event.put("test_summary", testSummary);
         }
+        //get coverage summary
+        Map coverage=CoverageMetricAdapter.getReport(run);
+        if(!coverage.isEmpty()){
+            event.put("coverage", coverage);
+        }
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
             List<String> changelog = getChangeLog(build);
@@ -75,10 +81,10 @@ public class LoggingRunListener extends RunListener<Run> {
             }
             event.putAll(getScmInfo(build));
         }
-        String sourceName=SplunkJenkinsInstallation.get().getMetadataSource()+JENKINS_SOURCE_SEP+JOB_EVENT_TAG_NAME;
-        SplunkLogService.getInstance().send(event, BUILD_EVENT,sourceName);
+        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource() + JENKINS_SOURCE_SEP + JOB_EVENT_TAG_NAME;
+        SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
         //custom event processing dsl
-        postJobAction.perform(run, listener,SplunkJenkinsInstallation.get().getScript());
+        postJobAction.perform(run, listener, SplunkJenkinsInstallation.get().getScript());
 
         if (run.getExecutor() != null) {
             //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());
@@ -130,8 +136,8 @@ public class LoggingRunListener extends RunListener<Run> {
         Map<String, Object> event = new HashMap<>();
         if (build.getProject().getScm() != null) {
             SCM scm = build.getProject().getScm();
-            EnvVars envVars =new EnvVars();
-            scm.buildEnvVars(build,envVars);
+            EnvVars envVars = new EnvVars();
+            scm.buildEnvVars(build, envVars);
             String className = scm.getClass().getName();
             //not support GIT_URL_N or SVN_URL_n
             // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins

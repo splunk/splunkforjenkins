@@ -101,6 +101,8 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
 
         /**
          * This method determines the values of the album drop-down list box.
+         *
+         * @return options for selection
          */
         public ListBoxModel doFillDataSourceItems() {
             ListBoxModel m = new ListBoxModel();
@@ -116,6 +118,8 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
 
         /**
          * This method determines the values of the album drop-down list box.
+         *
+         * @return options for selection
          */
         public static ListBoxModel doFillKeyNameItems() {
             ListBoxModel m = new ListBoxModel();
@@ -156,8 +160,8 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
     /**
      * Convert config set to plain text string, just to keep backward compatibility
      *
-     * @param configs
-     * @return string
+     * @param configs config items
+     * @return java property file content
      */
     public static String toString(Set<MetaDataConfigItem> configs) {
         StringBuffer sbf = new StringBuffer();

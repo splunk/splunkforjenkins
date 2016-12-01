@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.splunk.splunkjenkins.BaseTest;
 import hudson.model.Label;
 import hudson.model.Slave;
 import org.junit.*;
@@ -13,22 +14,8 @@ import java.util.logging.Level;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static org.junit.Assert.*;
 
-public class LogEventHelperTest {
+public class LogEventHelperTest extends BaseTest {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
-
-    @Rule
-    public JenkinsRule r = new JenkinsRule();
-
-    @Before
-    public void setUp() throws Exception {
-        org.junit.Assume.assumeTrue(checkTokenAvailable());
-    }
-
-    @After
-    public void tearDown() {
-        SplunkLogService.getInstance().stopWorker();
-        SplunkLogService.getInstance().releaseConnection();
-    }
 
     @Test
     public void parseFileSize() throws Exception {
@@ -43,7 +30,7 @@ public class LogEventHelperTest {
 
     @Test
     public void testSlaveStats() throws Exception {
-        Slave slave = r.createOnlineSlave();
+        Slave slave = j.createOnlineSlave();
         Map<String, Map<String, Object>> slaveStats = LogEventHelper.getSlaveStats();
         assertTrue("should not be empty", !slaveStats.isEmpty());
         String slaveName = slave.getNodeName();
