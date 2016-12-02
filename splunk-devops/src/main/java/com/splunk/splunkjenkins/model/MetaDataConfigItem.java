@@ -65,17 +65,21 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
     }
 
     @Override
-    public int hashCode() {
-        return toString().hashCode();
+    public String toString() {
+        String prefix = dataSource.toLowerCase() + ".";
+        if ("default".equals(dataSource)) {
+            prefix = "";
+        }
+        if (DISABLED_KEY.equals(this.keyName)) {
+            return prefix + "enabled=false";
+        } else {
+            return prefix + keyName + "=" + value;
+        }
     }
 
     @Override
-    public String toString() {
-        if (!DISABLED_KEY.equals(this.keyName)) {
-            return "" + this.dataSource + "|" + this.keyName + "|" + this.value;
-        } else {
-            return "" + this.dataSource + "|" + this.keyName;
-        }
+    public int hashCode() {
+        return toString().hashCode();
     }
 
     @Override
@@ -113,6 +117,7 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
             m.add("Log File", EventType.FILE.toString());
             m.add("Queue Information", EventType.QUEUE_INFO.toString());
             m.add("Slave Information", EventType.SLAVE_INFO.toString());
+            m.add("Default", "default");
             return m;
         }
 
@@ -150,6 +155,13 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
                         }
                     }
                 }
+                //add default
+                for (String keyName : CONFIG_ITEM_MAP.values()) {
+                    if (metaDataConfigProps.containsKey(keyName)) {
+                        config.add(new MetaDataConfigItem("default", keyName,
+                                metaDataConfigProps.getProperty(keyName)));
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -168,23 +180,8 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
         if (configs == null || configs.isEmpty()) {
             return "";
         }
-        Set<String> disabledKeys = new HashSet<>();
-        for (EventType eventType : EventType.values()) {
-            MetaDataConfigItem disabledItem = new MetaDataConfigItem(eventType.toString(), DISABLED_KEY, "");
-            if (configs.contains(disabledItem)) {
-                disabledKeys.add(eventType.toString());
-            }
-        }
-        for (String keyName : disabledKeys) {
-            sbf.append(keyName.toLowerCase()).append(".").append("enabled=false\n");
-        }
         for (MetaDataConfigItem config : configs) {
-            if (disabledKeys.contains(config.dataSource)) {
-                continue;
-            }
-            sbf.append(config.dataSource.toLowerCase()).append(".").append(config.keyName).append("=")
-                    .append(config.value).append("\n");
-
+            sbf.append(config.toString()).append("\n");
         }
         return sbf.toString();
     }

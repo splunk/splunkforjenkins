@@ -23,12 +23,16 @@ public class SplunkMessageStep extends AbstractStepImpl {
     //required fields
     String scriptText;
     //reuse global script
-    boolean globalScriptEnabled = false;
+    boolean globalScriptEnabled = true;
 
     @DataBoundConstructor
     public SplunkMessageStep(boolean globalScriptEnabled, String scriptText) {
         this.globalScriptEnabled = globalScriptEnabled;
         this.scriptText = fixNull(scriptText);
+    }
+
+    public SplunkMessageStep() {
+        this.globalScriptEnabled = true;
     }
 
     public String getScriptText() {

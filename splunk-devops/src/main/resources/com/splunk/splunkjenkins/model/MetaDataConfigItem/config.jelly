@@ -48,13 +48,10 @@ function check_datasource_key(item) {
     if (val == "disabled") {
         tableRow.style.display = "none"
         tableRow.nextSibling.style.display = "none"
-        $(tableRow).find("input").removeClassName("required");
     } else {
         tableRow.style.display = ""
         tableRow.nextSibling.style.display = "";
-        $(tableRow).find("input").addClassName("required");
     }
-    console.log(val)
 }
 
 
