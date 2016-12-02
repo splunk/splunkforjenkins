@@ -58,18 +58,11 @@
                           title="${%Customize Event Processing Command}"
                           checked="${instance.getScriptPath() == null }" inline="true">
                 <f:entry help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
-                    <f:textarea class="fixed-width splunkins" codemirror-mode="clike"
-                                codemirror-config="mode: 'text/x-groovy', lineNumbers: true, matchBrackets: true, onBlur: function(editor){editor.save()}"
-                                checkMethod="POST" name="scriptContent" value="${instance.getScriptOrDefault()}"
+                    <f:textarea class="fixed-width" name="scriptContent" value="${instance.getScriptOrDefault()}"
                     />
                 </f:entry>
             </f:radioBlock>
         </f:advanced>
 
     </f:section>
-    <style>
-        div.CodeMirror-scroll.cm-s-default {
-        min-height: 200px;
-        }
-    </style>
 </j:jelly>
