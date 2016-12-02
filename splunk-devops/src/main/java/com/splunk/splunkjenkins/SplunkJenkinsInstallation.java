@@ -72,7 +72,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient long scriptTimestamp;
     private transient String postActionScript;
     private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
-    private transient static String defaultMetaData;
+    private transient String defaultMetaData;
 
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {

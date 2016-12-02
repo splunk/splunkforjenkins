@@ -31,7 +31,6 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
     //can only be null if enabled is false
     private String value;
 
-    @Nonnull
     public String getDataSource() {
         return dataSource;
     }
@@ -40,7 +39,6 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
         this.dataSource = dataSource;
     }
 
-    @Nonnull
     public String getKeyName() {
         return keyName;
     }

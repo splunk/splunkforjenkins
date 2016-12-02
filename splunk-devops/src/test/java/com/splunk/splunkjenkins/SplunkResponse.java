@@ -10,6 +10,10 @@ public class SplunkResponse {
         return getItem(0, key);
     }
 
+    public void setEntry(List<EntryItem> entry) {
+        this.entry = entry;
+    }
+
     public String getItem(int idx, String key) {
         return entry.get(idx).content.get(key).toString();
     }

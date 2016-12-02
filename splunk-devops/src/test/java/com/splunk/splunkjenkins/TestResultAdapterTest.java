@@ -16,7 +16,7 @@ public class TestResultAdapterTest extends BaseTest {
         String query = "ExampleIntegrationTest| spath | search \"testsuite.testcase{}.classname\"=ExampleIntegrationTest";
         FreeStyleProject project = (FreeStyleProject) j.getInstance().getItem("testng_job1");
         long startTime = System.currentTimeMillis();
-        AbstractBuild build = project.scheduleBuild2(0).get();
+        project.scheduleBuild2(0).get();
         verifySplunkSearchResult(query, startTime, 1);
     }
 
