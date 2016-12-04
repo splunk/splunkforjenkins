@@ -27,11 +27,17 @@ public class CoverageMetricTest extends BaseTest {
 
     public void getCoverageReport(String jobName, int methodPercentage) throws Exception {
         FreeStyleProject project = (FreeStyleProject) j.getInstance().getItem(jobName);
-        String newName= UUID.randomUUID().toString();
+        String newName = UUID.randomUUID().toString();
         project.renameTo(newName);
         long startTime = System.currentTimeMillis();
         AbstractBuild build = project.scheduleBuild2(0).get();
-        String query = "build_url=\"" + build.getUrl() + "\" \"coverage.methods\" >= " + methodPercentage;
+        //verify coverage sumary
+        String query = "event_tag=job_event build_url=\"" + build.getUrl() + "\" \"coverage.methods\" >= " + methodPercentage;
+        verifySplunkSearchResult(query, startTime, 1);
+        //verify detailsm
+        query = "source=\"unit_test/coverage\" build_url=\"" + build.getUrl() + "\"|"
+                + "rename \"coverage{}.methods\" as methods |mvexpand methods " +
+                "|search methods>=" + methodPercentage;
         verifySplunkSearchResult(query, startTime, 1);
     }
 }

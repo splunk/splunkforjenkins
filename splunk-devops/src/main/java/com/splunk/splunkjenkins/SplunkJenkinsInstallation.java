@@ -9,6 +9,7 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
 import net.sf.json.JSONObject;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.accmod.Restricted;
@@ -28,6 +29,7 @@ import java.util.regex.Pattern;
 
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
@@ -78,10 +80,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
             super.load();
-            this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
+            migrate();
             //load default metadata
             try (InputStream metaInput = this.getClass().getClassLoader().getResourceAsStream("metadata.properties")) {
-                defaultMetaData=IOUtils.toString(metaInput);
+                defaultMetaData = IOUtils.toString(metaInput);
             } catch (IOException e) {
                 //ignore
             }
@@ -223,7 +225,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
             //discard previous metadata cache and load new one
             metaDataProperties = new Properties();
-            String combinedMetaData= Util.fixNull(defaultMetaData)+Util.fixNull(metaDataConfig);
+            String combinedMetaData = Util.fixNull(defaultMetaData) + Util.fixNull(metaDataConfig);
             if (!isEmpty(combinedMetaData)) {
                 metaDataProperties.load(new StringReader(combinedMetaData));
             }
@@ -413,10 +415,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         map.put("host", host);
         map.put("port", port);
         map.put("useSSL", useSSL);
-        map.put("metaDataConfig", Util.fixNull(defaultMetaData)+Util.fixNull(metaDataConfig));
+        map.put("metaDataConfig", Util.fixNull(defaultMetaData) + Util.fixNull(metaDataConfig));
         map.put("retriesOnError", retriesOnError);
-        map.put("metadataHost",metadataHost);
-        map.put("metadataSource",metadataSource);
+        map.put("metadataHost", metadataHost);
+        map.put("metadataSource", metadataSource);
         return map;
     }
 
@@ -504,7 +506,21 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
     }
 
+    public String getMetadataSource(String suffix) {
+        return getMetadataSource() + JENKINS_SOURCE_SEP + suffix;
+    }
+
     public void setMetadataSource(String metadataSource) {
         this.metadataSource = metadataSource;
+    }
+
+    private void migrate() {
+        if (this.scriptContent != null) {
+            String hash = DigestUtils.md5Hex(this.scriptContent);
+            if (FILE_HASH.contains(hash)) {
+                this.scriptContent = getPostJobSample();
+            }
+        }
+        this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
     }
 }

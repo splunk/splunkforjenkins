@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins
 
 import com.splunk.splunkjenkins.listeners.LoggingRunListener
+import com.splunk.splunkjenkins.model.CoverageMetricAdapter
 import com.splunk.splunkjenkins.model.EventType
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup
 import com.splunk.splunkjenkins.utils.LogEventHelper
@@ -17,6 +18,8 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
+import static com.splunk.splunkjenkins.Constants.JENKINS_SOURCE_SEP
+import static com.splunk.splunkjenkins.Constants.JOB_EVENT_TAG_NAME
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.USER_NAME_KEY
@@ -105,6 +108,31 @@ public class RunDelegate {
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "failed to get junit report", ex)
             return Collections.emptyList();
+        }
+    }
+
+    def sendTestReport(int pageSize) {
+        def results = getJunitReport(50)
+        def buildEvent = getBuildEvent()
+        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource("test")
+        results.eachWithIndex { junitResult, idx ->
+            Map pagedEvent = buildEvent + ["testsuite": junitResult, "page_num": idx + 1]
+            send(pagedEvent, sourceName)
+        }
+    }
+
+    def sendCoverageReport(int pageSize) {
+        def coverageList = CoverageMetricAdapter.getReport(build, pageSize);
+        if (coverageList.isEmpty()) {
+            return;
+        }
+        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource("coverage")
+        Map event = getBuildEvent()
+        event.put(TAG, "coverage")
+        def buildEvent = getBuildEvent()
+        coverageList.eachWithIndex { coverage, idx ->
+            Map pagedEvent = buildEvent + ["coverage": coverage, "page_num": idx + 1]
+            send(pagedEvent, sourceName)
         }
     }
 

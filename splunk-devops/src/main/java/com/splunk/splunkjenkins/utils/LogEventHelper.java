@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -62,7 +63,8 @@ public class LogEventHelper {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy())
-            .setDateFormat(LOG_TIME_FORMAT).create();
+            .setDateFormat(LOG_TIME_FORMAT).registerTypeAdapter(CoverageMetricAdapter.CoverageDetail.class,
+                    new CoverageDetailJsonSerializer()).create();
     private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
             .put("KB", 1024L)
             .put("kB", 1000L)

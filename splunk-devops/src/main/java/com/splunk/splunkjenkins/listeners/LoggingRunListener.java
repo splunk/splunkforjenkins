@@ -20,7 +20,6 @@ import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,7 +67,7 @@ public class LoggingRunListener extends RunListener<Run> {
             event.put("test_summary", testSummary);
         }
         //get coverage summary
-        Map coverage=CoverageMetricAdapter.getReport(run);
+        Map coverage=CoverageMetricAdapter.getMetrics(run);
         if(!coverage.isEmpty()){
             event.put("coverage", coverage);
         }
@@ -81,7 +80,7 @@ public class LoggingRunListener extends RunListener<Run> {
             }
             event.putAll(getScmInfo(build));
         }
-        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource() + JENKINS_SOURCE_SEP + JOB_EVENT_TAG_NAME;
+        String sourceName = SplunkJenkinsInstallation.get().getMetadataSource(JOB_EVENT_TAG_NAME);
         SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
         //custom event processing dsl
         postJobAction.perform(run, listener, SplunkJenkinsInstallation.get().getScript());

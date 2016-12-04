@@ -1,5 +1,8 @@
 package com.splunk.splunkjenkins;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class Constants {
     public static final String TESTCASE = "testcase";
     public static final String TESTSUITE = "testsuite";
@@ -26,5 +29,6 @@ public class Constants {
     public static final String MASK_PASSWORD = "***";
     public static final String NO_TEST_REPORT_FOUND = "No TestResult";
     public static final String TEST_REPORT_NOT_CONFIGURED = "Junit or xUnit report not configured";
+    public static final List<String> FILE_HASH = Arrays.asList("729ac3b82ecf2e0afc0cb00d73c22892");
 
 }
