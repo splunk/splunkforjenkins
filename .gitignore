@@ -25,3 +25,4 @@ debug.log.lck
 # mvn versions:set
 pom.xml.versionsBackup
 pom.xml.releaseBackup
+dependency-reduced-pom.xml

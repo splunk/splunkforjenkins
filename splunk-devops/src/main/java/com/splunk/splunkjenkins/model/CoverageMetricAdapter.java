@@ -79,8 +79,7 @@ public abstract class CoverageMetricAdapter<M extends HealthReportingAction> imp
         if (pageSize == 0 || reports.size() <= pageSize) {
             return Arrays.asList(reports);
         } else {
-            int partitionSize = reports.size() / pageSize;
-            return Lists.partition(reports, partitionSize);
+            return Lists.partition(reports, pageSize);
         }
     }
 
