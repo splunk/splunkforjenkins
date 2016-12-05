@@ -1,7 +1,7 @@
 package com.splunk.splunkjenkins;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.Gson;
+import shaded.splk.com.google.gson.Gson;
 import com.splunk.*;
 import com.splunk.splunkjenkins.model.*;
 import com.splunk.splunkjenkins.model.EventType;

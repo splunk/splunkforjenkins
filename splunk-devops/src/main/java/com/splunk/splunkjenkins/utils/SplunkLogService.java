@@ -4,19 +4,19 @@ import com.google.common.base.Strings;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
-import org.apache.http.client.HttpClient;
-import org.apache.http.config.Registry;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.HttpClientConnectionManager;
-import org.apache.http.conn.socket.ConnectionSocketFactory;
-import org.apache.http.conn.socket.PlainConnectionSocketFactory;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.ssl.SSLContexts;
+import shaded.splk.org.apache.http.client.HttpClient;
+import shaded.splk.org.apache.http.config.Registry;
+import shaded.splk.org.apache.http.config.RegistryBuilder;
+import shaded.splk.org.apache.http.config.SocketConfig;
+import shaded.splk.org.apache.http.conn.HttpClientConnectionManager;
+import shaded.splk.org.apache.http.conn.socket.ConnectionSocketFactory;
+import shaded.splk.org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import shaded.splk.org.apache.http.conn.ssl.NoopHostnameVerifier;
+import shaded.splk.org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import shaded.splk.org.apache.http.conn.ssl.TrustStrategy;
+import shaded.splk.org.apache.http.impl.client.HttpClients;
+import shaded.splk.org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import shaded.splk.org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
-
-import static com.splunk.splunkjenkins.model.EventType.QUEUE_INFO;
 
 public class SplunkLogService {
     public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
@@ -48,6 +46,9 @@ public class SplunkLogService {
     private SplunkLogService() {
         this.logQueue = new LinkedBlockingQueue<EventRecord>(QUEUE_SIZE);
         this.workers = new ArrayList<LogConsumer>();
+    }
+
+    private void initHttpClient() {
         this.connMgr = buildConnectionManager();
         this.client = HttpClients.custom().setConnectionManager(this.connMgr).build();
     }
@@ -119,10 +120,13 @@ public class SplunkLogService {
      * @return true if enqueue successfully, false if the message is discarded
      */
     public boolean send(Object message, EventType eventType, String sourceName) {
+        if (this.connMgr == null) {
+            return false;
+        }
         if (message == null) {
             LOG.warning("null message discarded");
             return false;
-        } else if ( (message instanceof String) && ((String) message).length() == 0) {
+        } else if ((message instanceof String) && ((String) message).length() == 0) {
             LOG.warning("empty message discarded");
             return false;
         }
@@ -213,7 +217,20 @@ public class SplunkLogService {
     }
 
     private static class InstanceHolder {
-        static SplunkLogService service = new SplunkLogService();
+        static SplunkLogService service;
+
+        static {
+            service = new SplunkLogService();
+            try {
+                service.initHttpClient();
+            } catch (java.lang.NoSuchFieldError e) {
+                /*
+                  java.lang.NoSuchFieldError: INSTANCE
+                  at shaded.splk.org.apache.http.conn.ssl.SSLConnectionSocketFactory.<clinit>(SSLConnectionSocketFactory.java:144)
+                */
+                LOG.log(Level.SEVERE, "init httpclient failed, version conflicts", e);
+            }
+        }
     }
 
     public String getStats() {
@@ -222,7 +239,8 @@ public class SplunkLogService {
                 .append("sent:").append(this.getSentCount());
         return sbr.toString();
     }
-    static class TrustAllStrategy implements TrustStrategy{
+
+    static class TrustAllStrategy implements TrustStrategy {
         public boolean isTrusted(X509Certificate[] certificate,
                                  String type) {
             return true;

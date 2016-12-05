@@ -1,9 +1,9 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.gson.FieldNamingStrategy;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import shaded.splk.com.google.gson.FieldNamingStrategy;
+import shaded.splk.com.google.gson.Gson;
+import shaded.splk.com.google.gson.GsonBuilder;
 import com.splunk.splunkjenkins.Constants;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
@@ -27,11 +27,11 @@ import hudson.util.DescribableList;
 import hudson.util.FormValidation;
 import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
+import shaded.splk.org.apache.http.HttpResponse;
+import shaded.splk.org.apache.http.client.HttpClient;
+import shaded.splk.org.apache.http.client.methods.HttpPost;
+import shaded.splk.org.apache.http.entity.StringEntity;
+import shaded.splk.org.apache.http.util.EntityUtils;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import java.io.*;

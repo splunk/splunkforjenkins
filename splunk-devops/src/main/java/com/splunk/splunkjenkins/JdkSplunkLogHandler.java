@@ -30,6 +30,9 @@ public class JdkSplunkLogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
+        if (!SplunkJenkinsInstallation.isLoadCompleted()) {
+            return;
+        }
         if (!isLoggable(record)) {
             return;
         }
@@ -55,13 +58,11 @@ public class JdkSplunkLogHandler extends Handler {
         //logger may trigger recursive call, need skip them
         private final String[] skipLoggerNames = {
                 SplunkLogService.class.getName(), LogConsumer.class.getName(),
-                "jenkins.InitReactorRunner", "org.apache.http", "hudson.node_monitors", "hudson.Extension"};
+                "jenkins.InitReactorRunner", "hudson.util.BootFailure",
+                "shaded.splk.org.apache.http", "hudson.node_monitors", "hudson.Extension"};
 
         @Override
         public boolean isLoggable(LogRecord record) {
-            if (! SplunkJenkinsInstallation.isLoadCompleted()) {
-                return false;
-            }
             String logSource = record.getSourceClassName();
             String loggerName = record.getLoggerName();
             if (logSource == null || loggerName == null) {

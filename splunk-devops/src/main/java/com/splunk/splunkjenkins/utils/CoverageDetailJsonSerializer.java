@@ -1,8 +1,8 @@
 package com.splunk.splunkjenkins.utils;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
+import shaded.splk.com.google.gson.JsonElement;
+import shaded.splk.com.google.gson.JsonSerializationContext;
+import shaded.splk.com.google.gson.JsonSerializer;
 import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 
 import java.lang.reflect.Type;
