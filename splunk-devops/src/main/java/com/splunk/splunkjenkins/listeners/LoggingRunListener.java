@@ -2,7 +2,7 @@ package com.splunk.splunkjenkins.listeners;
 
 
 import com.splunk.splunkjenkins.Constants;
-import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
+import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.UserActionDSL;
@@ -69,7 +69,7 @@ public class LoggingRunListener extends RunListener<Run> {
             event.put("test_summary", testSummary);
         }
         //get coverage summary
-        Map coverage = CoverageMetricAdapter.getMetrics(run);
+        Map coverage = CoverageMetricsAdapter.getMetrics(run);
         if (!coverage.isEmpty()) {
             event.put("coverage", coverage);
         }

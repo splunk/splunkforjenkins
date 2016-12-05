@@ -16,7 +16,7 @@ import java.util.Map;
  * CoverageMetric for <a href="https://confluence.atlassian.com/display/CLOVER">clover</a>
  */
 @Extension(optional = true)
-public class CloverCoverageMetric extends CoverageMetricAdapter<CloverBuildAction> {
+public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAction> {
     /**
      * @return coverage summary
      * {@inheritDoc}

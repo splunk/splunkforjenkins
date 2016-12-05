@@ -1,7 +1,6 @@
 package com.splunk.splunkjenkins.model;
 
 import hudson.Extension;
-import hudson.Util;
 import hudson.plugins.cobertura.CoberturaBuildAction;
 import hudson.plugins.cobertura.targets.CoverageElement;
 import hudson.plugins.cobertura.targets.CoverageMetric;
@@ -13,7 +12,7 @@ import java.util.*;
  * CoverageMetric for <a href="https://github.com/cobertura/cobertura/wiki">Cobertura</a>
  */
 @Extension(optional = true)
-public class CoberturaCoverageMetric extends CoverageMetricAdapter<CoberturaBuildAction> {
+public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBuildAction> {
     private static List<CoverageElement> TOP_LEVELS = Arrays.asList(CoverageElement.PROJECT,
             CoverageElement.JAVA_PACKAGE, CoverageElement.JAVA_FILE);
 

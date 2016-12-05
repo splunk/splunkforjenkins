@@ -1,15 +1,15 @@
 package com.splunk.splunkjenkins.utils;
 
+import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import shaded.splk.com.google.gson.JsonElement;
 import shaded.splk.com.google.gson.JsonSerializationContext;
 import shaded.splk.com.google.gson.JsonSerializer;
-import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 
 import java.lang.reflect.Type;
 
-public class CoverageDetailJsonSerializer implements JsonSerializer<CoverageMetricAdapter.CoverageDetail> {
+public class CoverageDetailJsonSerializer implements JsonSerializer<CoverageMetricsAdapter.CoverageDetail> {
     @Override
-    public JsonElement serialize(CoverageMetricAdapter.CoverageDetail coverageDetail, Type type,
+    public JsonElement serialize(CoverageMetricsAdapter.CoverageDetail coverageDetail, Type type,
                                  JsonSerializationContext jsonSerializationContext) {
         return jsonSerializationContext.serialize(coverageDetail.getReport());
     }

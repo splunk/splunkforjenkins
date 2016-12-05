@@ -1,16 +1,12 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.model.AbstractTestResultAdapter;
-import com.splunk.splunkjenkins.model.CoverageMetricAdapter;
 import com.splunk.splunkjenkins.model.EmptyTestCaseGroup;
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup;
-import hudson.model.Descriptor;
 import hudson.model.Result;
 import hudson.model.Run;
-import hudson.tasks.Publisher;
 import hudson.tasks.test.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
-import hudson.util.DescribableList;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;

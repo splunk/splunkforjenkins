@@ -1,7 +1,7 @@
 package com.splunk.splunkjenkins
 
 import com.splunk.splunkjenkins.listeners.LoggingRunListener
-import com.splunk.splunkjenkins.model.CoverageMetricAdapter
+import com.splunk.splunkjenkins.model.CoverageMetricsAdapter
 import com.splunk.splunkjenkins.model.EventType
 import com.splunk.splunkjenkins.model.JunitTestCaseGroup
 import com.splunk.splunkjenkins.utils.LogEventHelper
@@ -18,8 +18,6 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 import static com.splunk.splunkjenkins.Constants.BUILD_ID
-import static com.splunk.splunkjenkins.Constants.JENKINS_SOURCE_SEP
-import static com.splunk.splunkjenkins.Constants.JOB_EVENT_TAG_NAME
 import static com.splunk.splunkjenkins.Constants.TAG
 import static com.splunk.splunkjenkins.Constants.JOB_RESULT
 import static com.splunk.splunkjenkins.Constants.USER_NAME_KEY
@@ -121,7 +119,7 @@ public class RunDelegate {
     }
 
     def sendCoverageReport(int pageSize) {
-        def coverageList = CoverageMetricAdapter.getReport(build, pageSize);
+        def coverageList = CoverageMetricsAdapter.getReport(build, pageSize);
         if (coverageList.isEmpty()) {
             return;
         }

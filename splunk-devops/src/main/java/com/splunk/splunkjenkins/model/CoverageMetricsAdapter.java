@@ -17,15 +17,15 @@ import java.util.*;
  *
  * @param <M> Coverage Action
  */
-public abstract class CoverageMetricAdapter<M extends HealthReportingAction> implements ExtensionPoint {
+public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> implements ExtensionPoint {
     public final Class<M> targetType;
 
-    public CoverageMetricAdapter() {
-        Type type = Types.getBaseClass(getClass(), CoverageMetricAdapter.class);
+    public CoverageMetricsAdapter() {
+        Type type = Types.getBaseClass(getClass(), CoverageMetricsAdapter.class);
         if (type instanceof ParameterizedType)
             targetType = Types.erasure(Types.getTypeArgument(type, 0));
         else
-            throw new IllegalStateException(getClass() + " uses the raw type for extending CoverageMetricAdapter");
+            throw new IllegalStateException(getClass() + " uses the raw type for extending CoverageMetricsAdapter");
 
     }
 
@@ -39,8 +39,8 @@ public abstract class CoverageMetricAdapter<M extends HealthReportingAction> imp
 
     @Nonnull
     public static Map<Metric, Integer> getMetrics(Run build) {
-        List<CoverageMetricAdapter> adapters = ExtensionList.lookup(CoverageMetricAdapter.class);
-        for (CoverageMetricAdapter adapter : adapters) {
+        List<CoverageMetricsAdapter> adapters = ExtensionList.lookup(CoverageMetricsAdapter.class);
+        for (CoverageMetricsAdapter adapter : adapters) {
             if (adapter.isApplicable(build)) {
                 return adapter.getMetrics(adapter.getAction(build));
             }
@@ -66,9 +66,9 @@ public abstract class CoverageMetricAdapter<M extends HealthReportingAction> imp
      * @return coverage report with no more than <code>pageSize</code>
      */
     public static List<List<CoverageDetail>> getReport(Run build, int pageSize) {
-        List<CoverageMetricAdapter> adapters = ExtensionList.lookup(CoverageMetricAdapter.class);
+        List<CoverageMetricsAdapter> adapters = ExtensionList.lookup(CoverageMetricsAdapter.class);
         List<CoverageDetail> reports = new ArrayList<>();
-        for (CoverageMetricAdapter adapter : adapters) {
+        for (CoverageMetricsAdapter adapter : adapters) {
             if (adapter.isApplicable(build)) {
                 reports.addAll(adapter.getReport(adapter.getAction(build)));
             }
