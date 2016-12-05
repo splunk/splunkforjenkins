@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
@@ -64,6 +65,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private String splunkAppUrl;
     private String metadataHost;
     private String metadataSource;
+    private String ignoredJobs;
 
     //below are all transient properties
     public transient Properties metaDataProperties = new Properties();
@@ -75,6 +77,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient String postActionScript;
     private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
     private transient String defaultMetaData;
+    private transient Pattern ignoredJobPattern;
 
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
@@ -194,7 +197,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         config.enabled = true;
         config.updateCache();
         if (!config.isValid()) {
-            return FormValidation.error("Invalid config, please check Hostname or Token");
+            return FormValidation.error(Messages.InvalidHostOrToken());
         }
         return verifyHttpInput(config);
     }
@@ -210,6 +213,15 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return FormValidation.ok();
     }
 
+    public FormValidation doCheckIgnoredJobs(@QueryParameter String value) {
+        try {
+            Pattern.compile(value);
+        } catch (PatternSyntaxException ex) {
+            return FormValidation.errorWithMarkup(Messages.InvalidPattern());
+        }
+        return FormValidation.ok();
+    }
+
     ////////END OF FORM VALIDATION/////////
     protected void updateCache() {
         if (scriptPath != null) {
@@ -218,6 +230,16 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             postActionScript = scriptContent;
         } else {
             postActionScript = null;
+        }
+        if (ignoredJobs == null) {
+            ignoredJobPattern = null;
+        } else {
+            try {
+                ignoredJobPattern = Pattern.compile(ignoredJobs);
+            } catch (PatternSyntaxException ex) {
+                LOG.log(Level.SEVERE, "invalid ignore job pattern {0}, error: {1}", new Object[]{
+                        ignoredJobs, ex.getDescription()});
+            }
         }
         try {
             String scheme = useSSL ? "https" : "http";
@@ -325,6 +347,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public boolean isEventDisabled(EventType eventType) {
         return !isValid() || "false".equals(metaDataProperties.getProperty(eventType.getKey("enabled")));
+    }
+
+    public boolean isJobIgnored(String jobUrl) {
+        if (ignoredJobPattern != null) {
+            return ignoredJobPattern.matcher(jobUrl).find();
+        } else {
+            return false;
+        }
     }
 
     public void setEnabled(boolean enabled) {
@@ -522,5 +552,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             }
         }
         this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
+    }
+
+    public String getIgnoredJobs() {
+        return ignoredJobs;
+    }
+
+    public void setIgnoredJobs(String ignoredJobs) {
+        this.ignoredJobs = ignoredJobs;
     }
 }

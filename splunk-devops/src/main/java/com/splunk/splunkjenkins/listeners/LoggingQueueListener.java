@@ -39,6 +39,9 @@ public class LoggingQueueListener extends QueueListener {
             return;
         }
         String name = getTaskName(wi.task);
+        if (SplunkJenkinsInstallation.get().isJobIgnored(name)) {
+            return;
+        }
         Map event = getMasterStats();
         event.put("item", name);
         event.put(Constants.TAG, Constants.QUEUE_TAG_NAME);
@@ -51,9 +54,12 @@ public class LoggingQueueListener extends QueueListener {
         if (SplunkJenkinsInstallation.get().isEventDisabled(QUEUE_INFO)) {
             return;
         }
+        String name = getTaskName(li.task);
+        if (SplunkJenkinsInstallation.get().isJobIgnored(name)) {
+            return;
+        }
         float queueTime = (System.currentTimeMillis() - li.getInQueueSince()) / 1000f;
         cache.put(li.getId(), queueTime);
-        String name = getTaskName(li.task);
         Map event = getMasterStats();
         event.put("item", name);
         event.put(Constants.TAG, Constants.QUEUE_TAG_NAME);

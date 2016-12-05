@@ -38,7 +38,8 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onStarted(Run run, TaskListener listener) {
-        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT)) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT) ||
+                SplunkJenkinsInstallation.get().isJobIgnored(run.getUrl())) {
             return;
         }
         Map<String, Object> event = getCommonBuildInfo(run, false);
@@ -54,7 +55,8 @@ public class LoggingRunListener extends RunListener<Run> {
 
     @Override
     public void onCompleted(Run run, @Nonnull TaskListener listener) {
-        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT)) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(BUILD_EVENT) ||
+                SplunkJenkinsInstallation.get().isJobIgnored(run.getUrl())) {
             return;
         }
         Map<String, Object> event = getCommonBuildInfo(run, true);
@@ -67,8 +69,8 @@ public class LoggingRunListener extends RunListener<Run> {
             event.put("test_summary", testSummary);
         }
         //get coverage summary
-        Map coverage=CoverageMetricAdapter.getMetrics(run);
-        if(!coverage.isEmpty()){
+        Map coverage = CoverageMetricAdapter.getMetrics(run);
+        if (!coverage.isEmpty()) {
             event.put("coverage", coverage);
         }
         if (run instanceof AbstractBuild) {
@@ -179,7 +181,7 @@ public class LoggingRunListener extends RunListener<Run> {
             for (int i = 0; i < 10; i++) {
                 String probe_url = envVars.get(prefix + "_" + i);
                 if (probe_url != null) {
-                    urls.add(Util.replaceMacro(probe_url,envVars));
+                    urls.add(Util.replaceMacro(probe_url, envVars));
                 } else {
                     break;
                 }

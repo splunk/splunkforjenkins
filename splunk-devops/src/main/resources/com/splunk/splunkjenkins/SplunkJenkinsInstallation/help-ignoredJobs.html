@@ -1,0 +1,31 @@
+<br>
+Check <a href="https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">Regular
+    Expression</a> to select which jobs will be ignored for monitoring. Job names matches
+the pattern will be ignored, for example: </br>
+<code>(?:backgroundJobName|adhocJobName|tempJobName)</code>
+<p> will match backgroundJobName, backgroundJobNameBlah, blahbackgroundJobName</p>
+<code>^(?:backgroundJobName|adhocJobName|tempJobName)$</code>
+<p> will match backgroundJobName but neither backgroundJobNameBlah nor blahbackgroundJobName</p>
+<table>
+    <tr>
+        <td>(?:X) </td>
+        <td>X, as a non-capturing group</td>
+    </tr>
+    <tr>
+        <td>^</td>
+        <td>The beginning of a line</td>
+    </tr>
+    <tr>
+        <td>$</td>
+        <td>The end of a line</td>
+    </tr>
+    <tr>
+        <td>X|Y</td>
+        <td>Either X or Y</td>
+    </tr>
+    <tr>
+        <td>\w</td>
+        <td>A word character: [a-zA-Z_0-9]</td>
+    </tr>
+</table>
+</div>

@@ -46,6 +46,9 @@
             <f:entry title="${%Retries on Error}" field="retriesOnError">
                 <f:textbox/>
             </f:entry>
+            <f:entry title="${%Ignored Job Names Pattern}" field="ignoredJobs">
+                <f:textbox />
+            </f:entry>
             <f:radioBlock name="commandsOrFileInSplunkins" value="file"
                           title="${%Customize Event Processing Script}"
                           checked="${instance.getScriptPath() !=null}" inline="true">
