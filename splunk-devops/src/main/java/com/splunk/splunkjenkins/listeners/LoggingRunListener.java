@@ -179,7 +179,7 @@ public class LoggingRunListener extends RunListener<Run> {
             for (int i = 0; i < 10; i++) {
                 String probe_url = envVars.get(prefix + "_" + i);
                 if (probe_url != null) {
-                    urls.add(probe_url);
+                    urls.add(Util.replaceMacro(probe_url,envVars));
                 } else {
                     break;
                 }
