@@ -27,6 +27,7 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
         Map<Metric, Integer> result = new HashMap<>();
         result.put(Metric.METHOD, projectCoverage.getMethodCoverage().getPercentage());
         result.put(Metric.STATEMENT, projectCoverage.getStatementCoverage().getPercentage());
+        result.put(Metric.CONDITIONAL,projectCoverage.getConditionalCoverage().getPercentage());
         result.put(Metric.ELEMENT, projectCoverage.getElementCoverage().getPercentage());
         return result;
     }
@@ -42,6 +43,7 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
                     result.add(detail);
                     detail.addMetric(Metric.METHOD, clazzCover.getMethodCoverage().getPercentage());
                     detail.addMetric(Metric.STATEMENT, clazzCover.getStatementCoverage().getPercentage());
+                    detail.addMetric(Metric.CONDITIONAL,clazzCover.getConditionalCoverage().getPercentage());
                     detail.addMetric(Metric.ELEMENT, clazzCover.getElementCoverage().getPercentage());
                 }
             }
