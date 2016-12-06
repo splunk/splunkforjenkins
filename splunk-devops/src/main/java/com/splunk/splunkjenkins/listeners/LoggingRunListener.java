@@ -8,13 +8,11 @@ import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.UserActionDSL;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import com.splunk.splunkjenkins.utils.TestCaseResultUtils;
-import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.*;
 import hudson.model.listeners.RunListener;
 import hudson.scm.ChangeLogSet;
-import hudson.scm.SCM;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import org.apache.commons.lang.StringUtils;
@@ -73,6 +71,7 @@ public class LoggingRunListener extends RunListener<Run> {
         if (!coverage.isEmpty()) {
             event.put("coverage", coverage);
         }
+        event.putAll(getScmInfo(run));
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
             List<String> changelog = getChangeLog(build);
@@ -80,7 +79,6 @@ public class LoggingRunListener extends RunListener<Run> {
             if (!changelog.isEmpty()) {
                 event.put("changelog", changelog);
             }
-            event.putAll(getScmInfo(build));
         }
         String sourceName = SplunkJenkinsInstallation.get().getMetadataSource(JOB_EVENT_TAG_NAME);
         SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
@@ -127,76 +125,6 @@ public class LoggingRunListener extends RunListener<Run> {
             }
         }
         return StringUtils.join(causes, ", ");
-    }
-
-    /**
-     * @param build jenkins job build
-     * @return scm information, we only support git,svn and p4
-     */
-    public static Map<String, Object> getScmInfo(AbstractBuild build) {
-        Map<String, Object> event = new HashMap<>();
-        if (build.getProject().getScm() != null) {
-            SCM scm = build.getProject().getScm();
-            EnvVars envVars = new EnvVars();
-            scm.buildEnvVars(build, envVars);
-            String className = scm.getClass().getName();
-            //not support GIT_URL_N or SVN_URL_n
-            // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
-            switch (className) {
-                case "hudson.plugins.git.GitSCM":
-                    event.put("scm", "git");
-                    event.put("scm_url", getScmURL(envVars, "GIT_URL"));
-                    event.put("branch", envVars.get("GIT_BRANCH"));
-                    event.put("revision", envVars.get("GIT_COMMIT"));
-                    break;
-                case "hudson.scm.SubversionSCM":
-                    event.put("scm", "svn");
-                    event.put("scm_url", getScmURL(envVars, "SVN_URL"));
-                    event.put("revision", envVars.get("SVN_REVISION"));
-                    break;
-                case "org.jenkinsci.plugins.p4.PerforceScm":
-                    event.put("scm", "p4");
-                    event.put("p4_client", envVars.get("P4_CLIENT"));
-                    event.put("revision", envVars.get("P4_CHANGELIST"));
-                    break;
-                case "hudson.plugins.mercurial.MercurialSCM":
-                    event.put("scm", "hg");
-                    event.put("scm_url", envVars.get("MERCURIAL_REPOSITORY_URL"));
-                    event.put("branch", envVars.get("MERCURIAL_REVISION_BRANCH"));
-                    event.put("revision", envVars.get("MERCURIAL_REVISION"));
-                    break;
-                case "hudson.scm.NullSCM":
-                    break;
-                default:
-                    event.put("scm", className);
-            }
-        }
-        return event;
-    }
-
-    /**
-     * @param envVars environment variables
-     * @param prefix  scm prefix, such as GIT_URL, SVN_URL
-     * @return parsed scm urls from build env, e.g. GIT_URL_1, GIT_URL_2, ... GIT_URL_10 or GIT_URL
-     */
-    public static String getScmURL(EnvVars envVars, String prefix) {
-        String value = envVars.get(prefix);
-        if (value == null) {
-            List<String> urls = new ArrayList<>();
-            //just probe max 10 url
-            for (int i = 0; i < 10; i++) {
-                String probe_url = envVars.get(prefix + "_" + i);
-                if (probe_url != null) {
-                    urls.add(Util.replaceMacro(probe_url, envVars));
-                } else {
-                    break;
-                }
-            }
-            if (!urls.isEmpty()) {
-                value = StringUtils.join(urls, ",");
-            }
-        }
-        return value;
     }
 
     /**

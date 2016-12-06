@@ -2,6 +2,9 @@ package com.splunk.splunkjenkins.utils;
 
 import com.google.common.collect.ImmutableMap;
 import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
+import hudson.scm.SCM;
+import jenkins.triggers.SCMTriggerItem;
+import org.apache.commons.lang.StringUtils;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
 import shaded.splk.com.google.gson.Gson;
 import shaded.splk.com.google.gson.GsonBuilder;
@@ -50,7 +53,6 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.splunk.splunkjenkins.Constants.*;
-import static com.splunk.splunkjenkins.listeners.LoggingRunListener.getScmInfo;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -682,5 +684,93 @@ public class LogEventHelper {
             duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 100f);
         }
         return duration;
+    }
+
+    public static Map<String, Object> getScmInfo(Run build) {
+        EnvVars envVars = getEnvironment(build);
+        SCMTriggerItem scmTrigger = SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem(build.getParent());
+        if (scmTrigger == null) {
+            return Collections.emptyMap();
+        }
+        Collection<? extends SCM> scmConfigs = scmTrigger.getSCMs();
+        Map<String, Object> event = new HashMap<>();
+        Map<String, Object> singleEvent = new HashMap<>();
+        for (SCM scm : scmConfigs) {
+            String scmName = scm.getClass().getName();
+            if (!event.containsKey(scmName)) {
+                singleEvent = getScmInfo(scmName, envVars);
+                event.put(scmName, singleEvent);
+            }
+        }
+        if (event.size() == 1) {
+            return singleEvent;
+        } else { //there are multiple scm
+            return event;
+        }
+    }
+
+    /**
+     * @param scmName scm class name
+     * @param envVars environment variables
+     * @return scm information, we only support git,svn and p4
+     */
+    public static Map<String, Object> getScmInfo(String scmName, EnvVars envVars) {
+        Map<String, Object> event = new HashMap<>();
+        //not support GIT_URL_N or SVN_URL_n
+        // scm can be found at https://wiki.jenkins-ci.org/display/JENKINS/Plugins
+        switch (scmName) {
+            case "hudson.plugins.git.GitSCM":
+                event.put("scm", "git");
+                event.put("scm_url", getScmURL(envVars, "GIT_URL"));
+                event.put("branch", envVars.get("GIT_BRANCH"));
+                event.put("revision", envVars.get("GIT_COMMIT"));
+                break;
+            case "hudson.scm.SubversionSCM":
+                event.put("scm", "svn");
+                event.put("scm_url", getScmURL(envVars, "SVN_URL"));
+                event.put("revision", envVars.get("SVN_REVISION"));
+                break;
+            case "org.jenkinsci.plugins.p4.PerforceScm":
+                event.put("scm", "p4");
+                event.put("p4_client", envVars.get("P4_CLIENT"));
+                event.put("revision", envVars.get("P4_CHANGELIST"));
+                break;
+            case "hudson.plugins.mercurial.MercurialSCM":
+                event.put("scm", "hg");
+                event.put("scm_url", envVars.get("MERCURIAL_REPOSITORY_URL"));
+                event.put("branch", envVars.get("MERCURIAL_REVISION_BRANCH"));
+                event.put("revision", envVars.get("MERCURIAL_REVISION"));
+                break;
+            case "hudson.scm.NullSCM":
+                break;
+            default:
+                event.put("scm", scmName);
+        }
+        return event;
+    }
+
+    /**
+     * @param envVars environment variables
+     * @param prefix  scm prefix, such as GIT_URL, SVN_URL
+     * @return parsed scm urls from build env, e.g. GIT_URL_1, GIT_URL_2, ... GIT_URL_10 or GIT_URL
+     */
+    public static String getScmURL(EnvVars envVars, String prefix) {
+        String value = envVars.get(prefix);
+        if (value == null) {
+            List<String> urls = new ArrayList<>();
+            //just probe max 10 url
+            for (int i = 0; i < 10; i++) {
+                String probe_url = envVars.get(prefix + "_" + i);
+                if (probe_url != null) {
+                    urls.add(Util.replaceMacro(probe_url, envVars));
+                } else {
+                    break;
+                }
+            }
+            if (!urls.isEmpty()) {
+                value = StringUtils.join(urls, ",");
+            }
+        }
+        return value;
     }
 }
