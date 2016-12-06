@@ -159,6 +159,12 @@ public class LoggingRunListener extends RunListener<Run> {
                     event.put("p4_client", envVars.get("P4_CLIENT"));
                     event.put("revision", envVars.get("P4_CHANGELIST"));
                     break;
+                case "hudson.plugins.mercurial.MercurialSCM":
+                    event.put("scm", "hg");
+                    event.put("scm_url", envVars.get("MERCURIAL_REPOSITORY_URL"));
+                    event.put("branch", envVars.get("MERCURIAL_REVISION_BRANCH"));
+                    event.put("revision", envVars.get("MERCURIAL_REVISION"));
+                    break;
                 case "hudson.scm.NullSCM":
                     break;
                 default:
