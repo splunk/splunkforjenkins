@@ -231,7 +231,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         } else {
             postActionScript = null;
         }
-        if (ignoredJobs == null) {
+        if (StringUtils.isEmpty(ignoredJobs)) {
             ignoredJobPattern = null;
         } else {
             try {
