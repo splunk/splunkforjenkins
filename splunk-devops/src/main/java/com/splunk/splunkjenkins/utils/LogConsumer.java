@@ -2,9 +2,6 @@ package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
-import hudson.Util;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import shaded.splk.org.apache.http.HttpEntity;
 import shaded.splk.org.apache.http.HttpResponse;
 import shaded.splk.org.apache.http.client.HttpClient;
@@ -19,6 +16,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -37,8 +35,8 @@ public class LogConsumer extends Thread {
     private final int RETRY_SLEEP_THRESHOLD = 1 << 10;
     private List<Class<? extends IOException>> giveUpExceptions = Arrays.asList(
             UnknownHostException.class,
-            ConnectException.class,
-            SSLException.class);
+            SSLException.class,
+            SplunkClientError.class);
     // Create a custom response handler
     private ResponseHandler<String> responseHandler = new ResponseHandler<String>() {
         @Override
@@ -52,15 +50,17 @@ public class LogConsumer extends Thread {
                 //need consume entity so underlying connection can be released to pool
                 return entity != null ? EntityUtils.toString(entity) : null;
             } else { //see also http://docs.splunk.com/Documentation/Splunk/6.3.0/RESTREF/RESTinput#services.2Fcollector
-                SplunkClientError error = null;
+                String message;
                 if (status == 403 || status == 401) {
                     //Token disabled or Invalid authorization
-                    error = new SplunkClientError("splunk token is invalid," + reason, status);
+                    message = reason + ", http event collector token is invalid";
                 } else if (status == 400) {
-                    //Invalid data format or incorrect index, will discard
-                    error = new SplunkClientError("incorrect index or invalid data format," + reason, status);
+                    //Invalid data format or incorrect index
+                    message = reason + ", incorrect index or invalid data format";
+                } else {
+                    message = reason;
                 }
-                throw new IOException("failed to send data," + reason, error);
+                throw new SplunkClientError(message, status);
             }
         }
     };
@@ -77,32 +77,22 @@ public class LogConsumer extends Thread {
         while (acceptingTask) {
             try {
                 EventRecord record = queue.take();
-                if (!record.discard()) {
+                if (!record.isDiscarded()) {
                     HttpPost post = buildPost(record, SplunkJenkinsInstallation.get());
                     try {
                         sending = true;
                         client.execute(post, responseHandler);
-                    } catch (Exception ex) {
-                        LOG.log(Level.WARNING, "content length:" + post.getEntity().getContentLength(), ex);
-                        boolean needRetry = Util.filter(giveUpExceptions, ex.getClass()).isEmpty();
-                        if (!needRetry) {
-                            LOG.log(Level.SEVERE, "remote server error, will not retry");
-                            return;
-                        }
-                        Throwable cause = ex.getCause();
-                        if (cause != null && cause instanceof SplunkClientError) {
-                            String content;
-                            try {
-                                content = IOUtils.toString(post.getEntity().getContent());
-                            } catch (IOException e) {
-                                content = record.getMessageString();
+                    } catch (IOException ex) {
+                        boolean isDiscarded = false;
+                        for (Class<? extends IOException> giveUpException : giveUpExceptions) {
+                            if (giveUpException.isInstance(ex)) {
+                                isDiscarded = true;
+                                LOG.log(Level.SEVERE, "message not delivered:" + record.getShortDescr(), ex);
+                                break;
                             }
-                            LOG.log(Level.SEVERE, "invalid client config, will discard data and no retry:{0}"
-                                    , StringUtils.abbreviate(content, 80));
-                        } else {
-                            //other errors
-                            LOG.log(Level.SEVERE, "will resend the message:{0}", record.getShortDescr());
-                            retry(record);
+                        }
+                        if (!isDiscarded) {
+                            handleRetry(ex, record);
                         }
                     } finally {
                         sending = false;
@@ -116,6 +106,19 @@ public class LogConsumer extends Thread {
                 errorCount++;
                 //thread interrupted, just ignore
             }
+        }
+    }
+
+    private void handleRetry(IOException ex, EventRecord record) throws InterruptedException {
+        if (ex instanceof ConnectException) {
+            // splunk is restarting or network broke
+            LOG.log(Level.WARNING, "{0} connect error, will wait 5s and retry", this.getName());
+            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+            retry(record);
+        } else {
+            //other errors
+            LOG.log(Level.WARNING, "will resend the message:{0}", record.getShortDescr());
+            retry(record);
         }
     }
 
@@ -155,11 +158,11 @@ public class LogConsumer extends Thread {
         return outgoingCounter.get();
     }
 
-    public static class SplunkClientError extends Throwable {
+    public static class SplunkClientError extends IOException {
         int status;
 
         public SplunkClientError(String message, int status) {
-            super(message);
+            super(message + ", status code:" + status);
             this.status = status;
         }
     }

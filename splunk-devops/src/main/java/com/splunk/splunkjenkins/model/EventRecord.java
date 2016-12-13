@@ -38,7 +38,7 @@ public class EventRecord {
         this.retryCount++;
     }
 
-    public boolean discard() {
+    public boolean isDiscarded() {
         return retryCount > SplunkJenkinsInstallation.get().getMaxRetries();
     }
 
