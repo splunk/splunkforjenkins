@@ -313,7 +313,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * @param eventType does this type of text need to be logged to splunk line by line
      * @return true if HEC supports specify metadata in url query parameter
      */
-    public boolean isMetaDataInURLSupported(EventType eventType) {
+    public boolean canPostRaw(EventType eventType) {
         return rawEventEnabled && eventType.needSplit();
     }
 

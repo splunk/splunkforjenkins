@@ -32,6 +32,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.io.IOUtils;
 import shaded.splk.org.apache.http.HttpResponse;
 import shaded.splk.org.apache.http.client.HttpClient;
+import shaded.splk.org.apache.http.client.entity.GzipCompressingEntity;
 import shaded.splk.org.apache.http.client.methods.HttpPost;
 import shaded.splk.org.apache.http.entity.StringEntity;
 import shaded.splk.org.apache.http.util.EntityUtils;
@@ -76,11 +77,14 @@ public class LogEventHelper {
             .put("GB", 1024 * 1024 * 1024L)
             .build();
 
+    private static final int GZIP_THRESHOLD = 1024; //1kb
+    private static boolean gizpEnabled = !Boolean.getBoolean(LogEventHelper.class.getName() + ".disableGzip");
+
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
         HttpPost postMethod;
-        if (config.isMetaDataInURLSupported(record.getEventType())) {
+        if (config.canPostRaw(record.getEventType())) {
             postMethod = new HttpPost(record.getRawEndpoint(config));
-            postMethod.setEntity(new StringEntity(record.getMessageString(), UTF_8));
+            updateContent(postMethod, record.getMessageString(), false);
         } else {
             postMethod = new HttpPost(config.getJsonUrl());
             String jsonRecord;
@@ -102,13 +106,23 @@ public class LogEventHelper {
                 jsonRecord = gson.toJson(record.toMap(config));
             }
             LOG.log(Level.FINEST, jsonRecord);
-            StringEntity entity = new StringEntity(jsonRecord, UTF_8);
-            entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
-            postMethod.setEntity(entity);
+            updateContent(postMethod, jsonRecord, true);
         }
         postMethod.setHeader("x-splunk-request-channel", channel);
         postMethod.setHeader("Authorization", "Splunk " + config.getToken());
         return postMethod;
+    }
+
+    private static void updateContent(HttpPost postMethod, String message, boolean isJson) {
+        StringEntity entity = new StringEntity(message, UTF_8);
+        if (isJson) {
+            entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
+        }
+        if (gizpEnabled && entity.getContentLength() > GZIP_THRESHOLD) {
+            postMethod.setEntity(new GzipCompressingEntity(entity));
+        } else {
+            postMethod.setEntity(entity);
+        }
     }
 
     public static FormValidation verifyHttpInput(SplunkJenkinsInstallation config) {
