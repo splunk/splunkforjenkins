@@ -24,7 +24,8 @@ public class HealthMonitor extends AsyncPeriodicWork {
     private long period = TimeUnit.SECONDS.toMillis(Math.max(20, Long.getLong("com.splunk.splunkjenkins.queueMonitorSeconds", 45)));
 
     private Set<String> slaveNames = new HashSet<>();
-    private long lastAccessTime = -1;
+    //use protected to allow tweak it in testcase
+    protected long lastAccessTime = System.currentTimeMillis();
 
     public HealthMonitor() {
         super("Splunk data monitor");
@@ -45,18 +46,18 @@ public class HealthMonitor extends AsyncPeriodicWork {
         Map<String, Map<String, Object>> slaveStats = getSlaveStats();
         Set<String> aliveSlaves = slaveStats.keySet();
         //send event one by one instead of list to aid search
-        for (Map slaveInfo : slaveStats.values()) {
-            SplunkLogService.getInstance().send(slaveInfo, SLAVE_INFO);
-        }
+        SplunkLogService.getInstance().sendBatch(slaveStats.values(), SLAVE_INFO);
+        List<Map> removedSlavs = new ArrayList<>();
         for (String slaveName : slaveNames) {
             if (!aliveSlaves.contains(slaveName)) {
                 Map event = new HashMap();
                 event.put(Constants.TAG, SLAVE_TAG_NAME);
                 event.put(NODE_NAME, slaveName);
                 event.put("status", "removed");
-                SplunkLogService.getInstance().send(event, SLAVE_INFO);
+                removedSlavs.add(event);
             }
         }
+        SplunkLogService.getInstance().sendBatch(removedSlavs, SLAVE_INFO);
         //replace slave names, at one time should only one thread is running, so modify slaveNames is safe without lock
         slaveNames = aliveSlaves;
         //update master stats
@@ -69,6 +70,7 @@ public class HealthMonitor extends AsyncPeriodicWork {
     private void sendPendingQueue() {
         //send queue items
         Queue.Item[] items = Jenkins.getInstance().getQueue().getItems();
+        List<Map> queue = new ArrayList<>(items.length);
         for (int i = 0; i < items.length; i++) {
             Queue.Item item = items[i];
             Map queueItem = new HashMap();
@@ -79,8 +81,9 @@ public class HealthMonitor extends AsyncPeriodicWork {
             queueItem.put("task", item.task.getUrl());
             queueItem.put("concurrent_build", item.task.isConcurrentBuild());
             queueItem.put(Constants.TAG, Constants.QUEUE_WAITING_ITEM_NAME);
-            SplunkLogService.getInstance().send(queueItem, QUEUE_INFO);
+            queue.add(queueItem);
         }
+        SplunkLogService.getInstance().sendBatch(queue, QUEUE_INFO);
     }
 
     @Override

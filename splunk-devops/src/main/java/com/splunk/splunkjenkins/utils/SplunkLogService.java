@@ -21,6 +21,7 @@ import shaded.splk.org.apache.http.ssl.SSLContexts;
 import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
+
+import static com.splunk.splunkjenkins.model.EventType.BATCH_JSON;
 
 public class SplunkLogService {
     public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
@@ -111,6 +114,33 @@ public class SplunkLogService {
      */
     public boolean send(Object message, EventType eventType) {
         return send(message, eventType, null);
+    }
+
+    /**
+     * @param messages  the messages to send
+     * @param eventType the type of event, @see EventType
+     * @return true if enqueue successfully, false if some message are discarded
+     */
+    public boolean sendBatch(Collection<? extends Object> messages, EventType eventType) {
+        StringBuffer stringBuffer = new StringBuffer();
+        long batchSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
+        boolean isQueued = false;
+        for (Object message : messages) {
+            EventRecord record = new EventRecord(message, eventType);
+            stringBuffer.append(LogEventHelper.toJson(record));
+            stringBuffer.append("\n");
+            if (stringBuffer.length() > batchSize) {
+                isQueued = enqueue(new EventRecord(stringBuffer.toString(), BATCH_JSON));
+                stringBuffer.setLength(0);
+                if (!isQueued) {
+                    return isQueued;
+                }
+            }
+        }
+        if (stringBuffer.length() > 0) {
+            isQueued = enqueue(new EventRecord(stringBuffer.toString(), BATCH_JSON));
+        }
+        return isQueued;
     }
 
     /**

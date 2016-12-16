@@ -8,7 +8,8 @@ public enum EventType {
     CONSOLE_LOG(true),
     FILE(true),
     SLAVE_INFO(false),
-    LOG(false);
+    LOG(false),
+    BATCH_JSON(false);
 
     /**
      * whether the data need to be split by line breaker before send

@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.splunk.splunkjenkins.Constants.*;
+import static com.splunk.splunkjenkins.model.EventType.BATCH_JSON;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
 import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -102,6 +103,8 @@ public class LogEventHelper {
                     }
                 }
                 jsonRecord = stout.toString();
+            } else if (record.getEventType() == BATCH_JSON) {
+                jsonRecord = record.getMessageString();
             } else {
                 jsonRecord = gson.toJson(record.toMap(config));
             }
@@ -786,5 +789,13 @@ public class LogEventHelper {
             }
         }
         return value;
+    }
+
+    public static String toJson(EventRecord record) {
+        if (record == null) {
+            return "\"empty record\"";
+        }
+        SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
+        return gson.toJson(record.toMap(config));
     }
 }
