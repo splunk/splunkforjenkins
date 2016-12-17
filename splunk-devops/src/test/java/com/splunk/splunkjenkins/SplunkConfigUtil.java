@@ -1,22 +1,21 @@
 package com.splunk.splunkjenkins;
 
 import com.google.common.collect.ImmutableMap;
-import shaded.splk.com.google.gson.Gson;
 import com.splunk.*;
-import com.splunk.splunkjenkins.model.*;
 import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.apache.commons.io.IOUtils;
+import shaded.splk.com.google.gson.Gson;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
 
 public class SplunkConfigUtil {
     public static final String INDEX_NAME = System.getProperty("splunk-index", "plugin_sandbox");
@@ -133,6 +132,11 @@ public class SplunkConfigUtil {
         LOG.fine("splunk httpinput collector config is valid ?" + isValid);
         SplunkJenkinsInstallation.markComplete(true);
         return isValid;
+    }
+
+    public static void verifySplunkSearchResult(String query, int minNumber) throws InterruptedException {
+        long fiveMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+        verifySplunkSearchResult(query, fiveMinutesAgo, minNumber);
     }
 
     public static void verifySplunkSearchResult(String query, long startTime, int minNumber) throws InterruptedException {
