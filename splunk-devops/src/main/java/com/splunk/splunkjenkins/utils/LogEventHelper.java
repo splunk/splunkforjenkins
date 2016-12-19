@@ -5,6 +5,7 @@ import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import hudson.scm.SCM;
 import jenkins.triggers.SCMTriggerItem;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.taskdefs.Exec;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
 import shaded.splk.com.google.gson.Gson;
 import shaded.splk.com.google.gson.GsonBuilder;
@@ -417,17 +418,28 @@ public class LogEventHelper {
         }
     }
 
+    /**
+     * @param computer
+     * @return the computer name
+     */
+    private static String getNodeName(Computer computer) {
+        if (computer == null) {
+            return "N/A";
+        }
+        if (computer instanceof Jenkins.MasterComputer) {
+            return Constants.MASTER;
+        } else {
+            return computer.getName();
+        }
+    }
+
     public static Map<String, Object> getComputerStatus(Computer computer) {
         String nodeName;
         Map slaveInfo = new HashMap();
         if (computer == null) {
             return slaveInfo;
         }
-        if (computer instanceof Jenkins.MasterComputer) {
-            nodeName = Constants.MASTER;
-        } else {
-            nodeName = computer.getName();
-        }
+        nodeName = getNodeName(computer);
         slaveInfo.put(NODE_NAME, nodeName);
         slaveInfo.put(Constants.TAG, Constants.SLAVE_TAG_NAME);
         Node slaveNode = computer.getNode();
@@ -456,30 +468,34 @@ public class LogEventHelper {
             //slave is offline or disconnected
             slaveInfo.put("connect_time", 0);
         }
-        if (!computer.isIdle()) {
-            List<Map> builds = new ArrayList<>();
-            for (Computer.DisplayExecutor displayExecutor : computer.getDisplayExecutors()) {
-                if (displayExecutor.getExecutor().isBusy()) {
-                    WorkUnit workUnit = displayExecutor.getExecutor().getCurrentWorkUnit();
-                    Queue.Executable executable = displayExecutor.getExecutor().getCurrentExecutable();
-                    if (executable == null && workUnit != null) {
-                        executable = workUnit.getExecutable();
-                    }
-                    if (executable != null && executable instanceof Run) {
-                        Run run = (Run) executable;
-                        Map buildInfo = new HashMap();
-                        buildInfo.put("job_name", run.getUrl());
-                        buildInfo.put("job_duration", getRunDuration(run));
-                        builds.add(buildInfo);
-                    }
-                }
-            }
-            if (!builds.isEmpty()) {
-                slaveInfo.put("running_builds", builds);
-            }
-        }
         slaveInfo.put("uptime", getUpTime(computer));
         return slaveInfo;
+    }
+
+    public static List<Map> getRunningJob() {
+        List<Map> builds = new ArrayList<>();
+        for (Computer computer : Jenkins.getInstance().getComputers()) {
+            for (Computer.DisplayExecutor displayExecutor : computer.getDisplayExecutors()) {
+                Executor executor = displayExecutor.getExecutor();
+                WorkUnit workUnit = executor.getCurrentWorkUnit();
+                Queue.Executable executable = executor.getCurrentExecutable();
+                if (executable == null && workUnit != null) {
+                    executable = workUnit.getExecutable();
+                }
+                if (executable != null && executable instanceof Run) {
+                    Run run = (Run) executable;
+                    Map buildInfo = new HashMap();
+                    buildInfo.put(Constants.BUILD_ID, run.getUrl());
+                    buildInfo.put(Constants.TAG, Constants.JOB_EVENT_MONITOR);
+                    buildInfo.put(Constants.NODE_NAME, getNodeName(computer));
+                    buildInfo.put("job_name", run.getParent().getUrl());
+                    buildInfo.put("build_number", run.getNumber());
+                    buildInfo.put("job_duration", getRunDuration(run));
+                    builds.add(buildInfo);
+                }
+            }
+        }
+        return builds;
     }
 
     @SuppressFBWarnings("DE_MIGHT_IGNORE")
@@ -695,10 +711,10 @@ public class LogEventHelper {
      */
     public static float getRunDuration(Run run) {
         float duration = run.getDuration() / 1000f;
-        if (duration < 0.01f) {
+        if (duration < 0.01f || run.isBuilding()) {
             //workflow job duration is updated after job completed
             //not available in onCompleted listener
-            duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 100f);
+            duration = Math.max(0, (System.currentTimeMillis() - run.getStartTimeInMillis()) / 1000f);
         }
         return duration;
     }

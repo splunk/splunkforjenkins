@@ -84,7 +84,12 @@ public class LoggingQueueListener extends QueueListener {
     }
 
     public static Float getQueueTime(Long Id) {
-        return cache.getIfPresent(Id);
+        Float queueTime= cache.getIfPresent(Id);
+        if (queueTime == null) {
+            //the queue has been garbage collected
+            queueTime = 0f;
+        }
+        return queueTime;
     }
 
     public static void expire(Long Id) {

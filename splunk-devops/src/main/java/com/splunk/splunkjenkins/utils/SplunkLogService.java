@@ -122,6 +122,9 @@ public class SplunkLogService {
      * @return true if enqueue successfully, false if some message are discarded
      */
     public boolean sendBatch(Collection<? extends Object> messages, EventType eventType) {
+        if (messages == null || messages.isEmpty()) {
+            return false;
+        }
         StringBuffer stringBuffer = new StringBuffer();
         long batchSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
         boolean isQueued = false;

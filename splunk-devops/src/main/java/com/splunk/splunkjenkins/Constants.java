@@ -16,6 +16,7 @@ public class Constants {
     public final static String QUEUE_TAG_NAME = "queue";
     public final static String QUEUE_WAITING_ITEM_NAME = "queue_item";
     public static final String JOB_EVENT_TAG_NAME = "job_event";
+    public static final String JOB_EVENT_MONITOR = "job_monitor";
     public static final String MASTER = "(master)";
     public static final String BUILD_REPORT_ENV_TAG = "metadata";
     public static final String JENKINS_CONFIG_PREFIX = "jenkins://";

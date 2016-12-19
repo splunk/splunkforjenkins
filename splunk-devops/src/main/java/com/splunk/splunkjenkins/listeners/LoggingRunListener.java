@@ -140,10 +140,6 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put(Constants.USER_NAME_KEY, getTriggerUserName(run));
         long queueId = run.getQueueId();
         Float queueTime = LoggingQueueListener.getQueueTime(queueId);
-        if (queueTime == null) {
-            //the queue has been garbage collected
-            queueTime = 0f;
-        }
         event.put("queue_time", queueTime);
         event.put("queue_id", queueId);
         event.put(Constants.BUILD_ID, run.getUrl());

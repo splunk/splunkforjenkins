@@ -15,6 +15,7 @@ import static com.splunk.splunkjenkins.model.EventType.SLAVE_INFO;
 import static com.splunk.splunkjenkins.Constants.NODE_NAME;
 import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getRunningJob;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
 
 @Extension
@@ -58,6 +59,7 @@ public class HealthMonitor extends AsyncPeriodicWork {
             }
         }
         SplunkLogService.getInstance().sendBatch(removedSlavs, SLAVE_INFO);
+        SplunkLogService.getInstance().sendBatch(getRunningJob(),QUEUE_INFO);
         //replace slave names, at one time should only one thread is running, so modify slaveNames is safe without lock
         slaveNames = aliveSlaves;
         //update master stats
