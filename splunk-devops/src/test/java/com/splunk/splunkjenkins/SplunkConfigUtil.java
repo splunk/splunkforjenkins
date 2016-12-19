@@ -37,13 +37,11 @@ public class SplunkConfigUtil {
         serviceArgs.setPassword(System.getProperty("splunk-passwd", "changeme"));
         serviceArgs.setHost(host);
         serviceArgs.setPort(Integer.parseInt(System.getProperty("splunk-port", "8089")));
-        // Create a Service instance and log in with the argument map
-        splunkService = Service.connect(serviceArgs);
-        //create index if not exists
-
         //splunk service used URLConnection but not set timeout
         System.setProperty("sun.net.client.defaultReadTimeout", "90000");
         System.setProperty("sun.net.client.defaultConnectTimeout", "90000");
+        // Create a Service instance and log in with the argument map
+        splunkService = Service.connect(serviceArgs);
         return splunkService;
 
     }
