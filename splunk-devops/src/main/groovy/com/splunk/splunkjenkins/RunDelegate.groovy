@@ -109,7 +109,7 @@ public class RunDelegate {
     }
 
     def sendTestReport(int pageSize) {
-        def results = getJunitReport(50)
+        def results = getJunitReport(pageSize)
         def buildEvent = getBuildEvent()
         String sourceName = SplunkJenkinsInstallation.get().getMetadataSource("test")
         results.eachWithIndex { junitResult, idx ->
