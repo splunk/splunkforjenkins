@@ -32,6 +32,8 @@ To Setup
 - `getBuildEvent()` will return metadata about the build, such as build result, build URL, user who triggered the build
 - `getJunitReport(int pageSize)` will return a list of test results, which contains total, passes, failures, skips, time and testcase of type List<hudson.tasks.junit.CaseResult>
 - `getJunitReport()` is an alias of `getJunitReport(Integer.MAX_VALUE)[0]`
+- sendCoverageReport(pageSize)  send coverage report, with pagination support
+- sendTestReport(pageSize)  send Test report, with pagination support
 - `archive(String includes, String excludes, boolean uploadFromSlave, String fileSizeLimit)` send log file to splunk
 - `archive(String includes)` is an alias of `archive(includes, null, false, "")`
 - `getAction(Class type)` is an alias of ` build.getAction(type)`
@@ -39,16 +41,14 @@ To Setup
 - `hasPublisherName(String className)` check whether the publisher is configured for the build (applied to AbstractBuild only)
 - Here is the default settings for post job data processing
 
-```java
-	//send job metadata and junit reports with page size set to 100 (each event contains max 100 test cases)
-	def results = getJunitReport(50)
-	def buildEvent = getBuildEvent()
-	results.eachWithIndex { junitResult, idx ->
-	    Map pagedEvent = buildEvent + ["testsuite": junitResult, "page_num": idx + 1]
-	    send(pagedEvent)
-	}
-	//send all logs from workspace to splunk, with each file size limits to 10MB
-	archive("**/*.log", null,false,"10MB")
+```groovy
+//send job metadata and junit reports with page size set to 50 (each event contains max 50 test cases)
+sendTestReport(50)
+//send coverage, each event contains max 50 class metrics
+sendCoverageReport(50)
+//send all logs from workspace to splunk, with each file size limits to 10MB
+archive("**/*.log", null, false, "10MB")
+
 ```
 
 #### Customize log files at job level
@@ -61,17 +61,7 @@ Dashboard
 ----
 
 you can get the "Splunk App for Jenkins" App from [splunk base](https://splunkbase.splunk.com/app/3332/)
-and configure the plugin to use below metadata
 
-```
-source=jenkins
-host=your-host-name
-index=jenkins_statistics
-build_report.index=jenkins
-file.index=jenkins_artifact
-console_log.index=jenkins_console
-
-```
 
 System Requirement
 -----
