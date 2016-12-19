@@ -54,6 +54,7 @@ To Setup
 #### Customize log files at job level
 - Add a "post-build action" called "Send data to Splunk"
 - Enter an ant-style pattern matching string for your junit xml collection
+
   ![Screenshot](doc/images/splunk_for_jenkins_post_job.png)
  
 Dashboard
