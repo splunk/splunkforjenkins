@@ -25,7 +25,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.buildPost;
 
 public class LogConsumer extends Thread {
     private static final Logger LOG = Logger.getLogger(LogConsumer.class.getName());
-
+    private static final int retryInterval = Integer.parseInt(System.getProperty("splunk-retryinterval", "15"));
     private final HttpClient client;
     private final BlockingQueue<EventRecord> queue;
     private boolean acceptingTask = true;
@@ -51,6 +51,10 @@ public class LogConsumer extends Thread {
                 return entity != null ? EntityUtils.toString(entity) : null;
             } else { //see also http://docs.splunk.com/Documentation/Splunk/6.3.0/RESTREF/RESTinput#services.2Fcollector
                 String message;
+                if (status == 503) {
+                    throw new SplunkServiceError("Server is busy, maybe caused by blocked queue, please check " +
+                            "https://wiki.splunk.com/Community:TroubleshootingBlockedQueues", status);
+                }
                 if (status == 403 || status == 401) {
                     //Token disabled or Invalid authorization
                     message = reason + ", http event collector token is invalid";
@@ -110,10 +114,15 @@ public class LogConsumer extends Thread {
     }
 
     private void handleRetry(IOException ex, EventRecord record) throws InterruptedException {
-        if (ex instanceof ConnectException) {
+        if (ex instanceof SplunkServiceError) {
+            int sleepTime = 2 * retryInterval;
+            LOG.log(Level.WARNING, "{0}, will wait {1} seconds and retry", new Object[]{ex.getMessage(), sleepTime});
+            Thread.sleep(TimeUnit.SECONDS.toMillis(sleepTime));
+            retry(record);
+        } else if (ex instanceof ConnectException) {
             // splunk is restarting or network broke
-            LOG.log(Level.WARNING, "{0} connect error, will wait 5s and retry", this.getName());
-            Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+            LOG.log(Level.WARNING, "{0} connect error, will wait {1} seconds and retry", new Object[]{this.getName(), retryInterval});
+            Thread.sleep(TimeUnit.SECONDS.toMillis(retryInterval));
             retry(record);
         } else {
             //other errors
@@ -164,6 +173,12 @@ public class LogConsumer extends Thread {
         public SplunkClientError(String message, int status) {
             super(message + ", status code:" + status);
             this.status = status;
+        }
+    }
+
+    public static class SplunkServiceError extends IOException {
+        public SplunkServiceError(String message, int status) {
+            super(message);
         }
     }
 }
