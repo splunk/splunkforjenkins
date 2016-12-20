@@ -16,7 +16,6 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +29,7 @@ public class LogConsumer extends Thread {
     private final BlockingQueue<EventRecord> queue;
     private boolean acceptingTask = true;
     private AtomicLong outgoingCounter;
-    private int errorCount;
+    private long errorCount;
     private boolean sending = false;
     private final int RETRY_SLEEP_THRESHOLD = 1 << 10;
     private List<Class<? extends IOException>> giveUpExceptions = Arrays.asList(
@@ -49,12 +48,14 @@ public class LogConsumer extends Thread {
                 HttpEntity entity = response.getEntity();
                 //need consume entity so underlying connection can be released to pool
                 return entity != null ? EntityUtils.toString(entity) : null;
-            } else { //see also http://docs.splunk.com/Documentation/Splunk/6.3.0/RESTREF/RESTinput#services.2Fcollector
-                String message;
+            } else {
+                errorCount++;
+                //see also http://docs.splunk.com/Documentation/Splunk/6.3.0/RESTREF/RESTinput#services.2Fcollector
                 if (status == 503) {
                     throw new SplunkServiceError("Server is busy, maybe caused by blocked queue, please check " +
                             "https://wiki.splunk.com/Community:TroubleshootingBlockedQueues", status);
                 }
+                String message;
                 if (status == 403 || status == 401) {
                     //Token disabled or Invalid authorization
                     message = reason + ", http event collector token is invalid";
@@ -117,17 +118,15 @@ public class LogConsumer extends Thread {
         if (ex instanceof SplunkServiceError) {
             int sleepTime = 2 * retryInterval;
             LOG.log(Level.WARNING, "{0}, will wait {1} seconds and retry", new Object[]{ex.getMessage(), sleepTime});
-            Thread.sleep(TimeUnit.SECONDS.toMillis(sleepTime));
-            retry(record);
+            retry(record, sleepTime);
         } else if (ex instanceof ConnectException) {
             // splunk is restarting or network broke
             LOG.log(Level.WARNING, "{0} connect error, will wait {1} seconds and retry", new Object[]{this.getName(), retryInterval});
-            Thread.sleep(TimeUnit.SECONDS.toMillis(retryInterval));
-            retry(record);
+            retry(record, retryInterval);
         } else {
             //other errors
             LOG.log(Level.WARNING, "will resend the message:{0}", record.getShortDescr());
-            retry(record);
+            retry(record, 1);
         }
     }
 
@@ -152,19 +151,15 @@ public class LogConsumer extends Thread {
      * @param record
      * @throws InterruptedException
      */
-    private void retry(EventRecord record) throws InterruptedException {
+    private void retry(EventRecord record, int sleepIntervalInSeconds) throws InterruptedException {
         if (acceptingTask) {
             record.increase();
-            SplunkLogService.getInstance().enqueue(record);
             if (queue.size() < RETRY_SLEEP_THRESHOLD) {
                 //We don't have much data in queue so wait a while for the service to recovery(hopefully)
-                Thread.sleep(100);
+                Thread.sleep(sleepIntervalInSeconds * 1000);
             }
+            SplunkLogService.getInstance().enqueue(record);
         }
-    }
-
-    public long getSentCount() {
-        return outgoingCounter.get();
     }
 
     public static class SplunkClientError extends IOException {
@@ -180,5 +175,11 @@ public class LogConsumer extends Thread {
         public SplunkServiceError(String message, int status) {
             super(message);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "LogConsumer{ errors=" + errorCount +
+                ", name=" + this.getName() + " }";
     }
 }
