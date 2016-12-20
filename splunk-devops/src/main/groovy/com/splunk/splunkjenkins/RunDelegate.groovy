@@ -214,17 +214,31 @@ public class RunDelegate {
     /**
      * <pre>
      * {@code
+     * //modify the build the event on the fly
      * sendReport ({report - >
      * report["foo"] = "bar";
      * report["testsuite"] = junitReport;
      *})
-     *}</pre>
+     * //use a map as return
+     * sendReport{
+     *     return ["ke":"value"]
+     *}*}</pre>
      * send build reports with build variables as metadata
      * @param closure Groovy closure with a Map as parameter
      */
     public void sendReport(Closure closure) {
         Map event = getBuildEvent();
-        closure(event);
+        //closure may/not return a new build event
+        def res = closure(event);
+        if (res != null) {
+            if (res instanceof Map) {
+                event = event + res;
+            } else if (res instanceof JunitTestCaseGroup) {
+                event = event + ["testsuite": res]
+            } else {
+                event = event + ["report": res]
+            }
+        }
         send(event);
     }
 
