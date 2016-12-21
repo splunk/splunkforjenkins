@@ -7,15 +7,16 @@ import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.apache.commons.io.IOUtils;
 import shaded.splk.com.google.gson.Gson;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 
 public class SplunkConfigUtil {
     public static final String INDEX_NAME = System.getProperty("splunk-index", "plugin_sandbox");
@@ -25,18 +26,29 @@ public class SplunkConfigUtil {
     private static Gson gson = new Gson();
     private static Service splunkService;
 
-    public static synchronized Service getSplunkServiceInstance() {
+    public static synchronized Service getSplunkServiceInstance() throws IOException {
         if (splunkService != null) {
             return splunkService;
         }
-
-        String host = System.getProperty("splunk-host", "127.0.0.1");
+        Properties properties = new Properties();
+        File configFile = new File(System.getProperty("user.home"), ".splunkrc");
+        if (configFile.exists()) {
+            properties.load(new FileReader(configFile));
+        }
+        Properties sysProperties = System.getProperties();
+        properties.putAll(sysProperties);
+        if (!properties.containsKey("password")) {
+            System.err.println("please use mvn -Dpassword=AdminPassword -Dhost=ip-address to run the test\n" +
+                    "and you can also put this to global vm settings in IDE");
+            throw new IOException("splunk admin password is needed");
+        }
+        String host = properties.getProperty("host", "127.0.0.1");
         ServiceArgs serviceArgs = new ServiceArgs();
         serviceArgs.setSSLSecurityProtocol(SSLSecurityProtocol.TLSv1);
-        serviceArgs.setUsername(System.getProperty("splunk-username", "admin"));
-        serviceArgs.setPassword(System.getProperty("splunk-passwd", "changeme"));
+        serviceArgs.setUsername(properties.getProperty("username", "admin"));
+        serviceArgs.setPassword(properties.getProperty("password", "changeme"));
         serviceArgs.setHost(host);
-        serviceArgs.setPort(Integer.parseInt(System.getProperty("splunk-port", "8089")));
+        serviceArgs.setPort(Integer.parseInt(properties.getProperty("port", "8089")));
         //splunk service used URLConnection but not set timeout
         System.setProperty("sun.net.client.defaultReadTimeout", "90000");
         System.setProperty("sun.net.client.defaultConnectTimeout", "90000");
@@ -48,60 +60,55 @@ public class SplunkConfigUtil {
 
     public static synchronized boolean checkTokenAvailable() {
         SplunkJenkinsInstallation.markComplete(false);
-        String password = System.getProperty("splunk-passwd");
-        if (password == null) {
-            System.err.println("please use mvn -Dsplunk-password=AdminPassword -Dsplunk-host=ip-address to run the test\n" +
-                    "and you can also put this to global vm settings in IDE");
+        Service service = null;
+        try {
+            service = getSplunkServiceInstance();
+        } catch (IOException e) {
             return false;
         }
-        String token = System.getProperty("splunk-token");
-        String host = System.getProperty("splunk-host", "127.0.0.1");
-        if (token == null) {
-            Service service = getSplunkServiceInstance();
-            try {
-                Index myIndex = service.getIndexes().get(INDEX_NAME);
-                if (myIndex == null) {
-                    service.getIndexes().create(INDEX_NAME);
-                }
-            } catch (com.splunk.HttpException ex) {
-                int statusCode = ex.getStatus();
-                if (!(statusCode == 409 || statusCode == 201)) {
-                    throw ex;
-                }
+        try {
+            Index myIndex = service.getIndexes().get(INDEX_NAME);
+            if (myIndex == null) {
+                service.getIndexes().create(INDEX_NAME);
             }
-            //enable logging endpoint
-            service.post(ENDPOINT + "http", ImmutableMap.of("disabled", (Object) "0"));
-            ResponseMessage response;
-            try {
-                response = service.get(ENDPOINT + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
-            } catch (com.splunk.HttpException e) {
-                if (e.getStatus() != 404) {
-                    throw e;
-                }
-                //create token because it doesn't exist
-                Map<String, Object> args = new HashMap<String, Object>();
-                args.put("output_mode", "json");
-                args.put("name", COLLECTOR_NAME);
-                args.put("index", INDEX_NAME);
-                args.put("indexes", "main," + INDEX_NAME);
-                args.put("description", "test http event collector");
-                response = service.post(ENDPOINT + "http", args);
-                System.err.println(response);
-                response = service.get(ENDPOINT + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
-            }
-            try {
-                String tokenMessage = IOUtils.toString(response.getContent());
-                SplunkResponse result = gson.fromJson(tokenMessage, SplunkResponse.class);
-                token = result.getFirst("token");
-                System.setProperty("splunk-token", token);
-            } catch (IOException e) {
-                LOG.log(Level.SEVERE, "failed to get token", e);
+        } catch (com.splunk.HttpException ex) {
+            int statusCode = ex.getStatus();
+            if (!(statusCode == 409 || statusCode == 201)) {
+                throw ex;
             }
         }
-        return setupSender(host, token);
+        //enable logging endpoint
+        service.post(ENDPOINT + "http", ImmutableMap.of("disabled", (Object) "0"));
+        ResponseMessage response;
+        try {
+            response = service.get(ENDPOINT + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
+        } catch (com.splunk.HttpException e) {
+            if (e.getStatus() != 404) {
+                throw e;
+            }
+            //create token because it doesn't exist
+            Map<String, Object> args = new HashMap<String, Object>();
+            args.put("output_mode", "json");
+            args.put("name", COLLECTOR_NAME);
+            args.put("index", INDEX_NAME);
+            args.put("indexes", "main," + INDEX_NAME);
+            args.put("description", "test http event collector");
+            response = service.post(ENDPOINT + "http", args);
+            System.err.println(response);
+            response = service.get(ENDPOINT + COLLECTOR_NAME, ImmutableMap.of("output_mode", (Object) "json"));
+        }
+        try {
+            String tokenMessage = IOUtils.toString(response.getContent());
+            SplunkResponse result = gson.fromJson(tokenMessage, SplunkResponse.class);
+            String token = result.getFirst("token");
+            return setupSender(service.getHost(), service.getPort(), token);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    public static boolean setupSender(String host, String token) {
+    public static boolean setupSender(String host, int port, String token) {
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
         String metadataConfig = "";
@@ -132,12 +139,12 @@ public class SplunkConfigUtil {
         return isValid;
     }
 
-    public static void verifySplunkSearchResult(String query, int minNumber) throws InterruptedException {
+    public static void verifySplunkSearchResult(String query, int minNumber) {
         long fiveMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
         verifySplunkSearchResult(query, fiveMinutesAgo, minNumber);
     }
 
-    public static void verifySplunkSearchResult(String query, long startTime, int minNumber) throws InterruptedException {
+    public static void verifySplunkSearchResult(String query, long startTime, int minNumber) {
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
         jobargs.put("earliest_time", startTime / 1000);
@@ -151,7 +158,13 @@ public class SplunkConfigUtil {
         LOG.info("running query:\n" + query);
         int eventCount = 0;
         for (int i = 0; i < 20; i++) {
-            com.splunk.Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
+            Job job = null;
+            try {
+                job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
+            } catch (IOException e) {
+                e.printStackTrace();
+                fail("can not execute query " + query);
+            }
             eventCount = job.getEventCount();
             if (eventCount == 0) {
                 LOG.fine("remaining:" + SplunkLogService.getInstance().getQueueSize());
