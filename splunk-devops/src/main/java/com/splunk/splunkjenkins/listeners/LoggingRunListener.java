@@ -145,7 +145,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put(Constants.BUILD_ID, run.getUrl());
         event.put("upstream", getUpStreamUrl(run));
         event.put("job_started_at", run.getTimestampString2());
-        event.put("job_name", run.getParent().getUrl());
+        event.put("job_name", run.getParent().getFullName());
         Map parameters = getBuildVariables(run);
         if (!parameters.isEmpty()) {
             event.put(BUILD_REPORT_ENV_TAG, parameters);

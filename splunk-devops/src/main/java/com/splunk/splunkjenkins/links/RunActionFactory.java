@@ -29,7 +29,7 @@ public class RunActionFactory extends TransientActionFactory<Run> {
         if (junitFile.exists() || job.getClass().getName().startsWith("hudson.maven.")) {
             String query = new LogEventHelper.UrlQueryBuilder()
                     .putIfAbsent("host", SplunkJenkinsInstallation.get().getMetadataHost())
-                    .putIfAbsent("job", job.getUrl())
+                    .putIfAbsent("job", job.getFullName())
                     .putIfAbsent("build", target.getNumber() + "")
                     .build();
             return Collections.singleton(new LinkSplunkAction("test_analysis", query, "Splunk"));

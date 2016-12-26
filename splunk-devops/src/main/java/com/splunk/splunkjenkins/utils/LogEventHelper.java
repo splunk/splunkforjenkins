@@ -486,7 +486,7 @@ public class LogEventHelper {
                     buildInfo.put(Constants.BUILD_ID, run.getUrl());
                     buildInfo.put(Constants.TAG, Constants.JOB_EVENT_MONITOR);
                     buildInfo.put(Constants.NODE_NAME, getNodeName(computer));
-                    buildInfo.put("job_name", run.getParent().getUrl());
+                    buildInfo.put("job_name", run.getParent().getFullName());
                     buildInfo.put("build_number", run.getNumber());
                     buildInfo.put("job_duration", getRunDuration(run));
                     builds.add(buildInfo);
