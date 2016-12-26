@@ -152,7 +152,7 @@ public class SplunkConfigUtil {
             query = "index=" + SplunkConfigUtil.INDEX_NAME + " " + query;
         }
         if (!query.startsWith("search")) {
-            query = "search " + query;
+            query = "search splunk_server=local " + query;
         }
         query = query + "|stats count| where count>=" + minNumber;
         LOG.info("running query:\n" + query);
