@@ -30,9 +30,9 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 @Extension
 public class LoggingConfigListener extends SaveableListener {
     private static final String XML_COMMENT = "<!--<![CDATA[%s]]>-->\n";
-    //queue.xml or nodes/*/config.xml
+    //queue.xml or build/*/config.xml
     private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats" +
-            "|fingerprints|nodes|build)(.*?xml)", Pattern.CASE_INSENSITIVE);
+            "|fingerprint|build)(.*?xml)", Pattern.CASE_INSENSITIVE);
     private WeakHashMap cached = new WeakHashMap(512);
 
     @Override
