@@ -78,7 +78,6 @@ public class LogEventHelper {
             .put("GB", 1024 * 1024 * 1024L)
             .build();
 
-    private static final int GZIP_THRESHOLD = 1024; //1kb
     private static boolean gizpEnabled = !Boolean.getBoolean(LogEventHelper.class.getName() + ".disableGzip");
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {

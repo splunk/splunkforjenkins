@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-import static com.splunk.splunkjenkins.SplunkJenkinsInstallation.MIN_BUFFER_SIZE;
+import static com.splunk.splunkjenkins.Constants.MIN_BUFFER_SIZE;
 import static com.splunk.splunkjenkins.model.EventType.FILE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 

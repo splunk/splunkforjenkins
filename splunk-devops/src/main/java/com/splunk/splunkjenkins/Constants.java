@@ -31,5 +31,10 @@ public class Constants {
     public static final String NO_TEST_REPORT_FOUND = "No TestResult";
     public static final String TEST_REPORT_NOT_CONFIGURED = "Junit or xUnit report not configured";
     public static final List<String> FILE_HASH = Arrays.asList("729ac3b82ecf2e0afc0cb00d73c22892");
-
+    // min buffer size for raw data (usually log file and console)
+    public static final int MIN_BUFFER_SIZE = 2048;
+    // max buffer size for raw data (usually log file and console)
+    public static final int MAX_BUFFER_SIZE = 1 << 21;
+    // use gzip for http posting
+    public static final int GZIP_THRESHOLD = 1024; //1kb
 }

@@ -41,9 +41,6 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private static transient boolean loadCompleted = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
-    public transient static final int MIN_BUFFER_SIZE = 2048;
-    private transient static final int MAX_BUFFER_SIZE = 1 << 21;
-
     private transient volatile static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
     // Defaults plugin global config values
