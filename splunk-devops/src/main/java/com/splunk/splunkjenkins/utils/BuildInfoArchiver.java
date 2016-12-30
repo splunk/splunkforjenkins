@@ -66,6 +66,35 @@ public class BuildInfoArchiver {
     }
 
     /**
+     * @param buildUrl /job/folder/job/jobname/number
+     * @return true if the build is resend
+     */
+    public boolean sendBuild(String buildUrl) {
+        int idx = buildUrl.lastIndexOf('/');
+        String jobName = buildUrl.substring(0, idx);
+        int number = Integer.parseInt(buildUrl.substring(idx + 1));
+        Item item = normalizeJob(jobName);
+        boolean sent = false;
+        if (item != null && item instanceof Project) {
+            Run run = ((Project) item).getBuildByNumber(number);
+            sendBuild(run);
+            sent = true;
+        }
+        return sent;
+    }
+
+    /**
+     * @param jobName the job name, e.g. /folder/jobname or /job/folder/job/jobname
+     * @param start   start build number
+     * @param end     end build number
+     * @return total number of builds whose result or log was resent
+     */
+    public int run(String jobName, int start, int end) {
+        Item item = normalizeJob(jobName);
+        return run(item, new BuildIdPredict(start, end));
+    }
+
+    /**
      * @param jobName
      * @return normalized job name, replaced job URL /job/ with / if necessary
      */
@@ -106,32 +135,36 @@ public class BuildInfoArchiver {
             for (Run run : runList) {
                 if (processedJob.contains(run.getUrl())) {
                     continue;
-                } else if (run.isBuilding() || run.getResult() == null) {
-                    continue;
                 }
-                processedJob.add(run.getUrl());
                 //check whether the build is in the time range
                 if (predicate.apply(run)) {
+                    sendBuild(run);
+                    processedJob.add(run.getUrl());
                     count++;
-                    //resend build event
-                    runListener.onCompleted(run, TaskListener.NULL);
-                    if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
-                        continue;
-                    }
-                    //resend console logs, but with current timestamp
-                    try (InputStream input = run.getLogInputStream()) {
-                        TeeConsoleLogFilter.TeeOutputStream outputStream =
-                                new TeeConsoleLogFilter.TeeOutputStream(new NullStream(), true, run.getUrl() + "console");
-                        IOUtils.copy(input, outputStream);
-                        outputStream.flush();
-                        outputStream.close();
-                    } catch (IOException e) {
-                        //just ignore
-                    }
                 }
             }
         }
         return count;
+    }
+
+    private void sendBuild(Run run) {
+        if (run == null || run.isBuilding() || run.getResult() == null) {
+            return;
+        }
+        runListener.onCompleted(run, TaskListener.NULL);
+        if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
+            return;
+        }
+        //resend console logs, but with current timestamp
+        try (InputStream input = run.getLogInputStream()) {
+            TeeConsoleLogFilter.TeeOutputStream outputStream =
+                    new TeeConsoleLogFilter.TeeOutputStream(new NullStream(), true, run.getUrl() + "console");
+            IOUtils.copy(input, outputStream);
+            outputStream.flush();
+            outputStream.close();
+        } catch (IOException e) {
+            //just ignore
+        }
     }
 
     public static class BuildTimePredict implements Predicate<Run> {
