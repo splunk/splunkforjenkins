@@ -156,12 +156,15 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         Executor executor = run.getExecutor();
         String nodeName = null;
+        String label=null;
         if (executor != null) {
+            label=executor.getOwner().getNode().getLabelString();
             nodeName = executor.getOwner().getName();
             if (StringUtils.isEmpty(nodeName)) {
                 nodeName = Constants.MASTER;
             }
         }
+        event.put("label",label);
         event.put(NODE_NAME_KEY, nodeName);
         for (LoggingJobExtractor extendListener : LoggingJobExtractor.canApply(run)) {
             try {
