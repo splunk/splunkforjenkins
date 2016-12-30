@@ -5,7 +5,6 @@ import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import hudson.scm.SCM;
 import jenkins.triggers.SCMTriggerItem;
 import org.apache.commons.lang.StringUtils;
-import org.apache.tools.ant.taskdefs.Exec;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
 import shaded.splk.com.google.gson.Gson;
 import shaded.splk.com.google.gson.GsonBuilder;
