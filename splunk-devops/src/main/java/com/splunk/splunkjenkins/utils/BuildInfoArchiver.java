@@ -70,6 +70,9 @@ public class BuildInfoArchiver {
      * @return true if the build is resend
      */
     public boolean sendBuild(String buildUrl) {
+        if (buildUrl.endsWith("/")) {
+            buildUrl = buildUrl.substring(0, buildUrl.length() - 1);
+        }
         int idx = buildUrl.lastIndexOf('/');
         String jobName = buildUrl.substring(0, idx);
         int number = Integer.parseInt(buildUrl.substring(idx + 1));

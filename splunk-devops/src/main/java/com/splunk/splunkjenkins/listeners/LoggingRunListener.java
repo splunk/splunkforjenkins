@@ -163,6 +163,8 @@ public class LoggingRunListener extends RunListener<Run> {
             if (StringUtils.isEmpty(nodeName)) {
                 nodeName = Constants.MASTER;
             }
+        }else if(run instanceof AbstractBuild){
+            nodeName=((AbstractBuild) run).getBuiltOnStr();
         }
         event.put("label",label);
         event.put(NODE_NAME_KEY, nodeName);
