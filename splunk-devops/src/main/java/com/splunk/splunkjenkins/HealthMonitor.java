@@ -7,6 +7,7 @@ import hudson.model.Queue;
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -17,6 +18,7 @@ import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getRunningJob;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
+import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 @Extension
 public class HealthMonitor extends AsyncPeriodicWork {
@@ -80,9 +82,15 @@ public class HealthMonitor extends AsyncPeriodicWork {
             queueItem.put("queue_time", (System.currentTimeMillis() - item.getInQueueSince()) / 1000f);
             queueItem.put("stuck", item.isStuck());
             queueItem.put("block_reason", item.getWhy());
-            queueItem.put("task", item.task.getUrl());
             queueItem.put("concurrent_build", item.task.isConcurrentBuild());
             queueItem.put(Constants.TAG, Constants.QUEUE_WAITING_ITEM_NAME);
+            String jobName;
+            if (item.task instanceof Job) {
+                jobName = ((Job) item.task).getFullName();
+            } else {
+                jobName = item.task.getUrl();
+            }
+            queueItem.put("task", jobName);
             queue.add(queueItem);
         }
         SplunkLogService.getInstance().sendBatch(queue, QUEUE_INFO);
