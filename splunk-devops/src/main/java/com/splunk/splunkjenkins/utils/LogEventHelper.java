@@ -812,4 +812,20 @@ public class LogEventHelper {
         SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
         return gson.toJson(record.toMap(config));
     }
+
+    public static String getBuildVersion() {
+        InputStream pomInput = LogEventHelper.class.getResourceAsStream(
+                "/META-INF/maven/com.splunk.splunkins/splunk-devops/pom.properties"
+        );
+        Properties properties = new Properties();
+        if (pomInput != null) {
+            try {
+                properties.load(pomInput);
+                pomInput.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return properties.getProperty("version", "snapshot");
+    }
 }
