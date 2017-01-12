@@ -718,7 +718,6 @@ public class LogEventHelper {
     }
 
     public static Map<String, Object> getScmInfo(Run build) {
-        EnvVars envVars = getEnvironment(build);
         SCMTriggerItem scmTrigger = SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem(build.getParent());
         if (scmTrigger == null) {
             return Collections.emptyMap();
@@ -726,7 +725,11 @@ public class LogEventHelper {
         Collection<? extends SCM> scmConfigs = scmTrigger.getSCMs();
         Map<String, Object> event = new HashMap<>();
         Map<String, Object> singleEvent = new HashMap<>();
+        EnvVars envVars=new EnvVars();
         for (SCM scm : scmConfigs) {
+            if(build instanceof AbstractBuild){
+                scm.buildEnvVars((AbstractBuild)build,envVars);
+            }
             String scmName = scm.getClass().getName();
             if (!event.containsKey(scmName)) {
                 singleEvent = getScmInfo(scmName, envVars);
