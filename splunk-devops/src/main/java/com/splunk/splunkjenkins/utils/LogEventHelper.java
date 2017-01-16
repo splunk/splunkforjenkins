@@ -378,6 +378,8 @@ public class LogEventHelper {
                         .append("=");
                 try {
                     String encodeKey = URLEncoder.encode(value, "UTF-8");
+                    //encode space(+ in x-www-form-urlencoded) as %20 so javascript decodeURIComponent can decode it
+                    encodeKey=encodeKey.replaceAll("\\+", "%20");
                     stringBuilder.append(encodeKey).append("&");
                 } catch (UnsupportedEncodingException e) {
                     LOG.log(Level.SEVERE, "failed to encode key " + key, e);
