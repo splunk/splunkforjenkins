@@ -161,7 +161,7 @@ public class BuildInfoArchiver {
         //resend console logs, but with current timestamp
         try (InputStream input = run.getLogInputStream()) {
             TeeConsoleLogFilter.TeeOutputStream outputStream =
-                    new TeeConsoleLogFilter.TeeOutputStream(new NullStream(), true, run.getUrl() + "console");
+                    new TeeConsoleLogFilter.TeeOutputStream(new NullStream(),run.getUrl() + "console");
             IOUtils.copy(input, outputStream);
             outputStream.flush();
             outputStream.close();

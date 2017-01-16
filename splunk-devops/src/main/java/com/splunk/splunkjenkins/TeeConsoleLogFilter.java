@@ -28,7 +28,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * the filter apply order is determined by descent ordinal order
  * <p>
  * Some log filter's flush or close function is no-op, causes TeeConsoleLogFilter cache not flushed.
- * User an higher oridial so it wil be created at last and will be the outermost filter,
+ * User an higher ordinal so it wil be created at last and will be the outermost filter,
  * the feed log will be un-filtered.
  */
 @Extension(ordinal = Integer.MAX_VALUE - 1)
@@ -65,7 +65,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         if (build != null) {
             logSource = build.getUrl() + SUFFIX;
         }
-        return teeOutput(output, logSource, true);
+        return teeOutput(output, logSource);
 
     }
 
@@ -75,14 +75,21 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         if (computer != null) {
             logSource = computer.getUrl() + SUFFIX;
         }
-        return teeOutput(logger, logSource, false);
+        return teeOutput(logger, logSource, false, false);
     }
 
-    private OutputStream teeOutput(OutputStream output, String source, boolean addLineNumber) {
+    private OutputStream teeOutput(OutputStream output, String source) {
+        return teeOutput(output, source, true, true);
+    }
+
+    private OutputStream teeOutput(OutputStream output, String source, boolean useLineNumber, boolean enableCache) {
         if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
             return output;
         }
-        return new TeeOutputStream(output, addLineNumber, source);
+        TeeOutputStream teeOutput = new TeeOutputStream(output, source);
+        teeOutput.setRequireLineNumber(useLineNumber);
+        teeOutput.setCached(enableCache);
+        return teeOutput;
     }
 
     public static class TeeOutputStream extends FilterOutputStream {
@@ -95,16 +102,20 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(Constants.MIN_BUFFER_SIZE);
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
+        private boolean cached = true;
+
+        public void setCached(boolean cached) {
+            this.cached = cached;
+        }
+
+        public void setRequireLineNumber(boolean requireLineNumber) {
+            this.requireLineNumber = requireLineNumber;
+        }
 
         public TeeOutputStream(OutputStream out, String sourceName) {
             super(out);
             this.sourceName = sourceName;
             LOG.log(Level.FINE, "created splunk output tee for " + sourceName);
-        }
-
-        public TeeOutputStream(OutputStream out, boolean requireLineNumber, String sourceName) {
-            this(out, sourceName);
-            this.requireLineNumber = requireLineNumber;
         }
 
         @Override
@@ -147,7 +158,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
                 logText.write(("line:" + lineCounter + "  ").getBytes(UTF_8));
             }
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
-            if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize()) {
+            if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize() || !cached) {
                 flushLog();
             }
             // reuse the buffer under normal circumstances
