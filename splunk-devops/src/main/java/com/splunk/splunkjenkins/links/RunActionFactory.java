@@ -25,20 +25,16 @@ public class RunActionFactory extends TransientActionFactory<Run> {
     @Override
     public Collection<? extends Action> createFor(@Nonnull Run target) {
         Job job = target.getParent();
+        LogEventHelper.UrlQueryBuilder builder=new LogEventHelper.UrlQueryBuilder()
+                .putIfAbsent("host", SplunkJenkinsInstallation.get().getMetadataHost())
+                .putIfAbsent("job", job.getFullName())
+                .putIfAbsent("build", target.getNumber() + "");
         File junitFile = new File(target.getRootDir(), "junitResult.xml");
         if (junitFile.exists() || job.getClass().getName().startsWith("hudson.maven.")) {
-            String query = new LogEventHelper.UrlQueryBuilder()
-                    .putIfAbsent("host", SplunkJenkinsInstallation.get().getMetadataHost())
-                    .putIfAbsent("job", job.getFullName())
-                    .putIfAbsent("build", target.getNumber() + "")
-                    .build();
+            String query =builder.build();
             return Collections.singleton(new LinkSplunkAction("test_analysis", query, "Splunk"));
         }
-        String query = new LogEventHelper.UrlQueryBuilder()
-                .putIfAbsent("build_analysis_jenkinsmaster", SplunkJenkinsInstallation.get().getMetadataHost())
-                .putIfAbsent("build_analysis_job", job.getUrl())
-                .putIfAbsent("build_analysis_build", target.getNumber() + "")
-                .build();
+        String query =builder.putIfAbsent("type","build").build();
         return Collections.singleton(new LinkSplunkAction("build_analysis", query, "Splunk"));
     }
 }
