@@ -157,7 +157,7 @@ public class LoggingRunListener extends RunListener<Run> {
         Executor executor = run.getExecutor();
         String nodeName = null;
         String label=null;
-        if (executor != null) {
+        if (executor != null && executor.getOwner().getNode()!=null) {
             label=executor.getOwner().getNode().getLabelString();
             nodeName = executor.getOwner().getName();
             if (StringUtils.isEmpty(nodeName)) {
