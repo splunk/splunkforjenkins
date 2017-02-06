@@ -806,6 +806,8 @@ public class LogEventHelper {
             if (!urls.isEmpty()) {
                 value = StringUtils.join(urls, ",");
             }
+        } else {
+            value = Util.replaceMacro(value, envVars);
         }
         return value;
     }
