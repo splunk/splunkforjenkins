@@ -8,15 +8,20 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
 
-public class SplunkConsoleLogStep extends AbstractStepImpl {
+public class SplunkConsoleLogStep extends Step {
     @DataBoundConstructor
     public SplunkConsoleLogStep() {
+    }
+
+    @Override
+    public StepExecution start(StepContext context) throws Exception {
+        return new ConsoleLogExecutionImpl(context);
     }
 
     @Extension(optional = true)
     public static class DescriptorImpl extends AbstractStepDescriptorImpl {
         public DescriptorImpl() {
-            super(ExecutionImpl.class);
+            super(ConsoleLogExecutionImpl.class);
         }
 
         /**
@@ -46,7 +51,11 @@ public class SplunkConsoleLogStep extends AbstractStepImpl {
     }
 
 
-    public static class ExecutionImpl extends AbstractStepExecutionImpl {
+    public static class ConsoleLogExecutionImpl extends StepExecution {
+        public ConsoleLogExecutionImpl(StepContext context) {
+            super(context);
+        }
+
         /**
          * {@inheritDoc}
          */

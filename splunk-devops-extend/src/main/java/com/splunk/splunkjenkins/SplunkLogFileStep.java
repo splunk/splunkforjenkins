@@ -5,10 +5,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -21,7 +18,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.sendFiles;
 /**
  * Send logs to splunk
  */
-public class SplunkLogFileStep extends AbstractStepImpl {
+public class SplunkLogFileStep extends Step {
     //required fields
     String includes;
 
@@ -35,6 +32,11 @@ public class SplunkLogFileStep extends AbstractStepImpl {
     @DataBoundConstructor
     public SplunkLogFileStep(@Nonnull String includes) {
         this.includes = includes;
+    }
+
+    @Override
+    public StepExecution start(StepContext context) throws Exception {
+        return new SplunkLogFileStepExecution(context, this);
     }
 
     public String getIncludes() {
@@ -88,16 +90,20 @@ public class SplunkLogFileStep extends AbstractStepImpl {
     }
 
     public static class SplunkLogFileStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
+        protected SplunkLogFileStepExecution(StepContext context, SplunkLogFileStep step) throws Exception{
+            super(context);
+            this.step = step;
+            listener = context.get(TaskListener.class);
+            workspace = context.get(FilePath.class);
+            build = context.get(Run.class);
+            envVars = context.get(EnvVars.class);
+        }
+
         private static final long serialVersionUID = 1152009261375345133L;
-        @StepContextParameter
         private transient FilePath workspace;
-        @StepContextParameter
         private transient Run build;
-        @StepContextParameter
         private transient TaskListener listener;
-        @StepContextParameter
         private transient EnvVars envVars;
-        @Inject
         private transient SplunkLogFileStep step;
 
         @Override

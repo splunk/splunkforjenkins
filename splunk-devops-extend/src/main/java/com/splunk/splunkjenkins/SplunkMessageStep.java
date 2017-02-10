@@ -5,10 +5,7 @@ import hudson.Extension;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
-import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
-import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.jenkinsci.plugins.workflow.steps.*;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
@@ -19,7 +16,7 @@ import static hudson.Util.fixNull;
 /**
  * Send Message to splunk
  */
-public class SplunkMessageStep extends AbstractStepImpl {
+public class SplunkMessageStep extends Step {
     //required fields
     String scriptText;
     //reuse global script
@@ -33,6 +30,11 @@ public class SplunkMessageStep extends AbstractStepImpl {
 
     public SplunkMessageStep() {
         this.globalScriptEnabled = true;
+    }
+
+    @Override
+    public StepExecution start(StepContext context) throws Exception {
+        return new SplunkLogFileStepExecution(context, this);
     }
 
     public String getScriptText() {
@@ -75,16 +77,20 @@ public class SplunkMessageStep extends AbstractStepImpl {
 
     public static class SplunkLogFileStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
         private static final long serialVersionUID = 774937291218385173L;
-        @StepContextParameter
         private transient FilePath workspace;
-        @StepContextParameter
         private transient Run build;
-        @StepContextParameter
         private transient TaskListener listener;
-        @StepContextParameter
         private transient EnvVars envVars;
-        @Inject
         private transient SplunkMessageStep step;
+
+        public SplunkLogFileStepExecution(StepContext context, SplunkMessageStep step) throws Exception {
+            super(context);
+            this.step = step;
+            listener = context.get(TaskListener.class);
+            workspace = context.get(FilePath.class);
+            build = context.get(Run.class);
+            envVars = context.get(EnvVars.class);
+        }
 
         @Override
         protected Void run() throws Exception {
