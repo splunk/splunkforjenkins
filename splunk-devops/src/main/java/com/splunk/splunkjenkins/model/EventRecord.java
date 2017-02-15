@@ -101,21 +101,22 @@ public class EventRecord {
     private Map<String, String> getMetaData(SplunkJenkinsInstallation config) {
         LogEventHelper.UrlQueryBuilder metaDataBuilder = new LogEventHelper.UrlQueryBuilder();
         metaDataBuilder.putIfAbsent("source", source);
-        //default settings
-        if (eventType == EventType.LOG) { //prefer console log's index
-            metaDataBuilder.putIfAbsent("index", config.getMetaData(CONSOLE_LOG.getKey("index")));
-        }
-        if (isString()) {
-            //just plain text, not complex object, prefer "httpevent" as sourcetype
-            metaDataBuilder
-                    .putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(eventType.getKey("sourcetype_text")))
-                    .putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData("sourcetype_text"));
-        }
         for (String metaDataKey : METADATA_KEYS) {
             //individual config(EventType) have higher priority over default config
-            metaDataBuilder
-                    .putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)))
-                    .putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
+            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(eventType.getKey(metaDataKey)));
+        }
+        //default sourcetype for text
+        if (isString()) {
+            //just plain text, not complex object, prefer "text:jenkins" as sourcetype
+            metaDataBuilder.putIfAbsent(EVENT_SOURCE_TYPE, config.getMetaData(EVENT_SOURCE_TYPE + "_text"));
+        }
+        //prefer console log's index
+        if (eventType == EventType.LOG) {
+            metaDataBuilder.putIfAbsent("index", config.getMetaData(CONSOLE_LOG.getKey("index")));
+        }
+        //default settings for complex object
+        for (String metaDataKey : METADATA_KEYS) {
+            metaDataBuilder.putIfAbsent(metaDataKey, config.getMetaData(metaDataKey));
         }
         metaDataBuilder.putIfAbsent("host", config.getMetadataHost());
         return metaDataBuilder.getQueryMap();

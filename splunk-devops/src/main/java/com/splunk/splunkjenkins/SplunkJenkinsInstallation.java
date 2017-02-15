@@ -244,7 +244,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
             //discard previous metadata cache and load new one
             metaDataProperties = new Properties();
-            String combinedMetaData = Util.fixNull(defaultMetaData) + Util.fixNull(metaDataConfig);
+            String combinedMetaData = Util.fixNull(defaultMetaData) +"\n"+ Util.fixNull(metaDataConfig);
             if (!isEmpty(combinedMetaData)) {
                 metaDataProperties.load(new StringReader(combinedMetaData));
             }
