@@ -124,9 +124,8 @@ public class RunDelegate {
             return;
         }
         String sourceName = SplunkJenkinsInstallation.get().getMetadataSource("coverage")
-        Map event = getBuildEvent()
-        event.put(TAG, "coverage")
         def buildEvent = getBuildEvent()
+        buildEvent.put(TAG, "coverage")
         coverageList.eachWithIndex { coverage, idx ->
             Map pagedEvent = buildEvent + ["coverage": coverage, "page_num": idx + 1]
             send(pagedEvent, sourceName)
