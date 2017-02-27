@@ -379,7 +379,7 @@ public class LogEventHelper {
                 try {
                     String encodeKey = URLEncoder.encode(value, "UTF-8");
                     //encode space(+ in x-www-form-urlencoded) as %20 so javascript decodeURIComponent can decode it
-                    encodeKey=encodeKey.replaceAll("\\+", "%20");
+                    encodeKey = encodeKey.replaceAll("\\+", "%20");
                     stringBuilder.append(encodeKey).append("&");
                 } catch (UnsupportedEncodingException e) {
                     LOG.log(Level.SEVERE, "failed to encode key " + key, e);
@@ -588,10 +588,11 @@ public class LogEventHelper {
     }
 
     /**
-     * @param run the build
+     * @param run       the build
+     * @param completed the task is completed to compute scm info
      * @return build variables with password masked
      */
-    public static Map<String, Object> getBuildVariables(Run run) {
+    public static Map<String, Object> getBuildVariables(Run run, boolean completed) {
         Map<String, Object> values = new HashMap<>();
         List<ParametersAction> parameterActions = run.getActions(ParametersAction.class);
         for (ParametersAction parameters : parameterActions) {
@@ -604,10 +605,18 @@ public class LogEventHelper {
                 }
             }
         }
-        if (run instanceof AbstractBuild) {
-            values.putAll(getScmInfo((AbstractBuild) run));
+        if (completed) {
+            appendScm(values, run);
         }
         return values;
+    }
+
+    /**
+     * @param run the build
+     * @return build variables with password masked
+     */
+    public static Map<String, Object> getBuildVariables(Run run) {
+        return getBuildVariables(run, true);
     }
 
     public static void logUserAction(String user, String message) {
@@ -719,6 +728,16 @@ public class LogEventHelper {
         return duration;
     }
 
+    public static void appendScm(Map eventToAppend, Run run) {
+        Map<String, Object> scmInfo = getScmInfo(run);
+        //append scm info build parameter if no conflicts
+        for (Map.Entry<String, Object> scmEntry : scmInfo.entrySet()) {
+            if (!eventToAppend.containsKey(scmEntry.getKey())) {
+                eventToAppend.put(scmEntry.getKey(), scmEntry.getValue());
+            }
+        }
+    }
+
     public static Map<String, Object> getScmInfo(Run build) {
         SCMTriggerItem scmTrigger = SCMTriggerItem.SCMTriggerItems.asSCMTriggerItem(build.getParent());
         if (scmTrigger == null) {
@@ -727,10 +746,10 @@ public class LogEventHelper {
         Collection<? extends SCM> scmConfigs = scmTrigger.getSCMs();
         Map<String, Object> event = new HashMap<>();
         Map<String, Object> singleEvent = new HashMap<>();
-        EnvVars envVars=new EnvVars();
+        EnvVars envVars = new EnvVars();
         for (SCM scm : scmConfigs) {
-            if(build instanceof AbstractBuild){
-                scm.buildEnvVars((AbstractBuild)build,envVars);
+            if (build instanceof AbstractBuild) {
+                scm.buildEnvVars((AbstractBuild) build, envVars);
             }
             String scmName = scm.getClass().getName();
             if (!event.containsKey(scmName)) {

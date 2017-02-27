@@ -71,11 +71,10 @@ public class LoggingRunListener extends RunListener<Run> {
         if (!coverage.isEmpty()) {
             event.put("coverage", coverage);
         }
-        event.putAll(getScmInfo(run));
+        appendScm(event,run);
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
             List<String> changelog = getChangeLog(build);
-
             if (!changelog.isEmpty()) {
                 event.put("changelog", changelog);
             }
@@ -146,7 +145,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("upstream", getUpStreamUrl(run));
         event.put("job_started_at", run.getTimestampString2());
         event.put("job_name", run.getParent().getFullName());
-        Map parameters = getBuildVariables(run);
+        Map parameters = getBuildVariables(run, completed);
         if (!parameters.isEmpty()) {
             event.put(BUILD_REPORT_ENV_TAG, parameters);
         }
