@@ -3,8 +3,10 @@ package com.splunk.splunkjenkins;
 import com.cloudbees.workflow.rest.external.ErrorExt;
 import com.cloudbees.workflow.rest.external.RunExt;
 import com.cloudbees.workflow.rest.external.StageNodeExt;
+import com.cloudbees.workflow.rest.external.StatusExt;
 import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import hudson.Extension;
+import hudson.model.Result;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
 
 import java.util.ArrayList;
@@ -27,7 +29,7 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
                     ErrorExt error = stageNodeExt.getError();
                     stage.put("name", stageNodeExt.getName());
                     stage.put("id", stageNodeExt.getId());
-                    stage.put("status", stageNodeExt.getStatus().toString());
+                    stage.put("status", toResult(stageNodeExt.getStatus()));
                     stage.put("error", error);
                     stage.put("duration", stageNodeExt.getDurationMillis() / 1000f);
                     stage.put("pause_duration", stageNodeExt.getPauseDurationMillis() / 1000f);
@@ -41,5 +43,23 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
             }
         }
         return info;
+    }
+
+    /**
+     * @param status
+     * @return String compatible with hudson.model.Result
+     */
+    private String toResult(StatusExt status) {
+        if (status == null) {
+            return "UNKNOWN";
+        }
+        switch (status) {
+            case FAILED:
+                return Result.FAILURE.toString();
+            case NOT_EXECUTED:
+                return Result.NOT_BUILT.toString();
+            default:
+                return status.toString();
+        }
     }
 }
