@@ -22,10 +22,10 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
      */
     @Override
     public Map<Metric, Integer> getMetrics(CoberturaBuildAction coverageAction) {
-        return getMetrics(coverageAction.getResult());
+        return extract(coverageAction.getResult());
     }
 
-    private Map<Metric, Integer> getMetrics(CoverageResult coverageResult) {
+    private Map<Metric, Integer> extract(CoverageResult coverageResult) {
         Map<Metric, Integer> result = new HashMap<>();
         Set<CoverageMetric> metrics = coverageResult.getMetrics();
         for (CoverageMetric metric : metrics) {
@@ -41,35 +41,46 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
     @Override
     public List<CoverageDetail> getReport(CoberturaBuildAction coverageAction) {
         CoverageResult coverageResult = coverageAction.getResult();
-        return getReport(coverageResult);
+        return getReport(coverageResult, "");
     }
 
-    private List<CoverageDetail> getReport(CoverageResult coverage) {
+    private List<CoverageDetail> getReport(CoverageResult coverage, String prefix) {
         List<CoverageDetail> report = new ArrayList<>();
-        if (TOP_LEVELS.contains(coverage.getElement())) {
-            for (CoverageResult child : coverage.getChildrenReal().values()) {
-                report.addAll(getReport(child));
-            }
-        } else if (CoverageElement.JAVA_CLASS.equals(coverage.getElement())) {
-            String fileName = getPackageName(coverage) + coverage.getName();
-            CoverageDetail detail = new CoverageDetail(fileName);
-            Map<Metric, Integer> values = getMetrics(coverage);
-            for (Metric metric : values.keySet()) {
-                detail.addMetric(metric, values.get(metric));
-            }
-            report.add(detail);
+        CoverageLevel level;
+        prefix = prefix == null ? "" : prefix;
+        String coverageName = prefix + coverage.getName();
+        String childPrefix = prefix;
+        switch (coverage.getElement()) {
+            case JAVA_FILE:
+                level = CoverageLevel.FILE;
+                break;
+            case JAVA_PACKAGE:
+                level = CoverageLevel.PACKAGE;
+                childPrefix = coverageName + ".";
+                break;
+            case PROJECT:
+                level = CoverageLevel.PROJECT;
+                break;
+            case JAVA_METHOD:
+                level = CoverageLevel.METHOD;
+                break;
+            case JAVA_CLASS:
+                level = CoverageLevel.CLASS;
+                childPrefix = coverageName + "#";
+                break;
+            default:
+                level = CoverageLevel.PACKAGE;
+        }
+        CoverageDetail detail = new CoverageDetail(coverageName, level);
+        detail.putAll(extract(coverage));
+        report.add(detail);
+        Map<String, CoverageResult> children = coverage.getChildrenReal();
+        if (children == null || children.isEmpty()) {
+            return report;
+        }
+        for (CoverageResult child : children.values()) {
+            report.addAll(getReport(child, childPrefix));
         }
         return report;
-    }
-
-    private String getPackageName(CoverageResult result) {
-        if (result == null) {
-            return "";
-        }
-        if (CoverageElement.JAVA_PACKAGE.equals(result.getElement())) {
-            return result.getName() + ".";
-        } else {
-            return getPackageName(result.getParent());
-        }
     }
 }

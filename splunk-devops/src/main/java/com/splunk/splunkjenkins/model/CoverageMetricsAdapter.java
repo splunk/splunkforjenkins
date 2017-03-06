@@ -129,7 +129,7 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
      * used to trace which level coverage generated
      */
     public enum CoverageLevel {
-        PACKAGE, CLASS, METHOD, FILE
+        PROJECT, PACKAGE, CLASS, METHOD, FILE
     }
 
     public static class CoverageDetail {
