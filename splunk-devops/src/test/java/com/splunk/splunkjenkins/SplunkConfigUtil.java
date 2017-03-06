@@ -148,6 +148,7 @@ public class SplunkConfigUtil {
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
         jobargs.put("earliest_time", startTime / 1000);
+        jobargs.put("latest_time", 60 + System.currentTimeMillis() / 1000);
         if (!query.contains("index=")) {
             query = "index=" + SplunkConfigUtil.INDEX_NAME + " " + query;
         }
@@ -158,22 +159,17 @@ public class SplunkConfigUtil {
         LOG.info("running query:\n" + query);
         int eventCount = 0;
         for (int i = 0; i < 20; i++) {
-            Job job = null;
             try {
-                job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
-            } catch (IOException e) {
-                e.printStackTrace();
-                fail("can not execute query " + query);
-            }
-            eventCount = job.getEventCount();
-            if (eventCount == 0) {
-                LOG.fine("remaining:" + SplunkLogService.getInstance().getQueueSize());
-                try {
+                Job job = SplunkConfigUtil.getSplunkServiceInstance().getJobs().create(query, jobargs);
+                eventCount = job.getEventCount();
+                if (eventCount == 0) {
                     Thread.sleep(10000);
-                } catch (InterruptedException ex) {
+                } else {
+                    break;
                 }
-            } else {
-                break;
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+                fail("execute query " + query + " failed");
             }
         }
         assertTrue("event not reached using:" + query, eventCount > 0);
