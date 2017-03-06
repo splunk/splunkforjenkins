@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <actions/>
+    <description></description>
+    <keepDependencies>false</keepDependencies>
+    <properties/>
+    <scm class="hudson.scm.NullSCM"/>
+    <canRoam>true</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <triggers/>
+    <concurrentBuild>false</concurrentBuild>
+    <publishers>
+        <hudson.plugins.jacoco.JacocoPublisher plugin="jacoco@2.1.0">
+            <execPattern>**/**.exec</execPattern>
+            <classPattern>**/classes</classPattern>
+            <sourcePattern>**/java</sourcePattern>
+            <inclusionPattern></inclusionPattern>
+            <exclusionPattern></exclusionPattern>
+            <minimumInstructionCoverage>0</minimumInstructionCoverage>
+            <minimumBranchCoverage>0</minimumBranchCoverage>
+            <minimumComplexityCoverage>0</minimumComplexityCoverage>
+            <minimumLineCoverage>0</minimumLineCoverage>
+            <minimumMethodCoverage>0</minimumMethodCoverage>
+            <minimumClassCoverage>0</minimumClassCoverage>
+            <maximumInstructionCoverage>0</maximumInstructionCoverage>
+            <maximumBranchCoverage>0</maximumBranchCoverage>
+            <maximumComplexityCoverage>0</maximumComplexityCoverage>
+            <maximumLineCoverage>0</maximumLineCoverage>
+            <maximumMethodCoverage>0</maximumMethodCoverage>
+            <maximumClassCoverage>0</maximumClassCoverage>
+            <changeBuildStatus>false</changeBuildStatus>
+        </hudson.plugins.jacoco.JacocoPublisher>
+    </publishers>
+    <buildWrappers/>
+</project>

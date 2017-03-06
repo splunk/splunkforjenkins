@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1480607319585" clover="4.1.2">
+   <project name="mvn_function 1.0-SNAPSHOT" timestamp="1480607314398">
+      <metrics coveredelements="4" complexity="3" loc="18" methods="3" classes="1" statements="3" packages="1" coveredconditionals="0" coveredmethods="2" elements="6" ncloc="12" files="1" conditionals="0" coveredstatements="2"/>
+      <package name="com.mycompany">
+         <metrics coveredelements="4" complexity="3" loc="18" methods="3" classes="1" statements="3" coveredconditionals="0" coveredmethods="2" elements="6" ncloc="12" files="1" conditionals="0" coveredstatements="2"/>
+         <file path="main/java/com/mycompany/App.java" name="App.java">
+            <metrics coveredelements="4" coveredconditionals="0" complexity="3" loc="18" coveredmethods="2" methods="3" elements="6" classes="1" ncloc="12" statements="3" conditionals="0" coveredstatements="2"/>
+            <class name="App">
+               <metrics coveredelements="4" coveredconditionals="0" complexity="3" coveredmethods="2" methods="3" elements="6" statements="3" conditionals="0" coveredstatements="2"/>
+            </class>
+            <line complexity="1" visibility="public" signature="getText() : String" num="7" count="1" type="method"/>
+            <line num="8" count="1" type="stmt"/>
+            <line complexity="1" visibility="public" signature="getResult() : int" num="11" count="1" type="method"/>
+            <line num="12" count="1" type="stmt"/>
+            <line complexity="1" visibility="public" signature="isOk() : boolean" num="15" count="0" type="method"/>
+            <line num="16" count="0" type="stmt"/>
+         </file>
+      </package>
+   </project>
+   <testproject name="mvn_function 1.0-SNAPSHOT" timestamp="1480607314398">
+      <metrics coveredelements="8" complexity="3" loc="36" methods="3" classes="1" statements="5" packages="1" coveredconditionals="0" coveredmethods="3" elements="8" ncloc="18" files="1" conditionals="0" coveredstatements="5"/>
+      <package name="com.mycompany">
+         <metrics coveredelements="8" complexity="3" loc="36" methods="3" classes="1" statements="5" coveredconditionals="0" coveredmethods="3" elements="8" ncloc="18" files="1" conditionals="0" coveredstatements="5"/>
+         <file path="mvn_function/src/test/java/com/mycompany/AppTest.java" name="AppTest.java">
+            <metrics coveredelements="8" coveredconditionals="0" complexity="3" loc="36" coveredmethods="3" methods="3" elements="8" classes="1" ncloc="18" statements="5" conditionals="0" coveredstatements="5"/>
+            <class name="AppTest">
+               <metrics coveredelements="8" complexity="3" methods="3" testruns="2" statements="5" coveredconditionals="0" coveredmethods="3" elements="8" testfailures="0" testduration="0.019" conditionals="0" coveredstatements="5" testpasses="2"/>
+            </class>
+            <line complexity="1" visibility="public" signature="AppTest(String)" num="17" count="2" type="method"/>
+            <line num="18" count="2" type="stmt"/>
+            <line complexity="1" visibility="public" signature="suite() : Test" num="24" count="2" type="method"/>
+            <line num="25" count="2" type="stmt"/>
+            <line complexity="1" visibility="public" signature="testApp() : void" num="31" testsuccess="true" count="2" testduration="0.01" type="method"/>
+            <line num="32" count="2" type="stmt"/>
+            <line num="33" count="2" type="stmt"/>
+            <line num="34" count="2" type="stmt"/>
+         </file>
+      </package>
+   </testproject>
+</coverage>

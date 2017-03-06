@@ -25,6 +25,13 @@ public class CoverageMetricTest extends BaseTest {
         getCoverageReport(jobName, 50);
     }
 
+    @LocalData
+    @Test
+    public void getJaCoCoReport() throws Exception {
+        String jobName = "JaCoCo";
+        getCoverageReport(jobName, 50);
+    }
+
     public void getCoverageReport(String jobName, int methodPercentage) throws Exception {
         FreeStyleProject project = (FreeStyleProject) j.getInstance().getItem(jobName);
         String newName = UUID.randomUUID().toString();
