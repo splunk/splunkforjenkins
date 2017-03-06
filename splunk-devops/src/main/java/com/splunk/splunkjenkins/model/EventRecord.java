@@ -39,7 +39,12 @@ public class EventRecord {
     }
 
     public boolean isDiscarded() {
-        return retryCount > SplunkJenkinsInstallation.get().getMaxRetries();
+        try {
+            return retryCount > SplunkJenkinsInstallation.get().getMaxRetries();
+        }catch (IllegalStateException ex){
+            //jenkins server was shutdown
+            return true;
+        }
     }
 
     public long getTime() {

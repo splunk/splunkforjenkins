@@ -99,7 +99,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (cachedConfig != null) {
             return cachedConfig;
         } else {
-            return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
+            if(Jenkins.getInstance()!=null){
+                return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
+            }else{
+                //jenkins is in shutdown own phase
+                throw new IllegalStateException("Jenkins has not been started, or was already shut down");
+            }
         }
     }
 
