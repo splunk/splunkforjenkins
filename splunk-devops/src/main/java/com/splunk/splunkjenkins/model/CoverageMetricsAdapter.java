@@ -91,7 +91,12 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
         CONDITIONAL("conditionals"),
         STATEMENT("statements"),
         LINE("lines"),
-        ELEMENT("elements");
+        ELEMENT("elements"),
+        //for Emma (JaCoCo plugin)
+        COMPLEXITY("complexity"),
+        BRANCH("branch"),
+        INSTRUCTION("instruction");
+
 
         private String description;
 
@@ -104,7 +109,7 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
         }
 
         /**
-         * Clover and Cobertura use different metrics name, try to alain them using nearest
+         * Clover and Cobertura use different metrics name, try to align them using nearest value
          *
          * @param name Metrics name
          * @return enum if defined, otherwise null
@@ -120,11 +125,23 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
         }
     }
 
+    /**
+     * used to trace which level coverage generated
+     */
+    public enum CoverageLevel {
+        PACKAGE, CLASS, METHOD, FILE
+    }
+
     public static class CoverageDetail {
         Map<String, Object> report = new HashMap<>();
 
         public CoverageDetail(String name) {
             report.put("name", name);
+        }
+
+        public CoverageDetail(String name, CoverageLevel level) {
+            report.put("name", name);
+            report.put("cov_level", level.toString().toLowerCase());
         }
 
         public Map<String, Object> getReport() {
@@ -135,12 +152,22 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
             report.put(metric.toString(), value);
         }
 
+        /**
+         * @param metric metric name, such as classes, methods
+         * @param value  percentage value
+         */
         public void addMetric(String metric, int value) {
             Metric reportMetric = Metric.getMetric(metric);
             if (reportMetric != null) {
                 report.put(reportMetric.toString(), value);
             } else {
                 report.put(metric, value);
+            }
+        }
+
+        public void putAll(Map<Metric, Integer> subReport) {
+            for (Metric metric : subReport.keySet()) {
+                report.put(metric.toString(), subReport.get(metric));
             }
         }
 
