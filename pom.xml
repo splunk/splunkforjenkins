@@ -103,6 +103,7 @@
     </dependencies>
     <profiles>
         <profile>
+            <!--to use this profile, pass mvn -Plocal -Drepos.url=xx deploy-->
             <id>local</id>
             <activation>
                 <activeByDefault>false</activeByDefault>
