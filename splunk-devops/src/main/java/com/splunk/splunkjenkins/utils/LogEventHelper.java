@@ -260,6 +260,11 @@ public class LogEventHelper {
         final String expanded = Util.replaceMacro(includes, envVars);
         final String exclude = Util.replaceMacro(excludes, envVars);
         try {
+            if (!ws.exists()) {
+                LOG.warning("ws doesn't exist: " + ws.getRemote());
+                return eventCount;
+            }
+            
             final FilePath[] paths = ws.list(expanded, exclude);
             if (paths.length == 0) {
                 LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getRemote());
