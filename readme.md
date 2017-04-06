@@ -5,7 +5,7 @@ To Install Develop Version
 ----
  - clone the repo
  - `$ mvn package`
- -  That should produce `splunk-devops/target/splunk-devops.hpi` which you can install into Jenkins with either the web interface or by putting it in the `JENKINS_HOME/plugins` folder.
+ -  That will generate `splunk-devops/target/splunk-devops.hpi` which you can install into Jenkins by the web interface or just put it in the `JENKINS_HOME/plugins` folder.
  - `$ mvn clean verify -Dhost=localhost -Dusername=admin -Dpassword=changeme`
    to run tests against local splunk instance
 
