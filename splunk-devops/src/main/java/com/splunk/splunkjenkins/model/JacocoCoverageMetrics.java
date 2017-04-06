@@ -31,6 +31,7 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
         addMetric(result, Metric.BRANCH, coverageObject.getBranchCoverage());
         addMetric(result, Metric.COMPLEXITY, coverageObject.getComplexityScore());
         addMetric(result, Metric.INSTRUCTION, coverageObject.getInstructionCoverage());
+        addMetric(result, Metric.LINE, coverageObject.getLineCoverage());
         return result;
     }
 

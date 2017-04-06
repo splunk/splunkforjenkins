@@ -94,8 +94,8 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
         ELEMENT("elements"),
         //for Emma (JaCoCo plugin)
         COMPLEXITY("complexity"),
-        BRANCH("branch"),
-        INSTRUCTION("instruction");
+        BRANCH("branches"),
+        INSTRUCTION("instructions");
 
 
         private String description;
