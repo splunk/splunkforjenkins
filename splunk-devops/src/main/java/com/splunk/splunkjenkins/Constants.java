@@ -30,7 +30,7 @@ public class Constants {
     public static final String MASK_PASSWORD = "***";
     public static final String NO_TEST_REPORT_FOUND = "No TestResult";
     public static final String TEST_REPORT_NOT_CONFIGURED = "Junit or xUnit report not configured";
-    public static final List<String> FILE_HASH = Arrays.asList("729ac3b82ecf2e0afc0cb00d73c22892");
+    public static final List<String> FILE_HASH = Arrays.asList("729ac3b82ecf2e0afc0cb00d73c22892", "f43916477139eb890e72c1602e0851b4");
     // min buffer size for raw data (usually log file and console)
     public static final int MIN_BUFFER_SIZE = 2048;
     // max buffer size for raw data (usually log file and console)

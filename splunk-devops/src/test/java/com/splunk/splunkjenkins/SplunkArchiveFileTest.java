@@ -43,7 +43,7 @@ public class SplunkArchiveFileTest extends BaseTest {
     @Test
     public void testUploadFromSlave() {
         String script = "println \"uploading files\"\n" +
-                "archive(\"*.txt\",\"\",true,\"0\")";
+                "splunkins.archive(\"*.txt\",\"\",true,\"0\")";
         try {
             buildWithScript(script);
         } catch (Exception e) {
@@ -56,7 +56,7 @@ public class SplunkArchiveFileTest extends BaseTest {
     public void testUploadFromMaster() throws Exception {
         result = null;
         String script = "println \"uploading files\"\n" +
-                "def sentCount=archive(\"*.txt\",\"\",false,\"10MB\");" +
+                "def sentCount=splunkins.archive(\"*.txt\",\"\",false,\"10MB\");" +
                 "com.splunk.splunkjenkins.SplunkArchiveFileTest.result=sentCount;" +
                 "println \"send \"+sentCount";
         buildWithScript(script);

@@ -13,6 +13,7 @@ import hudson.model.AbstractBuild
 import hudson.model.Action
 import hudson.model.Run
 import hudson.model.TaskListener
+import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted
 
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -38,10 +39,10 @@ public class RunDelegate {
     RunDelegate() {
     }
 
-    public RunDelegate(Run build, EnvVars enVars, TaskListener listener) {
+    public RunDelegate(Run build, Map env, TaskListener listener) {
         this.build = build;
-        if (enVars != null) {
-            this.env = enVars;
+        if (env != null) {
+            this.env = env;
         } else {
             this.env = new HashMap();
         }
@@ -76,6 +77,7 @@ public class RunDelegate {
      * @param uploadFromSlave <code>true</code> if need upload directly from the slave
      * @parm fileSizeLimit max size per file to send to splunk, to prevent sending huge files by wildcard includes
      */
+    @Whitelisted
     def archive(String includes, String excludes = null, boolean uploadFromSlave = false, String fileSizeLimit = "") {
         if (build instanceof AbstractBuild) {
             def notifier = build.project.getPublishersList().get(SplunkArtifactNotifier)
@@ -89,6 +91,7 @@ public class RunDelegate {
         return sendFiles(build, workSpace, env, listener, includes, excludes, uploadFromSlave, parseFileSize(fileSizeLimit));
     }
 
+    @Whitelisted
     def getJunitReport() {
         //no pagination, use MAX_VALUE as page size
         List<JunitTestCaseGroup> results = getJunitReport(Integer.MAX_VALUE);
@@ -99,6 +102,7 @@ public class RunDelegate {
         }
     }
 
+    @Whitelisted
     def getJunitReport(int pageSize) {
         try {
             return TestCaseResultUtils.getBuildReport(build, pageSize);
@@ -108,6 +112,7 @@ public class RunDelegate {
         }
     }
 
+    @Whitelisted
     def sendTestReport(int pageSize) {
         def results = getJunitReport(pageSize)
         def buildEvent = getBuildEvent()
@@ -118,6 +123,7 @@ public class RunDelegate {
         }
     }
 
+    @Whitelisted
     def sendCoverageReport(int pageSize) {
         def coverageList = CoverageMetricsAdapter.getReport(build, pageSize);
         if (coverageList.isEmpty()) {
@@ -161,6 +167,7 @@ public class RunDelegate {
      * @param className
      * @return
      */
+    @Whitelisted
     def Action getActionByClassName(String className) {
         try {
             Class actionClz = Class.forName(className);
@@ -179,6 +186,7 @@ public class RunDelegate {
      * @return The first action item or <code>null</code> if no such actions exist.
      *
      */
+    @Whitelisted
     public Action getAction(Class<? extends Action> type) {
         return build.getAction(type);
     }
@@ -188,6 +196,7 @@ public class RunDelegate {
      * @param shortClassName , common used publishers are junit.JUnitResultArchiver, testng.Publisher
      * @return
      */
+    @Whitelisted
     def boolean hasPublisherName(String shortClassName) {
         return LogEventHelper.hasPublisherName(shortClassName, build);
     }
@@ -197,6 +206,7 @@ public class RunDelegate {
         return "RunDelegate on build:" + this.build;
     }
 
+    @Whitelisted
     def getBuildEvent() {
         String url = build.getUrl();
         Map event = new HashMap();
@@ -225,6 +235,7 @@ public class RunDelegate {
      * send build reports with build variables as metadata
      * @param closure Groovy closure with a Map as parameter
      */
+    @Whitelisted
     public void sendReport(Closure closure) {
         Map event = getBuildEvent();
         //closure may/not return a new build event

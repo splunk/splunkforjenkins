@@ -16,6 +16,7 @@ import static hudson.Util.fixNull;
 /**
  * Send Message to splunk
  */
+@Deprecated
 public class SplunkMessageStep extends Step {
     //required fields
     String scriptText;
@@ -71,7 +72,7 @@ public class SplunkMessageStep extends Step {
         @Nonnull
         @Override
         public String getDisplayName() {
-            return "Send data to Splunk via DSL script";
+            return "Send data to Splunk via DSL script(Deprecated)";
         }
     }
 
@@ -94,15 +95,8 @@ public class SplunkMessageStep extends Step {
 
         @Override
         protected Void run() throws Exception {
-            UserActionDSL scriptJobAction = new UserActionDSL();
-            String dslScript;
-            if (step.globalScriptEnabled) {
-                dslScript = SplunkJenkinsInstallation.get().getScript() + "\n" + step.getScriptText();
-            } else {
-                dslScript = step.getScriptText();
-            }
-            scriptJobAction.perform(build, listener, dslScript);
-            return null;
+            throw new UnsupportedOperationException("Please configure the script on global configure page, " +
+                    "custom script at step level is disabled for SECURITY-496, to prevent arbitrary groovy code execution");
         }
     }
 }

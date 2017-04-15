@@ -18,6 +18,7 @@ public class BaseTest {
         org.junit.Assume.assumeTrue(checkTokenAvailable());
         SplunkJenkinsInstallation.get().setScriptContent(getPostJobSample());
         SplunkJenkinsInstallation.get().updateCache();
+        SplunkJenkinsInstallation.get().setLegacyMode(false);
     }
 
     @After

@@ -75,7 +75,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
     private transient String defaultMetaData;
     private transient Pattern ignoredJobPattern;
-
+    private transient boolean legacyMode = false;
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
@@ -99,9 +99,9 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (cachedConfig != null) {
             return cachedConfig;
         } else {
-            if(Jenkins.getInstance()!=null){
+            if (Jenkins.getInstance() != null) {
                 return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
-            }else{
+            } else {
                 //jenkins is in shutdown own phase
                 throw new IllegalStateException("Jenkins has not been started, or was already shut down");
             }
@@ -249,7 +249,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
             //discard previous metadata cache and load new one
             metaDataProperties = new Properties();
-            String combinedMetaData = Util.fixNull(defaultMetaData) +"\n"+ Util.fixNull(metaDataConfig);
+            String combinedMetaData = Util.fixNull(defaultMetaData) + "\n" + Util.fixNull(metaDataConfig);
             if (!isEmpty(combinedMetaData)) {
                 metaDataProperties.load(new StringReader(combinedMetaData));
             }
@@ -549,9 +549,19 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private void migrate() {
         if (this.scriptContent != null) {
             String hash = DigestUtils.md5Hex(this.scriptContent);
-            if (FILE_HASH.contains(hash)) {
+            if (FILE_HASH.contains(hash)) { //previous versions' script hash, update to use new version
                 this.scriptContent = getPostJobSample();
+                // provided by the plugin itself, the namespace was already migrated from old settings
+                this.legacyMode = false;
+            } else if (StringUtils.contains(this.scriptContent, "splunkins.")) {
+                //contains the namespace splunkins, migrated
+                this.legacyMode = false;
+            } else {
+                this.legacyMode = true;
             }
+        } else if (this.scriptPath != null) {
+            //user defined script located on jenkins master
+            this.legacyMode = true;
         }
         this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
     }
@@ -562,5 +572,13 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public void setIgnoredJobs(String ignoredJobs) {
         this.ignoredJobs = ignoredJobs;
+    }
+
+    public boolean isLegacyMode() {
+        return legacyMode;
+    }
+
+    public void setLegacyMode(boolean legacyMode) {
+        this.legacyMode = legacyMode;
     }
 }

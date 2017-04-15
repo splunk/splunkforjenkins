@@ -169,7 +169,7 @@ public class SplunkConfigUtil {
                 }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
-                fail("execute query " + query + " failed");
+                throw new RuntimeException("execute query " + query + " failed");
             }
         }
         assertTrue("event not reached using:" + query, eventCount > 0);

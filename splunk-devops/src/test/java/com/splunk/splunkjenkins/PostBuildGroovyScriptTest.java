@@ -42,12 +42,37 @@ public class PostBuildGroovyScriptTest extends BaseTest {
         String groovyScript = "def metadata = [:]\n" +
                 "metadata[\"product\"]=\"splunk\"\n" +
                 "def result = [\n" +
+                "        \"build_url\": splunkins.build.url,\n" +
+                "        \"metadata\" : metadata,\n" +
+                "        \"testsuite\": splunkins.getJunitReport(10)\n" +
+                "]\n" +
+                "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.buildEvent=result";
+        createJob(simple_project, groovyScript);
+        assertNotNull("groovy script should set the item", buildEvent);
+        LOG.info("event is " + buildEvent);
+        List<JunitTestCaseGroup> suites = (List<JunitTestCaseGroup>) buildEvent.get("testsuite");
+        assertEquals(1, suites.size());
+        assertEquals(simple_project_cases, suites.get(0).getTotal());
+        Assert.assertTrue("product is splunk", "splunk".equals(((Map) buildEvent.get("metadata")).get("product")));
+    }
+
+    @LocalData
+    @Test
+    public void postBuildJunitResultLegacyMode() throws Exception {
+        String groovyScript = "def metadata = [:]\n" +
+                "metadata[\"product\"]=\"splunk\"\n" +
+                "def result = [\n" +
                 "        \"build_url\": build.url,\n" +
                 "        \"metadata\" : metadata,\n" +
                 "        \"testsuite\": getJunitReport(10)\n" +
                 "]\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.buildEvent=result";
-        createJob(simple_project, groovyScript);
+        SplunkJenkinsInstallation.get().setScriptContent(groovyScript);
+        SplunkJenkinsInstallation.get().setLegacyMode(true);
+        SplunkJenkinsInstallation.get().updateCache();
+        project = j.createFreeStyleProject(simple_project);
+        addJUnitResultArchiver(project);
+        build = project.scheduleBuild2(0).get();
         assertNotNull("groovy script should set the item", buildEvent);
         LOG.info("event is " + buildEvent);
         List<JunitTestCaseGroup> suites = (List<JunitTestCaseGroup>) buildEvent.get("testsuite");
@@ -62,10 +87,10 @@ public class PostBuildGroovyScriptTest extends BaseTest {
         String report_id = UUID.randomUUID().toString();
         int pageSize = 49;
         String groovyScript = "def report_id=\"" + report_id + "\"\n" +
-                "def suites=getJunitReport(" + pageSize + ")\n" +
+                "def suites=splunkins.getJunitReport(" + pageSize + ")\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.suites=suites\n" +
                 "suites.each{ report->\n" +
-                "\tsend( [\"report_id\":report_id, \"report\":report] );\n" +
+                "\tsplunkins.send( [\"report_id\":report_id, \"report\":report] );\n" +
                 "}";
         createJob(large_project, groovyScript);
         int remained = (large_project_cases % pageSize == 0) ? 0 : 1;
