@@ -7,7 +7,7 @@ import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getDefaultDslScript;
 
 public class BaseTest {
     @Rule
@@ -16,7 +16,7 @@ public class BaseTest {
     @Before
     public void setUp() throws Exception {
         org.junit.Assume.assumeTrue(checkTokenAvailable());
-        SplunkJenkinsInstallation.get().setScriptContent(getPostJobSample());
+        SplunkJenkinsInstallation.get().setScriptContent(getDefaultDslScript());
         SplunkJenkinsInstallation.get().updateCache();
         SplunkJenkinsInstallation.get().setLegacyMode(false);
     }

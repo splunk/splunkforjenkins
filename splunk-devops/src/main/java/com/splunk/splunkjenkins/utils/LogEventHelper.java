@@ -662,7 +662,7 @@ public class LogEventHelper {
         return relativePath;
     }
 
-    public static String getPostJobSample() {
+    public static String getDefaultDslScript() {
         String exampleText = "//post script section";
         try (InputStream input = LogEventHelper.class.getClassLoader().getResourceAsStream("sample.groovy")) {
             exampleText = IOUtils.toString(input);

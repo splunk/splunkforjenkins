@@ -12,6 +12,8 @@ import net.sf.json.JSONObject;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
@@ -30,7 +32,7 @@ import java.util.regex.PatternSyntaxException;
 
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
-import static com.splunk.splunkjenkins.utils.LogEventHelper.getPostJobSample;
+import static com.splunk.splunkjenkins.utils.LogEventHelper.getDefaultDslScript;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
@@ -458,7 +460,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (scriptContent == null && scriptPath == null) {
             //when user clear the text on UI, it will be set to empty string
             //so use null check will not overwrite user settings
-            return getPostJobSample();
+            return getDefaultDslScript();
         } else {
             return scriptContent;
         }
@@ -550,7 +552,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (this.scriptContent != null) {
             String hash = DigestUtils.md5Hex(this.scriptContent);
             if (FILE_HASH.contains(hash)) { //previous versions' script hash, update to use new version
-                this.scriptContent = getPostJobSample();
+                this.scriptContent = getDefaultDslScript();
+                ScriptApproval.get().preapprove(this.scriptContent, GroovyLanguage.get());
                 // provided by the plugin itself, the namespace was already migrated from old settings
                 this.legacyMode = false;
             } else if (StringUtils.contains(this.scriptContent, "splunkins.")) {
