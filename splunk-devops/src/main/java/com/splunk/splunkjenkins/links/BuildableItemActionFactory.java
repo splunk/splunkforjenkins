@@ -26,7 +26,7 @@ public class BuildableItemActionFactory extends TransientActionFactory<Buildable
     public Collection<? extends Action> createFor(@Nonnull BuildableItem target) {
         String query = new LogEventHelper.UrlQueryBuilder()
                 .putIfAbsent("build_analysis_jenkinsmaster", SplunkJenkinsInstallation.get().getMetadataHost())
-                .putIfAbsent("build_analysis_job", target.getUrl()).build();
+                .putIfAbsent("build_analysis_job", target.getFullName()).build();
         return Collections.singleton(new LinkSplunkAction("build_analysis", query, "Splunk"));
     }
 }
