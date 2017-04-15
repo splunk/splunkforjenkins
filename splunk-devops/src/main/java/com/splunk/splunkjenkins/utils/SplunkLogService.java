@@ -228,8 +228,10 @@ public class SplunkLogService {
             }
             workers.clear();
         }
-        if (this.getQueueSize() != 0) {
-            LOG.severe("remaining " + this.getQueueSize() + " record(s) not sent");
+        long queueLength = this.getQueueSize();
+        if (queueLength > 0) {
+            logQueue.clear();
+            LOG.severe("remaining " + queueLength + " record(s) not sent");
         }
     }
 

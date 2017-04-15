@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins.listeners;
 
+import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.Item;
 import hudson.model.listeners.ItemListener;
@@ -48,5 +49,11 @@ public class LoggingItemListener extends ItemListener {
             return "unknown";
         }
         return getRelativeJenkinsHomePath(item.getRootDir() + File.separator + "config.xml");
+    }
+
+    @Override
+    public void onBeforeShutdown() {
+        SplunkLogService.getInstance().stopWorker();
+        SplunkLogService.getInstance().releaseConnection();
     }
 }
