@@ -62,10 +62,13 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Run build, OutputStream output) throws IOException, InterruptedException {
         String logSource = this.source;
+        boolean useLineNumber=true;
         if (build != null) {
             logSource = build.getUrl() + SUFFIX;
+        }else{
+            useLineNumber=false;
         }
-        return teeOutput(output, logSource);
+        return teeOutput(output, logSource, useLineNumber, true);
 
     }
 
