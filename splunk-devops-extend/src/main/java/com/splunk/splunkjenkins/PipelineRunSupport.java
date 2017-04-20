@@ -1,9 +1,6 @@
 package com.splunk.splunkjenkins;
 
-import com.cloudbees.workflow.rest.external.ErrorExt;
-import com.cloudbees.workflow.rest.external.RunExt;
-import com.cloudbees.workflow.rest.external.StageNodeExt;
-import com.cloudbees.workflow.rest.external.StatusExt;
+import com.cloudbees.workflow.rest.external.*;
 import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import hudson.Extension;
 import hudson.model.Result;
@@ -25,24 +22,38 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
             if (!nodes.isEmpty()) {
                 List<Map> stages = new ArrayList<Map>(nodes.size());
                 for (StageNodeExt stageNodeExt : nodes) {
-                    Map<String, Object> stage = new HashMap();
-                    ErrorExt error = stageNodeExt.getError();
-                    stage.put("name", stageNodeExt.getName());
-                    stage.put("id", stageNodeExt.getId());
-                    stage.put("status", toResult(stageNodeExt.getStatus()));
-                    stage.put("error", error);
-                    stage.put("duration", stageNodeExt.getDurationMillis() / 1000f);
-                    stage.put("pause_duration", stageNodeExt.getPauseDurationMillis() / 1000f);
-                    stage.put("start_time", stageNodeExt.getStartTimeMillis() / 1000);
-                    if (error != null) {
-                        stage.put("error", error.getMessage());
+                    Map<String, Object> stage = flowNodeToMap(stageNodeExt);
+                    List<Map<String, Object>> children = new ArrayList<>();
+                    for (FlowNodeExt childNode : stageNodeExt.getStageFlowNodes()) {
+                        children.add(flowNodeToMap(childNode));
                     }
+                    stage.put("children", children);
                     stages.add(stage);
                 }
                 info.put("stages", stages);
             }
         }
         return info;
+    }
+
+    /**
+     * @param node FlowNodeExt
+     * @return a map contains basic info
+     */
+    private Map<String, Object> flowNodeToMap(FlowNodeExt node) {
+        Map<String, Object> result = new HashMap();
+        ErrorExt error = node.getError();
+        result.put("name", node.getName());
+        result.put("id", node.getId());
+        result.put("status", toResult(node.getStatus()));
+        result.put("error", error);
+        result.put("duration", node.getDurationMillis() / 1000f);
+        result.put("pause_duration", node.getPauseDurationMillis() / 1000f);
+        result.put("start_time", node.getStartTimeMillis() / 1000);
+        if (error != null) {
+            result.put("error", error.getMessage());
+        }
+        return result;
     }
 
     /**
