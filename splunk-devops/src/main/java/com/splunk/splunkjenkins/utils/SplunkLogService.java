@@ -185,12 +185,13 @@ public class SplunkLogService {
                     logQueue.drainTo(stuckRecords);
                     LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
                     for (EventRecord queuedRecord : stuckRecords) {
-                        if (queuedRecord.isFailed() && !queuedRecord.getEventType().equals(EventType.BUILD_REPORT)) {
+                        if (!queuedRecord.getEventType().equals(EventType.BUILD_REPORT)) {
                             continue;
                         }
                         boolean enqueued = logQueue.offer(queuedRecord);
                         if (!enqueued) {
                             LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescr());
+                            break;
                         }
                     }
                 } finally {

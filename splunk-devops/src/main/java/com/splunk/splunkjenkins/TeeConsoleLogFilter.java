@@ -62,13 +62,13 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     //introduced in jenkins 1.632
     public OutputStream decorateLogger(Run build, OutputStream output) throws IOException, InterruptedException {
         String logSource = this.source;
-        boolean useLineNumber=true;
+        boolean useLineNumber = true;
         if (build != null) {
             logSource = build.getUrl() + SUFFIX;
-        }else{
-            useLineNumber=false;
+        } else {
+            useLineNumber = false;
         }
-        return teeOutput(output, logSource, useLineNumber, true);
+        return teeOutput(output, logSource, useLineNumber, SplunkJenkinsInstallation.get().getMaxEventsBatchSize());
 
     }
 
@@ -78,20 +78,17 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         if (computer != null) {
             logSource = computer.getUrl() + SUFFIX;
         }
-        return teeOutput(logger, logSource, false, false);
+        long cacheSize = Math.min(SplunkJenkinsInstallation.get().getMaxEventsBatchSize(), Constants.SLAVE_LOG_BUFFER_SIZE);
+        return teeOutput(logger, logSource, false, cacheSize);
     }
 
-    private OutputStream teeOutput(OutputStream output, String source) {
-        return teeOutput(output, source, true, true);
-    }
-
-    private OutputStream teeOutput(OutputStream output, String source, boolean useLineNumber, boolean enableCache) {
+    private OutputStream teeOutput(OutputStream output, String source, boolean useLineNumber, long cacheSize) {
         if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
             return output;
         }
         TeeOutputStream teeOutput = new TeeOutputStream(output, source);
         teeOutput.setRequireLineNumber(useLineNumber);
-        teeOutput.setCached(enableCache);
+        teeOutput.setCacheSize(cacheSize);
         return teeOutput;
     }
 
@@ -105,10 +102,10 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(Constants.MIN_BUFFER_SIZE);
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-        private boolean cached = true;
+        private long cacheSize = 2 * Constants.MIN_BUFFER_SIZE;
 
-        public void setCached(boolean cached) {
-            this.cached = cached;
+        public void setCacheSize(long cacheSize) {
+            this.cacheSize = cacheSize;
         }
 
         public void setRequireLineNumber(boolean requireLineNumber) {
@@ -161,7 +158,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
                 logText.write(("line:" + lineCounter + "  ").getBytes(UTF_8));
             }
             decodeConsoleBase64Text(branch.getBuffer(), branch.size(), logText);
-            if (logText.size() > SplunkJenkinsInstallation.get().getMaxEventsBatchSize() || !cached) {
+            if (logText.size() >= cacheSize) {
                 flushLog();
             }
             // reuse the buffer under normal circumstances
@@ -172,7 +169,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
             try {
                 String logs = logText.toString("UTF-8");
                 SplunkLogService.getInstance().send(logs, CONSOLE_LOG, sourceName);
-            } catch (UnsupportedEncodingException e) {//this should not happen, since is utf-8 is an known charset
+            } catch (UnsupportedEncodingException e) {//this should not happen, since utf-8 is an known charset
                 e.printStackTrace();
             }
             logText.reset();

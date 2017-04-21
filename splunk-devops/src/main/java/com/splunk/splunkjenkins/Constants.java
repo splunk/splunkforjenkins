@@ -37,4 +37,6 @@ public class Constants {
     public static final int MAX_BUFFER_SIZE = 1 << 21;
     // use gzip for http posting
     public static final int GZIP_THRESHOLD = 1024; //1kb
+    // 20 KB for slave log
+    public static final int SLAVE_LOG_BUFFER_SIZE = MIN_BUFFER_SIZE * 4;
 }
