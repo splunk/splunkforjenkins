@@ -167,9 +167,15 @@ public class SplunkConfigUtil {
                 } else {
                     break;
                 }
+            } catch (HttpException httpError) {
+                if (httpError.getStatus() == 404) { //HTTP 404 -- Unknown sid, allow retry
+                    continue;
+                } else {
+                    throw new RuntimeException("execute query " + query + " failed", httpError);
+                }
             } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
-                throw new RuntimeException("execute query " + query + " failed");
+                throw new RuntimeException("execute query " + query + " failed", e);
             }
         }
         assertTrue("event not reached using:" + query, eventCount > 0);
