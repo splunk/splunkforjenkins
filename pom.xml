@@ -100,11 +100,6 @@
             <scope>provided</scope>
             <optional>true</optional>
         </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>script-security</artifactId>
-            <version>1.27</version>
-        </dependency>
     </dependencies>
     <profiles>
         <profile>
