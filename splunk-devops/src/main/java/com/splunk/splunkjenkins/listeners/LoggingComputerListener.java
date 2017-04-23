@@ -23,6 +23,7 @@ public class LoggingComputerListener extends ComputerListener {
     @Override
     public void onOnline(Computer c, TaskListener listener) throws IOException, InterruptedException {
         updateStatus(c, "Online");
+        listener.getLogger().flush();
     }
 
     @Override
@@ -43,6 +44,7 @@ public class LoggingComputerListener extends ComputerListener {
     @Override
     public void onLaunchFailure(Computer c, TaskListener taskListener) throws IOException, InterruptedException {
         updateStatus(c, "Launch Failure");
+        taskListener.getLogger().flush();
     }
 
     private void updateStatus(Computer c, String eventSource) {
