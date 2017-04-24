@@ -228,6 +228,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     ////////END OF FORM VALIDATION/////////
     protected void updateCache() {
+        if (!this.enabled) {
+            //nothing to do if not enabled
+            return;
+        }
         if (scriptPath != null) {
             scriptFile = new File(scriptPath);
         } else if (nonEmpty(scriptContent)) {
