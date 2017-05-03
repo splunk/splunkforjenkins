@@ -49,7 +49,7 @@ public class UserActionDSL {
                     ScriptApproval.get().using(groovyScriptText, GroovyLanguage.get());
                     ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
                     if (!legacyScript) {
-                        SecureGroovyScript script = new SecureGroovyScript(groovyScriptText, false, null);
+                        SecureGroovyScript script = new SecureGroovyScript(groovyScriptText, false, null).configuringWithKeyItem();;
                         script.evaluate(cl, binding)
                     } else {
                         //had to call setDelegate
