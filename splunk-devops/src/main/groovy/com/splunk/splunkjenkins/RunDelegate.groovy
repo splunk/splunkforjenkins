@@ -54,6 +54,7 @@ public class RunDelegate {
      * @param message
      * @return true if enqueue successfully, false if the message is discarded
      */
+    @Whitelisted
     def send(def message) {
         return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT);
     }
@@ -64,6 +65,7 @@ public class RunDelegate {
      * @param sourceName source for splunk metadata
      * @return true if enqueue successfully, false if the message is discarded
      */
+    @Whitelisted
     def send(def message, String eventSourceName) {
         return SplunkLogService.getInstance().send(message, EventType.BUILD_REPORT, eventSourceName);
     }
@@ -138,10 +140,12 @@ public class RunDelegate {
         }
     }
 
+    @Whitelisted
     def getOut() {
         return listener.logger
     }
 
+    @Whitelisted
     def println(String s) {
         try {
             getOut().println(s)
@@ -149,11 +153,11 @@ public class RunDelegate {
             ex.printStackTrace();
         }
     }
-
+    @Whitelisted
     def getEnv() {
         return env
     }
-
+    @Whitelisted
     def getBuild() {
         return build
     }

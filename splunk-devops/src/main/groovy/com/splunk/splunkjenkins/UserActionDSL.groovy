@@ -1,19 +1,25 @@
 package com.splunk.splunkjenkins
 
 import com.splunk.splunkjenkins.listeners.LoggingRunListener
+import com.splunk.splunkjenkins.model.DslDelegateScript
+
 import com.splunk.splunkjenkins.utils.LogEventHelper
 import hudson.model.Run
 import hudson.model.TaskListener
-import hudson.util.spring.ClosureScript
 import jenkins.model.Jenkins
 import org.apache.commons.lang.StringUtils
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
+import org.jenkinsci.plugins.scriptsecurity.sandbox.RejectedAccessException
+import org.jenkinsci.plugins.scriptsecurity.sandbox.Whitelist
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.ClassLoaderWhitelist
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SandboxInterceptor
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript
+import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.ProxyWhitelist
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext
-import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval
-import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.kohsuke.groovy.sandbox.GroovyInterceptor
 
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -45,16 +51,27 @@ public class UserActionDSL {
                         script.evaluate(cl, binding)
                     } else {
                         //had to call setDelegate
-                        CompilerConfiguration cc = new CompilerConfiguration();
-                        cc.scriptBaseClass = ClosureScript.class.name;
+                        CompilerConfiguration cc = GroovySandbox.createSecureCompilerConfiguration();
+                        cc.scriptBaseClass = DslDelegateScript.class.name;
                         ImportCustomizer ic = new ImportCustomizer()
                         ic.addStaticStars(LogEventHelper.class.name)
                         ic.addStarImport("jenkins.model")
                         cc.addCompilationCustomizers(ic)
-                        ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader,binding, cc)
-                                .parse(scriptText)
+                        ClassLoader secureClassLoader = GroovySandbox.createSecureClassLoader(cl);
+                        GroovyShell shell = new GroovyShell(secureClassLoader, binding, cc);
+                        DslDelegateScript dslScript = (DslDelegateScript) shell.parse(scriptText);
                         dslScript.setDelegate(delegate);
-                        dslScript.run()
+                        Whitelist wrapperWhitelist = new ProxyWhitelist(new ClassLoaderWhitelist(secureClassLoader), new DslDelegateScript.UserActionWhiteList(), Whitelist.all());
+                        GroovyInterceptor sandbox = new SandboxInterceptor(wrapperWhitelist);
+                        sandbox.register();
+                        try {
+                            dslScript.run();
+                        } catch (RejectedAccessException x) {
+                            //save for pending approval
+                            throw ScriptApproval.get().accessRejected(x, ApprovalContext.create());
+                        } finally {
+                            sandbox.unregister();
+                        }
                     }
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE, "UserActionDSL script failed", e);
