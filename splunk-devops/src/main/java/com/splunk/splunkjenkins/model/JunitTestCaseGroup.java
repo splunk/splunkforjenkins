@@ -60,12 +60,12 @@ public class JunitTestCaseGroup {
 
     @Override
     public String toString() {
-        return "failures=" + failures +
-                ", passes=" + passes +
-                ", skips=" + skips +
-                ", errors=" + errors +
-                ", total=" + total +
-                ", duration=" + Util.getPastTimeString((long)duration);
+        return "failures: " + failures +
+                ", passes: " + passes +
+                ", skips: " + skips +
+                ", errors: " + errors +
+                ", total: " + total +
+                ", duration: " + Util.getPastTimeString((long)duration);
 
     }
 }
