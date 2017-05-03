@@ -5,6 +5,7 @@ import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import hudson.scm.SCM;
 import jenkins.triggers.SCMTriggerItem;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.whitelists.Whitelisted;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
 import shaded.splk.com.google.gson.Gson;
 import shaded.splk.com.google.gson.GsonBuilder;
@@ -570,6 +571,7 @@ public class LogEventHelper {
      * @param run the build
      * @return build env with masked password variables
      */
+    @Whitelisted
     public static EnvVars getEnvironment(Run run) {
         EnvVars vars;
         Map<String, String> maskPasswords = new HashMap<>();
