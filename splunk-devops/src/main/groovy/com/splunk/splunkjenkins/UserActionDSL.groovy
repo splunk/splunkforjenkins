@@ -10,7 +10,6 @@ import jenkins.model.Jenkins
 import org.apache.commons.lang.StringUtils
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox
 import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval
@@ -53,14 +52,13 @@ public class UserActionDSL {
                         script.evaluate(cl, binding)
                     } else {
                         //had to call setDelegate
-                        CompilerConfiguration cc = GroovySandbox.createSecureCompilerConfiguration();
+                        CompilerConfiguration cc = new CompilerConfiguration();
                         cc.scriptBaseClass = ClosureScript.class.name;
                         ImportCustomizer ic = new ImportCustomizer()
                         ic.addStaticStars(LogEventHelper.class.name)
                         ic.addStarImport("jenkins.model")
                         cc.addCompilationCustomizers(ic)
-                        ClassLoader secureClassLoader = GroovySandbox.createSecureClassLoader(cl);
-                        GroovyShell shell = new GroovyShell(secureClassLoader, binding, cc);
+                        GroovyShell shell = new GroovyShell(cl, binding, cc);
                         ClosureScript dslScript = (ClosureScript) shell.parse(groovyScriptText);
                         dslScript.setDelegate(delegate);
                         dslScript.run();
