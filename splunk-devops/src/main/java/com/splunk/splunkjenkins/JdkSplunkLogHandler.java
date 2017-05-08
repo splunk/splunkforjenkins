@@ -1,5 +1,7 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.model.EventRecord;
+import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.LogConsumer;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.model.Computer;
@@ -8,23 +10,23 @@ import jenkins.model.Jenkins;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.*;
+import java.util.logging.Formatter;
 
 
 public class JdkSplunkLogHandler extends Handler {
+    private Lock maintenanceLock = new ReentrantLock();
+    private final int cacheSize = 64;
+    private List<EventRecord> verboseLogCache = Collections.synchronizedList(new ArrayList(cacheSize));
     private Level filterLevel = Level.parse(System.getProperty(JdkSplunkLogHandler.class.getName() + ".level", "INFO"));
     private LogEventFormatter splunkFormatter;
 
     public JdkSplunkLogHandler() {
         this.splunkFormatter = new LogEventFormatter();
         setFilter(new LogFilter());
-        //prevent log flood
-        if (filterLevel.intValue() < Level.INFO.intValue()) {
-            filterLevel = Level.INFO;
-        }
         setLevel(filterLevel);
     }
 
@@ -40,13 +42,33 @@ public class JdkSplunkLogHandler extends Handler {
         if (logEvent == null || logEvent.isEmpty()) {
             return;
         }
-        SplunkLogService.getInstance().send(logEvent, "logger://" + record.getLoggerName());
+        EventRecord logEventRecord = new EventRecord(logEvent, EventType.LOG);
+        logEventRecord.setSource("logger://" + record.getLoggerName());
+        if (record.getLevel().intValue() < Level.INFO.intValue()) {
+            verboseLogCache.add(logEventRecord);
+            if (verboseLogCache.size() >= cacheSize) {
+                flush();
+            }
+        } else {
+            SplunkLogService.getInstance().send(logEventRecord);
+        }
+
     }
 
     @Override
     public void flush() {
-        String stats = SplunkLogService.getInstance().getStats();
-        SplunkLogService.getInstance().send(stats, "logger://com.splunk.splunkjenkins");
+        if (this.verboseLogCache.isEmpty()) {
+            return;
+        }
+        List copyList = new ArrayList();
+        try {
+            maintenanceLock.lock();
+            copyList.addAll(verboseLogCache);
+            verboseLogCache.clear();
+        } finally {
+            maintenanceLock.unlock();
+        }
+        SplunkLogService.getInstance().sendBatch(copyList, EventType.CONSOLE_LOG);
     }
 
     @Override

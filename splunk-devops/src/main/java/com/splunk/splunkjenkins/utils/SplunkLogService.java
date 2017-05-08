@@ -129,7 +129,12 @@ public class SplunkLogService {
         long batchSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
         boolean isQueued = false;
         for (Object message : messages) {
-            EventRecord record = new EventRecord(message, eventType);
+            EventRecord record;
+            if (!(message instanceof EventRecord)) {
+                record = new EventRecord(message, eventType);
+            } else {
+                record = (EventRecord) message;
+            }
             stringBuffer.append(LogEventHelper.toJson(record));
             stringBuffer.append("\n");
             if (stringBuffer.length() > batchSize) {
