@@ -67,8 +67,11 @@ public class LogEventHelper {
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
     private static final String channel = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy())
-            .setDateFormat(LOG_TIME_FORMAT).registerTypeAdapter(CoverageMetricsAdapter.CoverageDetail.class,
-                    new CoverageDetailJsonSerializer()).create();
+            .setDateFormat(LOG_TIME_FORMAT)
+            .registerTypeAdapter(CoverageMetricsAdapter.CoverageDetail.class, new CoverageDetailJsonSerializer())
+            .registerTypeAdapter(Double.class, new SpecialDoubleAdapter())
+            .registerTypeAdapter(Float.class, new SpeicalFloatAdapter())
+            .create();
     private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
             .put("KB", 1024L)
             .put("kB", 1000L)
@@ -264,7 +267,7 @@ public class LogEventHelper {
                 LOG.warning("ws doesn't exist: " + ws.getRemote());
                 return eventCount;
             }
-            
+
             final FilePath[] paths = ws.list(expanded, exclude);
             if (paths.length == 0) {
                 LOG.warning("can not find files using includes:" + includes + " excludes:" + excludes + " in workspace:" + ws.getRemote());

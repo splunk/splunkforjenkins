@@ -83,9 +83,10 @@ public class LogConsumer extends Thread {
             try {
                 EventRecord record = queue.take();
                 if (!record.isDiscarded()) {
-                    HttpPost post = buildPost(record, SplunkJenkinsInstallation.get());
+                    HttpPost post = null;
                     try {
                         sending = true;
+                        post = buildPost(record, SplunkJenkinsInstallation.get());
                         client.execute(post, responseHandler);
                     } catch (IOException ex) {
                         boolean isDiscarded = false;
@@ -99,9 +100,13 @@ public class LogConsumer extends Thread {
                         if (!isDiscarded) {
                             handleRetry(ex, record);
                         }
+                    } catch (Exception e) {
+                        LOG.log(Level.SEVERE, "failed construct post message" + record.getShortDescr(), e);
                     } finally {
                         sending = false;
-                        post.releaseConnection();
+                        if (post != null) {
+                            post.releaseConnection();
+                        }
                     }
                 } else {
                     //message discarded

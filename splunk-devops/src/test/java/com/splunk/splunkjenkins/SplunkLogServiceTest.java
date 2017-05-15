@@ -7,21 +7,20 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import org.junit.*;
 
-import static com.splunk.splunkjenkins.SplunkConfigUtil.checkTokenAvailable;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.*;
-
-import org.jvnet.hudson.test.JenkinsRule;
 
 import javax.annotation.concurrent.NotThreadSafe;
 
 @NotThreadSafe
-public class SplunkLogServiceTest extends BaseTest{
+public class SplunkLogServiceTest extends BaseTest {
     private static final Logger LOG = Logger.getLogger(SplunkLogServiceTest.class.getName());
     private static final int BATCH_COUNT = 1000;
+
     /**
      * Test of update method, of class SplunkLogService.
      */
@@ -58,5 +57,18 @@ public class SplunkLogServiceTest extends BaseTest{
         }
         int expected = BATCH_COUNT;
         verifySplunkSearchResult(query, timestamp, expected);
+    }
+
+    @Test
+    public void sendFloatNaN() {
+        Map result = new HashMap();
+        result.put("floatNaN", Float.NaN);
+        result.put("doubleMaxVal", Double.MAX_VALUE);
+        result.put("doubleMinVal", Double.MIN_VALUE);
+        result.put("doubleNaN", Double.NaN);
+        long timestamp = System.currentTimeMillis();
+        SplunkLogService.getInstance().send(result, EventType.LOG);
+        String query = "doubleMaxVal>9999999999999999";
+        verifySplunkSearchResult(query, timestamp, 1);
     }
 }
