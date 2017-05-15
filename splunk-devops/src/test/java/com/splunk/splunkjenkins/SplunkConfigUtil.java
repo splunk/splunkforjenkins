@@ -44,7 +44,7 @@ public class SplunkConfigUtil {
         }
         String host = properties.getProperty("host", "127.0.0.1");
         ServiceArgs serviceArgs = new ServiceArgs();
-        serviceArgs.setSSLSecurityProtocol(SSLSecurityProtocol.TLSv1);
+        serviceArgs.setSSLSecurityProtocol(SSLSecurityProtocol.TLSv1_2);
         serviceArgs.setUsername(properties.getProperty("username", "admin"));
         serviceArgs.setPassword(properties.getProperty("password", "changeme"));
         serviceArgs.setHost(host);
