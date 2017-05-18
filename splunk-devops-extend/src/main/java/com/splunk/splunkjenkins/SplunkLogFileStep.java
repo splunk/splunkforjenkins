@@ -85,7 +85,7 @@ public class SplunkLogFileStep extends Step {
         @Nonnull
         @Override
         public String getDisplayName() {
-            return "Forwarding pipeline console log to Splunk";
+            return "Send files to Splunk";
         }
     }
 
