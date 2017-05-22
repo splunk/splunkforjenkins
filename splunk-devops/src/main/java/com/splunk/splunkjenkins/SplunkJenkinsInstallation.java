@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins;
 
 import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.model.MetaDataConfigItem;
+import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
@@ -139,6 +140,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     @Override
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
         this.metadataItemSet = null; // otherwise bindJSON will never clear it once set
+        boolean previousState=this.enabled;
         req.bindJSON(this, formData);
         if (this.metadataItemSet == null) {
             this.metaDataConfig = "";
@@ -151,6 +153,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
         updateCache();
         save();
+        if (previousState && !this.enabled) {
+            //switch from enable to disable
+            SplunkLogService.getInstance().stopWorker();
+            SplunkLogService.getInstance().releaseConnection();
+        }
         return true;
     }
 
