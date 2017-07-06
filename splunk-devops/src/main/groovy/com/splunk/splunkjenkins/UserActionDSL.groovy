@@ -36,26 +36,20 @@ public class UserActionDSL {
                         env: buildParameters, listener: listener);
                 Binding binding = new Binding();
                 binding.setVariable("splunkins", delegate);
-                ClassLoader cl = Jenkins.getActiveInstance().getPluginManager().uberClassLoader;
-                // the script written before SecureGroovyScript was introduced, and can not be migrated automatically
-                boolean legacyScript = SplunkJenkinsInstallation.get().isLegacyMode();
                 try {
-                    if (!legacyScript) {
-                        SecureGroovyScript script = new SecureGroovyScript(scriptText, false, null).configuringWithKeyItem();
-                        script.evaluate(cl, binding)
-                    } else {
-                        //had to call setDelegate
-                        CompilerConfiguration cc = new CompilerConfiguration();
-                        cc.scriptBaseClass = ClosureScript.class.name;
-                        ImportCustomizer ic = new ImportCustomizer()
-                        ic.addStaticStars(LogEventHelper.class.name)
-                        ic.addStarImport("jenkins.model")
-                        cc.addCompilationCustomizers(ic)
-                        ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader,binding, cc)
-                                .parse(scriptText)
-                        dslScript.setDelegate(delegate);
-                        dslScript.run()
-                    }
+                    //check approval, will throw UnapprovedUsageException
+                    ScriptApproval.get().using(scriptText, GroovyLanguage.get());
+                    //call setDelegate to RunDelegate instance and run
+                    CompilerConfiguration cc = new CompilerConfiguration();
+                    cc.scriptBaseClass = ClosureScript.class.name;
+                    ImportCustomizer ic = new ImportCustomizer()
+                    ic.addStaticStars(LogEventHelper.class.name)
+                    ic.addStarImport("jenkins.model")
+                    cc.addCompilationCustomizers(ic)
+                    ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader, binding, cc)
+                            .parse(scriptText)
+                    dslScript.setDelegate(delegate);
+                    dslScript.run()
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE, "UserActionDSL script failed", e);
                     e.printStackTrace(listener.getLogger())
