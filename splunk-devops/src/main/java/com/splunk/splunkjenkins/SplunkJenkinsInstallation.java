@@ -10,6 +10,7 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
 import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -242,7 +243,17 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (scriptPath != null) {
             scriptFile = new File(scriptPath);
         } else if (nonEmpty(scriptContent)) {
-            ApprovalContext context = ApprovalContext.create().withCurrentUser().withKey(this.getClass().getName());
+            // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
+            // Tried proxying com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
+            // Use Jenkins.getAuthentication() will by pass the issue
+            Authentication auth = Jenkins.getAuthentication();
+            String userName;
+            if (auth != null) {
+                userName = auth.getName();
+            } else {
+                userName = Jenkins.ANONYMOUS.getName();
+            }
+            ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
             //check approval saving pending for approval
             ScriptApproval.get().configuring(scriptContent, GroovyLanguage.get(), context);
             postActionScript = scriptContent;
