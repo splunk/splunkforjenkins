@@ -10,9 +10,11 @@ import jenkins.model.GlobalConfiguration;
 import jenkins.model.Jenkins;
 import jenkins.model.JenkinsLocationConfiguration;
 import net.sf.json.JSONObject;
+import org.acegisecurity.Authentication;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import org.kohsuke.accmod.Restricted;
@@ -78,7 +80,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private transient Set<MetaDataConfigItem> metadataItemSet = new HashSet<>();
     private transient String defaultMetaData;
     private transient Pattern ignoredJobPattern;
-    private transient boolean legacyMode = false;
 
     public SplunkJenkinsInstallation(boolean useConfigFile) {
         if (useConfigFile) {
@@ -140,7 +141,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     @Override
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
         this.metadataItemSet = null; // otherwise bindJSON will never clear it once set
-        boolean previousState=this.enabled;
+        boolean previousState = this.enabled;
         req.bindJSON(this, formData);
         if (this.metadataItemSet == null) {
             this.metaDataConfig = "";
@@ -242,6 +243,19 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (scriptPath != null) {
             scriptFile = new File(scriptPath);
         } else if (nonEmpty(scriptContent)) {
+            // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
+            // Tried proxying com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
+            // Use Jenkins.getAuthentication() will by pass the issue
+            Authentication auth = Jenkins.getAuthentication();
+            String userName;
+            if (auth != null) {
+                userName = auth.getName();
+            } else {
+                userName = Jenkins.ANONYMOUS.getName();
+            }
+            ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
+            //check approval saving pending for approval
+            ScriptApproval.get().configuring(scriptContent, GroovyLanguage.get(), context);
             postActionScript = scriptContent;
         } else {
             postActionScript = null;
@@ -562,20 +576,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private void migrate() {
         if (this.scriptContent != null) {
             String hash = DigestUtils.md5Hex(this.scriptContent);
-            if (FILE_HASH.contains(hash)) { //previous versions' script hash, update to use new version
+            if (SCRIPT_TEXT_MD5_HASH.contains(hash)) { //previous versions' script hash, update to use new version
                 this.scriptContent = getDefaultDslScript();
                 ScriptApproval.get().preapprove(this.scriptContent, GroovyLanguage.get());
                 // provided by the plugin itself, the namespace was already migrated from old settings
-                this.legacyMode = false;
-            } else if (StringUtils.contains(this.scriptContent, "splunkins.")) {
-                //contains the namespace splunkins, migrated
-                this.legacyMode = false;
-            } else {
-                this.legacyMode = true;
             }
-        } else if (this.scriptPath != null) {
-            //user defined script located on jenkins master
-            this.legacyMode = true;
         }
         this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
     }
@@ -586,13 +591,5 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     public void setIgnoredJobs(String ignoredJobs) {
         this.ignoredJobs = ignoredJobs;
-    }
-
-    public boolean isLegacyMode() {
-        return legacyMode;
-    }
-
-    public void setLegacyMode(boolean legacyMode) {
-        this.legacyMode = legacyMode;
     }
 }
