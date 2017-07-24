@@ -68,7 +68,6 @@ public class PostBuildGroovyScriptTest extends BaseTest {
                 "]\n" +
                 "com.splunk.splunkjenkins.PostBuildGroovyScriptTest.buildEvent=result";
         SplunkJenkinsInstallation.get().setScriptContent(groovyScript);
-        SplunkJenkinsInstallation.get().setLegacyMode(true);
         SplunkJenkinsInstallation.get().updateCache();
         project = j.createFreeStyleProject(simple_project);
         addJUnitResultArchiver(project);

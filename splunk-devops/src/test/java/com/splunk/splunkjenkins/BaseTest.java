@@ -18,7 +18,6 @@ public class BaseTest {
         org.junit.Assume.assumeTrue(checkTokenAvailable());
         SplunkJenkinsInstallation.get().setScriptContent(getDefaultDslScript());
         SplunkJenkinsInstallation.get().updateCache();
-        SplunkJenkinsInstallation.get().setLegacyMode(false);
     }
 
     @After
