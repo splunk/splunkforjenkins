@@ -18,6 +18,7 @@ public class LoggingInitStep {
         Logger.getLogger(HealthMonitor.class.getName()).setLevel(Level.WARNING);
         Logger.getLogger(rootLoggerName).addHandler(JdkSplunkLogHandler.LogHolder.LOG_HANDLER);
         //init plugin
+        SplunkJenkinsInstallation.get().updateCache();
         SplunkJenkinsInstallation.markComplete(true);
         Logger.getLogger(LoggingInitStep.class.getName()).info("plugin splunk-devops version " + LogEventHelper.getBuildVersion() + " loaded");
     }

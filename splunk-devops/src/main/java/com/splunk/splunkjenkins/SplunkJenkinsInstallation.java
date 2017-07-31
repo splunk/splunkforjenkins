@@ -91,7 +91,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             } catch (IOException e) {
                 //ignore
             }
-            this.updateCache();
         }
     }
 
