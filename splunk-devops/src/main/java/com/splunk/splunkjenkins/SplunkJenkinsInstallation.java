@@ -241,24 +241,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
         if (scriptPath != null) {
             scriptFile = new File(scriptPath);
+            //load the text content into postActionScript
+            refreshScriptText();
         } else if (nonEmpty(scriptContent)) {
-            // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
-            // Tried proxying com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
-            // Use Jenkins.getAuthentication() will by pass the issue
-            Authentication auth = Jenkins.getAuthentication();
-            String userName;
-            if (auth != null) {
-                userName = auth.getName();
-            } else {
-                userName = Jenkins.ANONYMOUS.getName();
-            }
-            ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
-            //check approval saving pending for approval
-            ScriptApproval.get().configuring(scriptContent, GroovyLanguage.get(), context);
             postActionScript = scriptContent;
         } else {
             postActionScript = null;
         }
+        configApproval();
         if (StringUtils.isEmpty(ignoredJobs)) {
             ignoredJobPattern = null;
         } else {
@@ -285,6 +275,25 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         } catch (Exception e) {
             LOG.log(Level.SEVERE, "update cache failed, splunk host:" + host, e);
         }
+    }
+
+    private void configApproval() {
+        if (postActionScript == null) {
+            return;
+        }
+        // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
+        // Tried proxying com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
+        // Use Jenkins.getAuthentication() will by pass the issue
+        Authentication auth = Jenkins.getAuthentication();
+        String userName;
+        if (auth != null) {
+            userName = auth.getName();
+        } else {
+            userName = Jenkins.ANONYMOUS.getName();
+        }
+        ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
+        //check approval saving pending for approval
+        ScriptApproval.get().configuring(postActionScript, GroovyLanguage.get(), context);
     }
 
     /**
