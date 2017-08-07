@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins.model;
 import gherkin.formatter.model.Result;
 import gherkin.formatter.model.Step;
 import hudson.Extension;
+import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
 import org.apache.commons.lang.reflect.FieldUtils;
 import org.jenkinsci.plugins.cucumber.jsontestsupport.*;
@@ -18,12 +19,12 @@ public class CucumberTestResultAdapter extends AbstractTestResultAdapter<Cucumbe
         List<TestCaseResult> caseResults = new ArrayList<>();
         Collection<FeatureResult> featureResults = resultAction.getResult().getChildren();
         //prefix is cucumber/
-        String prefix=resultAction.getResult().getName()+"/";
+        String prefix = resultAction.getResult().getName() + "/";
         for (FeatureResult featureResult : featureResults) {
             for (ScenarioResult scenarioResult : featureResult.getChildren()) {
-                String className=scenarioResult.getId();
-                if(className.startsWith(prefix)){
-                    className=className.substring(prefix.length());
+                String className = scenarioResult.getId();
+                if (className.startsWith(prefix)) {
+                    className = className.substring(prefix.length());
                 }
                 for (BeforeAfterResult beforeAfterResult : scenarioResult.getBeforeResults()) {
                     TestCaseResult testCaseResult = convert(beforeAfterResult, className);
@@ -44,8 +45,8 @@ public class CucumberTestResultAdapter extends AbstractTestResultAdapter<Cucumbe
     }
 
     /**
-     * @param testResult   bdd test result
-     * @param className bdd test scenario name
+     * @param testResult bdd test result
+     * @param className  bdd test scenario name
      * @return
      */
     private TestCaseResult convert(TestResult testResult, String className) {
@@ -65,6 +66,10 @@ public class CucumberTestResultAdapter extends AbstractTestResultAdapter<Cucumbe
         testCaseResult.setFailedSince(testResult.getFailedSince());
         if (testCaseResult.getStatus() == TestStatus.FAILURE) {
             updateErrorDetails(testResult, testCaseResult);
+        }
+        TestObject parent = testResult.getParent();
+        if (parent != null) {
+            testCaseResult.setGroupName(parent.getName());
         }
         return testCaseResult;
     }

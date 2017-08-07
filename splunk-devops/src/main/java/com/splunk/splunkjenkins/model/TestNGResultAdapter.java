@@ -29,6 +29,7 @@ public class TestNGResultAdapter extends AbstractTestResultAdapter<TestNGTestRes
                     testCaseResult.setUniqueName(methodResult.getSafeName());
                     testCaseResult.setDuration(methodResult.getDuration());
                     testCaseResult.setClassName(methodResult.getClassName());
+                    testCaseResult.setGroupName(testResult.getName());
                     String status = Util.fixNull(methodResult.getStatus()).toLowerCase();
                     switch (status) {
                         case "fail":

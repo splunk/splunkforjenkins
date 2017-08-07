@@ -7,6 +7,7 @@ public class TestCaseResult extends TestResult {
     private float duration;
     private String className;
     private String testName;
+    private String groupName;
     private boolean skipped;
     private String skippedMessage;
     private String errorStackTrace;
@@ -146,5 +147,13 @@ public class TestCaseResult extends TestResult {
     @Override
     public int getSkipCount() {
         return TestStatus.SKIPPED == status ? 1 : 0;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
     }
 }
