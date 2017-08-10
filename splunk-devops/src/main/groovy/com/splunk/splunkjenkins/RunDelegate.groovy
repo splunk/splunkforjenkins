@@ -94,7 +94,7 @@ public class RunDelegate {
     @Whitelisted
     def getJunitReport() {
         //no pagination, use MAX_VALUE as page size
-        List<JunitTestCaseGroup> results = getJunitReport(Integer.MAX_VALUE);
+        List<JunitTestCaseGroup> results = getJunitReport(Integer.MAX_VALUE, null);
         if (!results.isEmpty()) {
             return results.get(0)
         } else {
@@ -103,9 +103,9 @@ public class RunDelegate {
     }
 
     @Whitelisted
-    def getJunitReport(int pageSize) {
+    def getJunitReport(int pageSize, List<String> ignoredActions = null) {
         try {
-            return TestCaseResultUtils.getBuildReport(build, pageSize);
+            return TestCaseResultUtils.getBuildReport(build, pageSize, ignoredActions);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "failed to get junit report", ex)
             return Collections.emptyList();
@@ -114,7 +114,7 @@ public class RunDelegate {
 
     @Whitelisted
     def sendTestReport(int pageSize) {
-        def results = getJunitReport(pageSize)
+        def results = getJunitReport(pageSize, null)
         def buildEvent = getBuildEvent()
         String sourceName = SplunkJenkinsInstallation.get().getMetadataSource("test")
         results.eachWithIndex { junitResult, idx ->

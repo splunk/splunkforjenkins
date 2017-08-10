@@ -75,11 +75,23 @@ public class TestCaseResultUtils {
      */
     @Nonnull
     public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize) {
+        return getBuildReport(build, pageSize, null);
+    }
+
+    /**
+     * Get the Junit report  from build
+     * Extract from either TestResultAction or AggregatedTestResultAction
+     *
+     * @param build    Jenkins build
+     * @param pageSize how many test cases to hold in one page
+     * @return A list of JunitTestCaseGroup
+     */
+    public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize, List<String> ignoredTestActions) {
         List<JunitTestCaseGroup> junitReports = new ArrayList<>();
         if (build == null) {
             return junitReports;
         }
-        List<TestResult> results = AbstractTestResultAdapter.getTestResult(build);
+        List<TestResult> results = AbstractTestResultAdapter.getTestResult(build, ignoredTestActions);
         junitReports = split(results, pageSize);
         if (junitReports.isEmpty()) {
             //last resort, try AbstractTestResultAction
