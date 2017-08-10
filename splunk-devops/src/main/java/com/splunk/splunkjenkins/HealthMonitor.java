@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
 import hudson.Extension;
 import hudson.model.*;
@@ -7,7 +8,9 @@ import hudson.model.Queue;
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryPoolMXBean;
+import java.lang.management.MemoryUsage;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -18,7 +21,6 @@ import static com.splunk.splunkjenkins.Constants.SLAVE_TAG_NAME;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getMasterStats;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getRunningJob;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getSlaveStats;
-import static org.apache.commons.lang.reflect.MethodUtils.getAccessibleMethod;
 
 @Extension
 public class HealthMonitor extends AsyncPeriodicWork {
@@ -36,16 +38,19 @@ public class HealthMonitor extends AsyncPeriodicWork {
 
     @Override
     protected void execute(TaskListener listener) throws IOException, InterruptedException {
+        if (!SplunkJenkinsInstallation.get().isEnabled()) {
+            return;
+        }
         sendPendingQueue();
         if (System.currentTimeMillis() - lastAccessTime < slaveUpdatePeriod) {
             return;
         }
         lastAccessTime = System.currentTimeMillis();
-        sendSlaveUpdate();
-        listener.getLogger().println("execute sendSlaveUpdate");
+        sendNodeUpdate();
+        listener.getLogger().println("execute sendNodeUpdate");
     }
 
-    private void sendSlaveUpdate() {
+    private void sendNodeUpdate() {
         Map<String, Map<String, Object>> slaveStats = getSlaveStats();
         Set<String> aliveSlaves = slaveStats.keySet();
         //send event one by one instead of list to aid search
@@ -61,7 +66,7 @@ public class HealthMonitor extends AsyncPeriodicWork {
             }
         }
         SplunkLogService.getInstance().sendBatch(removedSlavs, SLAVE_INFO);
-        SplunkLogService.getInstance().sendBatch(getRunningJob(),QUEUE_INFO);
+        SplunkLogService.getInstance().sendBatch(getRunningJob(), QUEUE_INFO);
         //replace slave names, at one time should only one thread is running, so modify slaveNames is safe without lock
         slaveNames = aliveSlaves;
         //update master stats
@@ -69,6 +74,20 @@ public class HealthMonitor extends AsyncPeriodicWork {
         masterEvent.put("item", name);
         masterEvent.put(Constants.TAG, Constants.QUEUE_TAG_NAME);
         SplunkLogService.getInstance().send(masterEvent, QUEUE_INFO);
+        //send memory details
+        List<Map> memoryUsages = new ArrayList();
+        for (MemoryPoolMXBean memoryPoolMXBean : ManagementFactory.getMemoryPoolMXBeans()) {
+            Map<String, Object> memoryPoolUsage = new HashMap();
+            MemoryUsage usageDetail = memoryPoolMXBean.getUsage();
+            memoryPoolUsage.put(Constants.TAG, "jvm_memory");
+            memoryPoolUsage.put("memory_pool", memoryPoolMXBean.getName());
+            memoryPoolUsage.put("init_size", usageDetail.getInit() >> 20);
+            memoryPoolUsage.put("max_size", usageDetail.getMax() >> 20);
+            memoryPoolUsage.put("committed_size", usageDetail.getCommitted() >> 20);
+            memoryPoolUsage.put("used_size", usageDetail.getUsed() >> 20);
+            memoryUsages.add(memoryPoolUsage);
+        }
+        SplunkLogService.getInstance().sendBatch(memoryUsages, EventType.QUEUE_INFO);
     }
 
     private void sendPendingQueue() {
