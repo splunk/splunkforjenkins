@@ -96,7 +96,8 @@ public class TestCaseResultUtils {
         if (junitReports.isEmpty()) {
             //last resort, try AbstractTestResultAction
             AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
-            if (abstractTestResultAction != null) {
+            if (abstractTestResultAction != null && ignoredTestActions != null
+                    && ignoredTestActions.contains(abstractTestResultAction.getClass().getCanonicalName())) {
                 junitReports = splitRaw(abstractTestResultAction, pageSize);
             }
         }

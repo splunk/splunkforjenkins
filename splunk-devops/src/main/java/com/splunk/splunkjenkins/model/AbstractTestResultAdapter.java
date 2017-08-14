@@ -53,11 +53,12 @@ public abstract class AbstractTestResultAdapter<A extends AbstractTestResultActi
         List<TestResult> testResults = new ArrayList<>();
         for (AbstractTestResultAdapter adapter : adapters) {
             if (adapter.isApplicable(build)) {
-                if (ignoreActions != null && ignoreActions.contains(adapter.targetType.getCanonicalName())) {
+                AbstractTestResultAction action = adapter.getAction(build);
+                if (ignoreActions != null && ignoreActions.contains(action.getClass().getName())) {
                     // the test action is ignored
                     continue;
                 }
-                testResults.addAll(adapter.getTestResult(adapter.getAction(build)));
+                testResults.addAll(adapter.getTestResult(action));
             }
         }
         return testResults;
