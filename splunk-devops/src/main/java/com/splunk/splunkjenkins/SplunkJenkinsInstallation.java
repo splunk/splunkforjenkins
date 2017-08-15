@@ -245,10 +245,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             refreshScriptText();
         } else if (nonEmpty(scriptContent)) {
             postActionScript = scriptContent;
+            checkApprove(postActionScript);
         } else {
             postActionScript = null;
         }
-        configApproval();
         if (StringUtils.isEmpty(ignoredJobs)) {
             ignoredJobPattern = null;
         } else {
@@ -277,8 +277,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
     }
 
-    private void configApproval() {
-        if (postActionScript == null) {
+    private void checkApprove(String scriptText) {
+        if (scriptText == null) {
             return;
         }
         // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
@@ -292,8 +292,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             userName = Jenkins.ANONYMOUS.getName();
         }
         ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
-        //check approval saving pending for approval
-        ScriptApproval.get().configuring(postActionScript, GroovyLanguage.get(), context);
+        //check approval and save pending for admin approval
+        ScriptApproval.get().configuring(scriptText, GroovyLanguage.get(), context);
     }
 
     /**
@@ -309,6 +309,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             } else {
                 scriptTimestamp = scriptFile.lastModified();
                 postActionScript = IOUtils.toString(scriptFile.toURI());
+                checkApprove(postActionScript);
             }
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "can not read file " + scriptFile, e);
