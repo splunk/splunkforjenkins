@@ -102,7 +102,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(Constants.MIN_BUFFER_SIZE);
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
-        private long cacheSize = 2 * Constants.MIN_BUFFER_SIZE;
+        private long cacheSize = Constants.MIN_BUFFER_SIZE;
 
         public void setCacheSize(long cacheSize) {
             this.cacheSize = cacheSize;

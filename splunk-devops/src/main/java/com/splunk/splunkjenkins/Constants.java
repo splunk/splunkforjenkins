@@ -33,7 +33,7 @@ public class Constants {
     public static final List<String> SCRIPT_TEXT_MD5_HASH = Arrays.asList("729ac3b82ecf2e0afc0cb00d73c22892",
             "f43916477139eb890e72c1602e0851b4", "aac4abe92db9bf90e3b27a4e41728526");
     // min buffer size for raw data (usually log file and console)
-    public static final int MIN_BUFFER_SIZE = 2048;
+    public static final int MIN_BUFFER_SIZE = Integer.getInteger("splunkins.buffer", 4096);
     // max buffer size for raw data (usually log file and console)
     public static final int MAX_BUFFER_SIZE = 1 << 21;
     // use gzip for http posting
