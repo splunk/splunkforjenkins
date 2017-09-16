@@ -384,7 +384,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public boolean isEventDisabled(EventType eventType) {
-        return !isValid() || "false".equals(metaDataProperties.getProperty(eventType.getKey("enabled")));
+        return !isValid() || metaDataProperties == null || "false".equals(metaDataProperties.getProperty(eventType.getKey("enabled")));
     }
 
     public boolean isJobIgnored(String jobUrl) {
