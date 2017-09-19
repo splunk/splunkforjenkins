@@ -483,27 +483,44 @@ public class LogEventHelper {
     public static List<Map> getRunningJob() {
         List<Map> builds = new ArrayList<>();
         for (Computer computer : Jenkins.getInstance().getComputers()) {
-            for (Computer.DisplayExecutor displayExecutor : computer.getDisplayExecutors()) {
-                Executor executor = displayExecutor.getExecutor();
-                WorkUnit workUnit = executor.getCurrentWorkUnit();
-                Queue.Executable executable = executor.getCurrentExecutable();
-                if (executable == null && workUnit != null) {
-                    executable = workUnit.getExecutable();
+            List<Run> runList = new ArrayList<>();
+            for (Executor executor : computer.getExecutors()) {
+                Run run = getRunningJob(executor);
+                if (run != null) {
+                    runList.add(run);
                 }
-                if (executable != null && executable instanceof Run) {
-                    Run run = (Run) executable;
-                    Map buildInfo = new HashMap();
-                    buildInfo.put(Constants.BUILD_ID, run.getUrl());
-                    buildInfo.put(Constants.TAG, Constants.JOB_EVENT_MONITOR);
-                    buildInfo.put(Constants.NODE_NAME, getNodeName(computer));
-                    buildInfo.put("job_name", run.getParent().getFullName());
-                    buildInfo.put("build_number", run.getNumber());
-                    buildInfo.put("job_duration", getRunDuration(run));
-                    builds.add(buildInfo);
+            }
+            for (Executor executor : computer.getOneOffExecutors()) {
+                Run run = getRunningJob(executor);
+                if (run != null) {
+                    runList.add(run);
                 }
+            }
+            for (Run run : runList) {
+                Map buildInfo = new HashMap();
+                buildInfo.put(Constants.BUILD_ID, run.getUrl());
+                buildInfo.put(Constants.TAG, Constants.JOB_EVENT_MONITOR);
+                buildInfo.put(Constants.NODE_NAME, getNodeName(computer));
+                buildInfo.put("job_name", run.getParent().getFullName());
+                buildInfo.put("build_number", run.getNumber());
+                buildInfo.put("job_duration", getRunDuration(run));
+                builds.add(buildInfo);
             }
         }
         return builds;
+    }
+
+    private static Run getRunningJob(Executor executor) {
+        Run run = null;
+        Queue.Executable executable = executor.getCurrentExecutable();
+        WorkUnit workUnit = executor.getCurrentWorkUnit();
+        if (executable == null && workUnit != null) {
+            executable = workUnit.getExecutable();
+        }
+        if (executable != null && executable instanceof Run) {
+            run = (Run) executable;
+        }
+        return run;
     }
 
     @SuppressFBWarnings("DE_MIGHT_IGNORE")
