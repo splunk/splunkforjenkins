@@ -91,13 +91,15 @@ public class TestCaseResultUtils {
         if (build == null) {
             return junitReports;
         }
+        if (ignoredTestActions == null) {
+            ignoredTestActions = new ArrayList<>();
+        }
         List<TestResult> results = AbstractTestResultAdapter.getTestResult(build, ignoredTestActions);
         junitReports = split(results, pageSize);
         if (junitReports.isEmpty()) {
             //last resort, try AbstractTestResultAction
             AbstractTestResultAction abstractTestResultAction = build.getAction(AbstractTestResultAction.class);
-            if (abstractTestResultAction != null && ignoredTestActions != null
-                    && ignoredTestActions.contains(abstractTestResultAction.getClass().getCanonicalName())) {
+            if (abstractTestResultAction != null && !ignoredTestActions.contains(abstractTestResultAction.getClass().getName())) {
                 junitReports = splitRaw(abstractTestResultAction, pageSize);
             }
         }

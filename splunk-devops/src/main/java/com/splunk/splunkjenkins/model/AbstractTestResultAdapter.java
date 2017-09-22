@@ -44,17 +44,17 @@ public abstract class AbstractTestResultAdapter<A extends AbstractTestResultActi
 
     /**
      * @param build         jenkins build
-     * @param ignoreActions a list of test action class name
+     * @param ignoredActions a list of test action class name
      * @return the test result filtered by the test action name
      */
     @Nonnull
-    public static List<TestResult> getTestResult(Run build, List<String> ignoreActions) {
+    public static List<TestResult> getTestResult(Run build, @Nonnull List<String> ignoredActions) {
         List<AbstractTestResultAdapter> adapters = ExtensionList.lookup(AbstractTestResultAdapter.class);
         List<TestResult> testResults = new ArrayList<>();
         for (AbstractTestResultAdapter adapter : adapters) {
             if (adapter.isApplicable(build)) {
                 AbstractTestResultAction action = adapter.getAction(build);
-                if (ignoreActions != null && ignoreActions.contains(action.getClass().getName())) {
+                if (ignoredActions.contains(action.getClass().getName())) {
                     // the test action is ignored
                     continue;
                 }
