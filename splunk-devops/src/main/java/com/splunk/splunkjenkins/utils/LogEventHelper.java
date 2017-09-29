@@ -34,6 +34,7 @@ import shaded.splk.org.apache.http.HttpResponse;
 import shaded.splk.org.apache.http.client.HttpClient;
 import shaded.splk.org.apache.http.client.entity.GzipCompressingEntity;
 import shaded.splk.org.apache.http.client.methods.HttpPost;
+import shaded.splk.org.apache.http.client.utils.URIBuilder;
 import shaded.splk.org.apache.http.entity.StringEntity;
 import shaded.splk.org.apache.http.util.EntityUtils;
 import org.codehaus.groovy.control.MultipleCompilationErrorsException;
@@ -44,7 +45,8 @@ import java.lang.management.MemoryUsage;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.net.URLEncoder;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -378,25 +380,25 @@ public class LogEventHelper {
         private Map<String, String> query = new HashMap();
 
         public static String toString(Map<String, String> queryParameters) {
-            StringBuilder stringBuilder = new StringBuilder();
+            URIBuilder builder = new URIBuilder();
             for (Map.Entry<String, String> keyPair : queryParameters.entrySet()) {
                 String key = keyPair.getKey();
                 String value = keyPair.getValue();
-                stringBuilder.append(key)
-                        .append("=");
-                try {
-                    String encodeKey = URLEncoder.encode(value, "UTF-8");
-                    //encode space(+ in x-www-form-urlencoded) as %20 so javascript decodeURIComponent can decode it
-                    encodeKey = encodeKey.replaceAll("\\+", "%20");
-                    stringBuilder.append(encodeKey).append("&");
-                } catch (UnsupportedEncodingException e) {
-                    LOG.log(Level.SEVERE, "failed to encode key " + key, e);
-                }
+                builder.addParameter(key, value);
             }
-            if (stringBuilder.length() == 0) {
+            try {
+                URI uri = builder.build();
+                String queryUrl = uri.toString();
+                //remove first ?
+                if (StringUtils.indexOf(queryUrl, "?") == 0) {
+                    return queryUrl.substring(1, queryUrl.length());
+                } else {
+                    return queryUrl;
+                }
+            } catch (URISyntaxException e) {
+                LOG.log(Level.SEVERE, "failed to encode url", e);
                 return "";
             }
-            return stringBuilder.substring(0, stringBuilder.length() - 1);
         }
 
         public UrlQueryBuilder putIfAbsent(String key, String value) {
