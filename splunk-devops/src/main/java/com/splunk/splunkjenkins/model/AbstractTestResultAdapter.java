@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractTestResultAdapter<A extends AbstractTestResultAction> implements ExtensionPoint {
@@ -39,7 +40,7 @@ public abstract class AbstractTestResultAdapter<A extends AbstractTestResultActi
      */
     @Nonnull
     public static List<TestResult> getTestResult(Run build) {
-        return getTestResult(build, null);
+        return getTestResult(build, Collections.<String>emptyList());
     }
 
     /**
