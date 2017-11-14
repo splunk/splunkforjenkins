@@ -38,7 +38,7 @@ public class CoverageMetricTest extends BaseTest {
         project.renameTo(newName);
         long startTime = System.currentTimeMillis();
         AbstractBuild build = project.scheduleBuild2(0).get();
-        //verify coverage sumary
+        //verify coverage summary
         String query = "event_tag=job_event build_url=\"" + build.getUrl() + "\" \"coverage.methods\" >= " + methodPercentage;
         verifySplunkSearchResult(query, startTime, 1);
         //verify detailsm
