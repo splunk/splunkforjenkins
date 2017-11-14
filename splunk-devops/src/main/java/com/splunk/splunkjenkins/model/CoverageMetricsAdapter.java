@@ -19,6 +19,10 @@ import java.util.*;
  */
 public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> implements ExtensionPoint {
     public final Class<M> targetType;
+    static final String PERCENTAGE_SUFFIX = "_percentage";
+    static final String TOTAL_SUFFIX = "_total";
+    static final String COVERED_SUFFIX = "_covered";
+
 
     public CoverageMetricsAdapter() {
         Type type = Types.getBaseClass(getClass(), CoverageMetricsAdapter.class);
@@ -148,7 +152,7 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
             return report;
         }
 
-        public void addMetric(Metric metric, int value) {
+        public void add(Metric metric, int value) {
             report.put(metric.toString(), value);
         }
 
@@ -156,7 +160,7 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
          * @param metric metric name, such as classes, methods
          * @param value  percentage value
          */
-        public void addMetric(String metric, int value) {
+        public void add(String metric, int value) {
             Metric reportMetric = Metric.getMetric(metric);
             if (reportMetric != null) {
                 report.put(reportMetric.toString(), value);

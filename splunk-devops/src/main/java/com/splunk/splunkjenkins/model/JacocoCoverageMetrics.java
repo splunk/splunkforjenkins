@@ -41,6 +41,30 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
         }
     }
 
+    private void appendDetail(CoverageDetail result, CoverageObject coverageObject) {
+        appendDetail(result, Metric.CLASS, coverageObject.getClassCoverage());
+        appendDetail(result, Metric.METHOD, coverageObject.getMethodCoverage());
+        appendDetail(result, Metric.BRANCH, coverageObject.getBranchCoverage());
+        appendDetail(result, Metric.COMPLEXITY, coverageObject.getComplexityScore());
+        appendDetail(result, Metric.INSTRUCTION, coverageObject.getInstructionCoverage());
+        appendDetail(result, Metric.LINE, coverageObject.getLineCoverage());
+    }
+
+    /**
+     * add percentage, covered and total
+     *
+     * @param detail
+     * @param reportMetric
+     * @param coverage
+     */
+    private void appendDetail(CoverageDetail detail, Metric reportMetric, Coverage coverage) {
+        if (coverage != null) {
+            detail.add(reportMetric + PERCENTAGE_SUFFIX, coverage.getPercentage());
+            detail.add(reportMetric + TOTAL_SUFFIX, coverage.getTotal());
+            detail.add(reportMetric + COVERED_SUFFIX, coverage.getCovered());
+        }
+    }
+
     @Override
     public List<CoverageDetail> getReport(JacocoBuildAction coverageAction) {
         CoverageReport report = coverageAction.getResult();
@@ -52,17 +76,17 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
         for (Map.Entry<String, PackageReport> entry : packages.entrySet()) {
             CoverageDetail packageDetail = new CoverageDetail(entry.getKey(), CoverageLevel.PACKAGE);
             result.add(packageDetail);
-            packageDetail.putAll(extract(entry.getValue()));
+            appendDetail(packageDetail, entry.getValue());
             Map<String, ClassReport> classReports = entry.getValue().getChildren();
             for (Map.Entry<String, ClassReport> classEntry : classReports.entrySet()) {
                 CoverageDetail classDetail = new CoverageDetail(classEntry.getKey(), CoverageLevel.CLASS);
                 result.add(classDetail);
-                classDetail.putAll(extract(classEntry.getValue()));
+                appendDetail(classDetail, classEntry.getValue());
                 Map<String, MethodReport> methodReports = classEntry.getValue().getChildren();
                 for (Map.Entry<String, MethodReport> methodEntry : methodReports.entrySet()) {
                     CoverageDetail methodDetail = new CoverageDetail(methodEntry.getKey(), CoverageLevel.METHOD);
                     result.add(methodDetail);
-                    methodDetail.putAll(extract(methodEntry.getValue()));
+                    appendDetail(methodDetail, methodEntry.getValue());
                 }
             }
         }

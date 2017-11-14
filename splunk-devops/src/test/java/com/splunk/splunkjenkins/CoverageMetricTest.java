@@ -8,7 +8,6 @@ import org.jvnet.hudson.test.recipes.LocalData;
 import java.util.UUID;
 
 import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
-import static org.junit.Assert.*;
 
 public class CoverageMetricTest extends BaseTest {
     @LocalData
@@ -39,12 +38,18 @@ public class CoverageMetricTest extends BaseTest {
         long startTime = System.currentTimeMillis();
         AbstractBuild build = project.scheduleBuild2(0).get();
         //verify coverage summary
-        String query = "event_tag=job_event build_url=\"" + build.getUrl() + "\" \"coverage.methods\" >= " + methodPercentage;
+        String query = "event_tag=job_event build_url=" + build.getUrl() + " \"coverage.methods\" >= " + methodPercentage;
         verifySplunkSearchResult(query, startTime, 1);
-        //verify detailsm
-        query = "source=\"unit_test/coverage\" build_url=\"" + build.getUrl() + "\"|"
-                + "rename \"coverage{}.methods\" as methods |mvexpand methods " +
+        //verify details
+        query = "source=\"unit_test/coverage\" build_url=" + build.getUrl() + "|"
+                + "rename \"coverage{}.methods_percentage\" as methods |mvexpand methods " +
                 "|search methods>=" + methodPercentage;
+        verifySplunkSearchResult(query, startTime, 1);
+        //check total and covered number
+        query = "splunk_server=local index=plugin_sandbox build_url=" + build.getUrl() +
+                " source=\"unit_test/coverage\" \"com.mycompany\"\n" +
+                "|spath output=coverage_json path=coverage{}|mvexpand coverage_json\n" +
+                "|spath input=coverage_json|where name=\"com.mycompany\" and methods_total>methods_covered|table methods*";
         verifySplunkSearchResult(query, startTime, 1);
     }
 }

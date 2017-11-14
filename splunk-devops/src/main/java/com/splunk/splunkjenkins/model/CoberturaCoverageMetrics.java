@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.model;
 
 import hudson.Extension;
 import hudson.plugins.cobertura.CoberturaBuildAction;
+import hudson.plugins.cobertura.Ratio;
 import hudson.plugins.cobertura.targets.CoverageElement;
 import hudson.plugins.cobertura.targets.CoverageMetric;
 import hudson.plugins.cobertura.targets.CoverageResult;
@@ -38,6 +39,19 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
         return result;
     }
 
+    private void appendDetail(CoverageDetail detail, CoverageResult coverageResult) {
+        Set<CoverageMetric> metrics = coverageResult.getMetrics();
+        for (CoverageMetric metric : metrics) {
+            Metric reportMetric = Metric.getMetric(metric.name());
+            if (reportMetric != null) {
+                Ratio ratio = coverageResult.getCoverage(metric);
+                detail.add(reportMetric + PERCENTAGE_SUFFIX, ratio.getPercentage());
+                detail.add(reportMetric + TOTAL_SUFFIX, (int) ratio.denominator);
+                detail.add(reportMetric + COVERED_SUFFIX, (int) ratio.numerator);
+            }
+        }
+    }
+
     @Override
     public List<CoverageDetail> getReport(CoberturaBuildAction coverageAction) {
         CoverageResult coverageResult = coverageAction.getResult();
@@ -72,7 +86,7 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
                 level = CoverageLevel.PACKAGE;
         }
         CoverageDetail detail = new CoverageDetail(coverageName, level);
-        detail.putAll(extract(coverage));
+        appendDetail(detail, coverage);
         report.add(detail);
         Map<String, CoverageResult> children = coverage.getChildrenReal();
         if (children == null || children.isEmpty()) {

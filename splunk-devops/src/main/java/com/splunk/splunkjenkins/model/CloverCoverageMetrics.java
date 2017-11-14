@@ -2,6 +2,7 @@ package com.splunk.splunkjenkins.model;
 
 import hudson.Extension;
 import hudson.plugins.clover.CloverBuildAction;
+import hudson.plugins.clover.Ratio;
 import hudson.plugins.clover.results.*;
 
 import java.util.ArrayList;
@@ -32,15 +33,15 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
         for (PackageCoverage pcover : projectCoverage.getChildren()) {
             CoverageDetail packageDetail = new CoverageDetail(pcover.getName(), CoverageLevel.PACKAGE);
             result.add(packageDetail);
-            packageDetail.putAll(extract(pcover));
+            appendDetail(packageDetail, pcover);
             for (FileCoverage fcover : pcover.getChildren()) {
                 CoverageDetail fileDetail = new CoverageDetail(pcover.getName(), CoverageLevel.FILE);
                 result.add(fileDetail);
-                fileDetail.putAll(extract(fcover));
+                appendDetail(fileDetail, fcover);
                 for (ClassCoverage clazzCover : fcover.getChildren()) {
                     CoverageDetail clazzDetail = new CoverageDetail(clazzCover.getName(), CoverageLevel.CLASS);
                     result.add(clazzDetail);
-                    clazzDetail.putAll(extract(clazzCover));
+                    appendDetail(clazzDetail, clazzCover);
                 }
             }
         }
@@ -54,5 +55,24 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
         result.put(Metric.CONDITIONAL, coverageObject.getConditionalCoverage().getPercentage());
         result.put(Metric.ELEMENT, coverageObject.getElementCoverage().getPercentage());
         return result;
+    }
+
+    /**
+     * get detail report about percentage, covered, and total number
+     *
+     * @param detail
+     * @param coverageObject
+     */
+    private void appendDetail(CoverageDetail detail, AbstractCloverMetrics coverageObject) {
+        appendDetail(detail, Metric.METHOD, coverageObject.getMethodCoverage());
+        appendDetail(detail, Metric.STATEMENT, coverageObject.getStatementCoverage());
+        appendDetail(detail, Metric.CONDITIONAL, coverageObject.getConditionalCoverage());
+        appendDetail(detail, Metric.ELEMENT, coverageObject.getElementCoverage());
+    }
+
+    private void appendDetail(CoverageDetail detail, Metric metricName, Ratio ratio) {
+        detail.add(metricName + PERCENTAGE_SUFFIX, ratio.getPercentage());
+        detail.add(metricName + TOTAL_SUFFIX, (int) ratio.denominator);
+        detail.add(metricName + COVERED_SUFFIX, (int) ratio.numerator);
     }
 }
