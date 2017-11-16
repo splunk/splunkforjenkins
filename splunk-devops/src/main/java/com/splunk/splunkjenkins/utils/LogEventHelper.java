@@ -3,6 +3,8 @@ package com.splunk.splunkjenkins.utils;
 import com.google.common.collect.ImmutableMap;
 import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
 import hudson.scm.SCM;
+import jenkins.model.CauseOfInterruption;
+import jenkins.model.InterruptedBuildAction;
 import jenkins.triggers.SCMTriggerItem;
 import org.apache.commons.lang.StringUtils;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
@@ -880,5 +882,24 @@ public class LogEventHelper {
             }
         }
         return properties.getProperty("version", "snapshot");
+    }
+
+    /**
+     * @param run Jenkins job run
+     * @return causes separated by comma
+     */
+    public static String getBuildCauses(Run run) {
+        Set<String> causes = new LinkedHashSet<>();
+        for (CauseAction action : run.getActions(CauseAction.class)) {
+            for (Cause cause : action.getCauses()) {
+                causes.add(cause.getShortDescription());
+            }
+        }
+        for (InterruptedBuildAction action : run.getActions(InterruptedBuildAction.class)) {
+            for (CauseOfInterruption cause : action.getCauses()) {
+                causes.add(cause.getShortDescription());
+            }
+        }
+        return StringUtils.join(causes, ", ");
     }
 }

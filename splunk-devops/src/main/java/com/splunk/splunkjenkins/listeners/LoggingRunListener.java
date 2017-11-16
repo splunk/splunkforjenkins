@@ -108,25 +108,6 @@ public class LoggingRunListener extends RunListener<Run> {
     }
 
     /**
-     * @param run Jenkins job run
-     * @return causes separated by comma
-     */
-    private String getBuildCauses(Run run) {
-        Set<String> causes = new LinkedHashSet<>();
-        for (CauseAction action : run.getActions(CauseAction.class)) {
-            for (Cause cause : action.getCauses()) {
-                causes.add(cause.getShortDescription());
-            }
-        }
-        for (InterruptedBuildAction action : run.getActions(InterruptedBuildAction.class)) {
-            for (CauseOfInterruption cause : action.getCauses()) {
-                causes.add(cause.getShortDescription());
-            }
-        }
-        return StringUtils.join(causes, ", ");
-    }
-
-    /**
      * @param run Jenkins build run
      * @return Build event which are common both to start/complete event
      * should not reference some fields only available after build such as result or duration
