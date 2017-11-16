@@ -74,7 +74,7 @@ public class LogEventHelper {
             .setDateFormat(LOG_TIME_FORMAT)
             .registerTypeAdapter(CoverageMetricsAdapter.CoverageDetail.class, new CoverageDetailJsonSerializer())
             .registerTypeAdapter(Double.class, new SpecialDoubleAdapter())
-            .registerTypeAdapter(Float.class, new SpeicalFloatAdapter())
+            .registerTypeAdapter(Float.class, new SpecialFloatAdapter())
             .create();
     private static final Map<String, Long> HUMAN_READABLE_SIZE = ImmutableMap.<String, Long>builder()
             .put("KB", 1024L)

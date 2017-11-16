@@ -8,7 +8,7 @@ import shaded.splk.com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 
-public class SpeicalFloatAdapter extends TypeAdapter<Float> {
+public class SpecialFloatAdapter extends TypeAdapter<Float> {
     @Override
     public void write(JsonWriter jsonWriter, Float number) throws IOException {
         if (number == null || Float.isNaN(number) || Float.isInfinite(number)) {

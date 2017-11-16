@@ -282,7 +282,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             return;
         }
         // During startup, hudson.model.User.current() calls User.load which will load other plugins, will throw error:
-        // Tried proxying com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
+        // Tried proxy for com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
         // Use Jenkins.getAuthentication() will by pass the issue
         Authentication auth = Jenkins.getAuthentication();
         String userName;

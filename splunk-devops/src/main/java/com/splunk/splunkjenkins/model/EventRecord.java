@@ -71,7 +71,7 @@ public class EventRecord {
     /**
      * @return short message, to be showed in debug message
      */
-    public String getShortDescr() {
+    public String getShortDescription() {
         if (isString()) {
             return "{length:" + ((String) message).length() + " " + StringUtils.substring((String) message, 0, 160) + " ...}";
         } else {
@@ -101,7 +101,7 @@ public class EventRecord {
 
     /**
      * @param config the Splunk config which contains metadata information
-     * @return metdata information for http event collector
+     * @return metadata information for http event collector
      */
     private Map<String, String> getMetaData(SplunkJenkinsInstallation config) {
         LogEventHelper.UrlQueryBuilder metaDataBuilder = new LogEventHelper.UrlQueryBuilder();

@@ -18,7 +18,7 @@ import java.util.Set;
 
 /**
  * @since 1.4
- * Helper class for metdata configure
+ * Helper class for metadata configure
  */
 public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
     private static final String DISABLED_KEY = "disabled";

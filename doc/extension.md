@@ -1,4 +1,4 @@
-Plugin implements some interfaces and mark the implemention to use annotaion @Extension so Jenkins can load it dynamically
+Plugin implements some interfaces and mark the implementation to use annotation @Extension so Jenkins can load it dynamically
 
 # Configure
 
@@ -30,12 +30,12 @@ Plugin implements some interfaces and mark the implemention to use annotaion @Ex
 #### [SecurityListener](http://javadoc.jenkins-ci.org/jenkins/security/SecurityListener.html)
     record user login/logout and failedToLogIn events
 #### [SaveableListener](http://javadoc.jenkins-ci.org/hudson/model/listeners/SaveableListener.html)
-    when user made changes to jenkins config (either plugin config or job config), record the config xml. disabled by default until user add jenkins_config.monitoring=true into medata config
+    when user made changes to jenkins config (either plugin config or job config), record the config xml. disabled by default until user add jenkins_config.monitoring=true into metadata config
 #### [ItemListener](http://javadoc.jenkins-ci.org/hudson/model/listeners/RunListener.html)
 	similar to SaveableListener but for Job only, it has finer grained audit event. used to capture job created, renamed, copied and deleted
 
 #### [QueueListener](http://javadoc.jenkins-ci.org/hudson/model/queue/QueueListener.html)
-	listen for onEnterWaiting and onLeft and record the job queueTime and jenkins matrics
+	listen for onEnterWaiting and onLeft and record the job queueTime and jenkins metrics
 #### [RunListener](http://javadoc.jenkins-ci.org/hudson/model/listeners/RunListener.html)
 	listen for onStarted and onCompleted, and extract upstream job, build cause, scm, job result, and invoke DSL if defined
 #### [ComputerListener](http://javadoc.jenkins-ci.org/hudson/slaves/ComputerListener.html)

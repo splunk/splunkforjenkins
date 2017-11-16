@@ -177,7 +177,7 @@ public class SplunkLogService {
 
     public boolean enqueue(EventRecord record) {
         if (SplunkJenkinsInstallation.get().isEventDisabled(record.getEventType())) {
-            LOG.log(Level.FINE, "config invalid or eventType {0} is disabled, can not send {1}", new String[]{record.getEventType().toString(), record.getShortDescr()});
+            LOG.log(Level.FINE, "config invalid or eventType {0} is disabled, can not send {1}", new String[]{record.getEventType().toString(), record.getShortDescription()});
             return false;
         }
         boolean added = logQueue.offer(record);
@@ -195,7 +195,7 @@ public class SplunkLogService {
                         }
                         boolean enqueued = logQueue.offer(queuedRecord);
                         if (!enqueued) {
-                            LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescr());
+                            LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescription());
                             break;
                         }
                     }

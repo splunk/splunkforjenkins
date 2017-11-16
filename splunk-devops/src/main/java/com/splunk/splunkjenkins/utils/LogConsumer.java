@@ -93,7 +93,7 @@ public class LogConsumer extends Thread {
                         for (Class<? extends IOException> giveUpException : giveUpExceptions) {
                             if (giveUpException.isInstance(ex)) {
                                 isDiscarded = true;
-                                LOG.log(Level.SEVERE, "message not delivered:" + record.getShortDescr(), ex);
+                                LOG.log(Level.SEVERE, "message not delivered:" + record.getShortDescription(), ex);
                                 break;
                             }
                         }
@@ -101,7 +101,7 @@ public class LogConsumer extends Thread {
                             handleRetry(ex, record);
                         }
                     } catch (Exception e) {
-                        LOG.log(Level.SEVERE, "failed construct post message" + record.getShortDescr(), e);
+                        LOG.log(Level.SEVERE, "failed construct post message" + record.getShortDescription(), e);
                     } finally {
                         sending = false;
                         if (post != null) {
@@ -110,7 +110,7 @@ public class LogConsumer extends Thread {
                     }
                 } else {
                     //message discarded
-                    LOG.log(Level.SEVERE, "failed to send " + record.getShortDescr());
+                    LOG.log(Level.SEVERE, "failed to send " + record.getShortDescription());
                 }
             } catch (InterruptedException e) {
                 errorCount++;
@@ -130,7 +130,7 @@ public class LogConsumer extends Thread {
             retry(record, retryInterval);
         } else {
             //other errors
-            LOG.log(Level.WARNING, "will resend the message:{0}", record.getShortDescr());
+            LOG.log(Level.WARNING, "will resend the message:{0}", record.getShortDescription());
             retry(record, 1);
         }
     }
