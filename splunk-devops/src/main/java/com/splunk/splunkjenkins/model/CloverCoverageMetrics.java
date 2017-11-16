@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.splunk.splunkjenkins.Constants.COVERAGE_OVERALL_NAME;
+
 /**
  * CoverageMetric for <a href="https://confluence.atlassian.com/display/CLOVER">clover</a>
  */
@@ -30,6 +32,9 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
     public List<CoverageDetail> getReport(CloverBuildAction coverageAction) {
         ProjectCoverage projectCoverage = coverageAction.getResult();
         List<CoverageDetail> result = new ArrayList<>();
+        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
+        result.add(summary);
+        appendDetail(summary, coverageAction);
         for (PackageCoverage pcover : projectCoverage.getChildren()) {
             CoverageDetail packageDetail = new CoverageDetail(pcover.getName(), CoverageLevel.PACKAGE);
             result.add(packageDetail);

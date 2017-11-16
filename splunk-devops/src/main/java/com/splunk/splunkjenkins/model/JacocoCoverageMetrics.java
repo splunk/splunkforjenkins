@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.splunk.splunkjenkins.Constants.COVERAGE_OVERALL_NAME;
+
 /**
  * CoverageMetric for <a href="https://wiki.jenkins-ci.org/display/JENKINS/JaCoCo+Plugin">JaCoCo</a>
  */
@@ -72,6 +74,9 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
         if (!report.hasChildren()) {
             return result;
         }
+        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
+        result.add(summary);
+        appendDetail(summary, coverageAction);
         Map<String, PackageReport> packages = report.getChildren();
         for (Map.Entry<String, PackageReport> entry : packages.entrySet()) {
             CoverageDetail packageDetail = new CoverageDetail(entry.getKey(), CoverageLevel.PACKAGE);

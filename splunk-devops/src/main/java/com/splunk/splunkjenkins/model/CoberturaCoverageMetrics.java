@@ -9,6 +9,8 @@ import hudson.plugins.cobertura.targets.CoverageResult;
 
 import java.util.*;
 
+import static com.splunk.splunkjenkins.Constants.COVERAGE_OVERALL_NAME;
+
 /**
  * CoverageMetric for <a href="https://github.com/cobertura/cobertura/wiki">Cobertura</a>
  */
@@ -92,6 +94,9 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
         if (children == null || children.isEmpty()) {
             return report;
         }
+        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
+        report.add(summary);
+        appendDetail(summary, coverage);
         for (CoverageResult child : children.values()) {
             report.addAll(getReport(child, childPrefix));
         }
