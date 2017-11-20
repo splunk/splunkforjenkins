@@ -32,10 +32,13 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
         Map<Metric, Integer> result = new HashMap<>();
         Set<CoverageMetric> metrics = coverageResult.getMetrics();
         for (CoverageMetric metric : metrics) {
-            int percentage = coverageResult.getCoverage(metric).getPercentage();
             Metric reportMetric = Metric.getMetric(metric.name());
             if (reportMetric != null) {
-                result.put(reportMetric, percentage);
+                Ratio ratio = coverageResult.getCoverage(metric);
+                if (ratio.denominator > 0) {
+                    int percentage = ratio.getPercentage();
+                    result.put(reportMetric, percentage);
+                }
             }
         }
         return result;
@@ -47,9 +50,11 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
             Metric reportMetric = Metric.getMetric(metric.name());
             if (reportMetric != null) {
                 Ratio ratio = coverageResult.getCoverage(metric);
-                detail.add(reportMetric + PERCENTAGE_SUFFIX, ratio.getPercentage());
-                detail.add(reportMetric + TOTAL_SUFFIX, (int) ratio.denominator);
-                detail.add(reportMetric + COVERED_SUFFIX, (int) ratio.numerator);
+                if (ratio.denominator > 0) {
+                    detail.add(reportMetric + PERCENTAGE_SUFFIX, ratio.getPercentage());
+                    detail.add(reportMetric + TOTAL_SUFFIX, (int) ratio.denominator);
+                    detail.add(reportMetric + COVERED_SUFFIX, (int) ratio.numerator);
+                }
             }
         }
     }
@@ -76,6 +81,7 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
                 break;
             case PROJECT:
                 level = CoverageLevel.PROJECT;
+                coverageName = COVERAGE_OVERALL_NAME;
                 break;
             case JAVA_METHOD:
                 level = CoverageLevel.METHOD;
@@ -94,9 +100,6 @@ public class CoberturaCoverageMetrics extends CoverageMetricsAdapter<CoberturaBu
         if (children == null || children.isEmpty()) {
             return report;
         }
-        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
-        report.add(summary);
-        appendDetail(summary, coverage);
         for (CoverageResult child : children.values()) {
             report.addAll(getReport(child, childPrefix));
         }

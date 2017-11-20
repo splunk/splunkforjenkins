@@ -32,7 +32,7 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
     public List<CoverageDetail> getReport(CloverBuildAction coverageAction) {
         ProjectCoverage projectCoverage = coverageAction.getResult();
         List<CoverageDetail> result = new ArrayList<>();
-        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
+        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.PROJECT);
         result.add(summary);
         appendDetail(summary, coverageAction);
         for (PackageCoverage pcover : projectCoverage.getChildren()) {
@@ -55,11 +55,17 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
 
     private Map<Metric, Integer> extract(AbstractCloverMetrics coverageObject) {
         Map<Metric, Integer> result = new HashMap<>();
-        result.put(Metric.METHOD, coverageObject.getMethodCoverage().getPercentage());
-        result.put(Metric.STATEMENT, coverageObject.getStatementCoverage().getPercentage());
-        result.put(Metric.CONDITIONAL, coverageObject.getConditionalCoverage().getPercentage());
-        result.put(Metric.ELEMENT, coverageObject.getElementCoverage().getPercentage());
+        putMetricIfExists(result, Metric.METHOD, coverageObject.getMethodCoverage());
+        putMetricIfExists(result, Metric.STATEMENT, coverageObject.getStatementCoverage());
+        putMetricIfExists(result, Metric.CONDITIONAL, coverageObject.getConditionalCoverage());
+        putMetricIfExists(result, Metric.ELEMENT, coverageObject.getElementCoverage());
         return result;
+    }
+
+    private void putMetricIfExists(Map<Metric, Integer> result, Metric metric, Ratio ratio) {
+        if (ratio.denominator > 0) {
+            result.put(metric, ratio.getPercentage());
+        }
     }
 
     /**
@@ -76,6 +82,9 @@ public class CloverCoverageMetrics extends CoverageMetricsAdapter<CloverBuildAct
     }
 
     private void appendDetail(CoverageDetail detail, Metric metricName, Ratio ratio) {
+        if (ratio.denominator == 0) {
+            return;
+        }
         detail.add(metricName + PERCENTAGE_SUFFIX, ratio.getPercentage());
         detail.add(metricName + TOTAL_SUFFIX, (int) ratio.denominator);
         detail.add(metricName + COVERED_SUFFIX, (int) ratio.numerator);

@@ -38,7 +38,7 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
     }
 
     private void addMetric(Map<Metric, Integer> result, Metric metric, Coverage coverage) {
-        if (coverage != null) {
+        if (coverage != null && coverage.getTotal() > 0) {
             result.put(metric, coverage.getPercentage());
         }
     }
@@ -60,7 +60,7 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
      * @param coverage
      */
     private void appendDetail(CoverageDetail detail, Metric reportMetric, Coverage coverage) {
-        if (coverage != null) {
+        if (coverage != null && coverage.getTotal() > 0) {
             detail.add(reportMetric + PERCENTAGE_SUFFIX, coverage.getPercentage());
             detail.add(reportMetric + TOTAL_SUFFIX, coverage.getTotal());
             detail.add(reportMetric + COVERED_SUFFIX, coverage.getCovered());
@@ -74,7 +74,7 @@ public class JacocoCoverageMetrics extends CoverageMetricsAdapter<JacocoBuildAct
         if (!report.hasChildren()) {
             return result;
         }
-        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.SUMMARY);
+        CoverageDetail summary = new CoverageDetail(COVERAGE_OVERALL_NAME, CoverageLevel.PROJECT);
         result.add(summary);
         appendDetail(summary, coverageAction);
         Map<String, PackageReport> packages = report.getChildren();
