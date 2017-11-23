@@ -1,5 +1,6 @@
 package com.splunk.splunkjenkins;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.UUID;
@@ -9,7 +10,14 @@ import java.util.logging.Logger;
 import static com.splunk.splunkjenkins.SplunkConfigUtil.verifySplunkSearchResult;
 import static org.junit.Assert.assertTrue;
 
-public class JdkSplunkLogHandlerTest extends BaseTest{
+public class JdkSplunkLogHandlerTest extends BaseTest {
+
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        LoggingInitStep.registerHandler();
+    }
+
     @Test
     public void publish() throws Exception {
         Handler[] handlers = Logger.getLogger("").getHandlers();

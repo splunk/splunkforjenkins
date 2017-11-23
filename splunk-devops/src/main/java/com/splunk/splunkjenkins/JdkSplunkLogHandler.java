@@ -19,7 +19,7 @@ import java.util.logging.Formatter;
 
 public class JdkSplunkLogHandler extends Handler {
     private Lock maintenanceLock = new ReentrantLock();
-    private final int cacheSize = 64;
+    private final int cacheSize = 128;
     private List<EventRecord> verboseLogCache = Collections.synchronizedList(new ArrayList(cacheSize));
     private Level filterLevel = Level.parse(System.getProperty(JdkSplunkLogHandler.class.getName() + ".level", "INFO"));
     private LogEventFormatter splunkFormatter;
@@ -32,7 +32,7 @@ public class JdkSplunkLogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
-        if (!SplunkJenkinsInstallation.isLoadCompleted()) {
+        if (!SplunkJenkinsInstallation.isLogHandlerRegistered()) {
             return;
         }
         if (!isLoggable(record)) {

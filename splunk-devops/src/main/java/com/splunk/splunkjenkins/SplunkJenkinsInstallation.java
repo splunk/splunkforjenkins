@@ -44,7 +44,7 @@ import static org.apache.commons.lang.StringUtils.isNotEmpty;
 @Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
-    private static transient boolean loadCompleted = false;
+    private static transient boolean logHandlerRegistered = false;
     private transient static final Logger LOG = Logger.getLogger(SplunkJenkinsInstallation.class.getName());
     private transient volatile static SplunkJenkinsInstallation cachedConfig;
     private transient static final Pattern uuidPattern = Pattern.compile("[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}", CASE_INSENSITIVE);
@@ -102,10 +102,10 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         if (cachedConfig != null) {
             return cachedConfig;
         } else {
-            if (Jenkins.getInstance() != null) {
+            if (Jenkins.getInstance() != null && GlobalConfiguration.all() != null) {
                 return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
             } else {
-                //jenkins is in shutdown own phase
+                //jenkins is in shutdown phase
                 throw new IllegalStateException("Jenkins has not been started, or was already shut down");
             }
         }
@@ -114,8 +114,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     /**
      * @return true if the plugin had been setup by Jenkins (constructor had been called)
      */
-    public static boolean isLoadCompleted() {
-        return loadCompleted && Jenkins.getInstance() != null;
+    public static boolean isLogHandlerRegistered() {
+        return logHandlerRegistered && Jenkins.getInstance() != null;
     }
 
     /**
@@ -124,7 +124,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
      * @param completed mark the init as initiate completed
      */
     public static void markComplete(boolean completed) {
-        loadCompleted = completed;
+        logHandlerRegistered = completed;
     }
 
     /**

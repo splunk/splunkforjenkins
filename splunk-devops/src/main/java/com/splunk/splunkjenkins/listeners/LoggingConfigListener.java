@@ -37,7 +37,7 @@ public class LoggingConfigListener extends SaveableListener {
 
     @Override
     public void onChange(Saveable saveable, XmlFile file) {
-        if (!SplunkJenkinsInstallation.isLoadCompleted()) {
+        if (!SplunkJenkinsInstallation.isLogHandlerRegistered()) {
             return;
         }
         String configPath = file.getFile().getAbsolutePath();
