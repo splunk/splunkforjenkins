@@ -82,8 +82,9 @@ public class TestCaseResultUtils {
      * Get the Junit report  from build
      * Extract from either TestResultAction or AggregatedTestResultAction
      *
-     * @param build    Jenkins build
-     * @param pageSize how many test cases to hold in one page
+     * @param build              Jenkins build
+     * @param pageSize           how many test cases to hold in one page
+     * @param ignoredTestActions test action list to be ignored
      * @return A list of JunitTestCaseGroup
      */
     public static List<JunitTestCaseGroup> getBuildReport(Run build, int pageSize, List<String> ignoredTestActions) {
