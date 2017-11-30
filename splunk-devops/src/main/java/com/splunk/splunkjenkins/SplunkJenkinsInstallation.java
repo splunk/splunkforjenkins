@@ -587,8 +587,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             String hash = DigestUtils.md5Hex(this.scriptContent);
             if (SCRIPT_TEXT_MD5_HASH.contains(hash)) { //previous versions' script hash, update to use new version
                 this.scriptContent = getDefaultDslScript();
-                ScriptApproval.get().preapprove(this.scriptContent, GroovyLanguage.get());
-                // provided by the plugin itself, the namespace was already migrated from old settings
             }
         }
         this.metadataItemSet = MetaDataConfigItem.loadProps(this.metaDataConfig);
