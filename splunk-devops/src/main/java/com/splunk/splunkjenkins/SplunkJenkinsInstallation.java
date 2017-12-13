@@ -99,16 +99,14 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public static SplunkJenkinsInstallation get() {
-        if (cachedConfig != null) {
-            return cachedConfig;
-        } else {
-            if (Jenkins.getInstance() != null && GlobalConfiguration.all() != null) {
-                return GlobalConfiguration.all().get(SplunkJenkinsInstallation.class);
-            } else {
-                //jenkins is in shutdown phase
-                throw new IllegalStateException("Jenkins has not been started, or was already shut down");
+        if (cachedConfig == null) {
+            synchronized (SplunkJenkinsInstallation.class) {
+                if (cachedConfig == null) {
+                    cachedConfig = (SplunkJenkinsInstallation) Jenkins.getActiveInstance().getDescriptor(SplunkJenkinsInstallation.class);
+                }
             }
         }
+        return cachedConfig;
     }
 
     /**
