@@ -85,7 +85,7 @@ public class LogEventHelper {
             .put("GB", 1024 * 1024 * 1024L)
             .build();
 
-    private static boolean gizpEnabled = !Boolean.getBoolean(LogEventHelper.class.getName() + ".disableGzip");
+    private static boolean gzipEnabled = !Boolean.getBoolean(LogEventHelper.class.getName() + ".disableGzip");
 
     public static HttpPost buildPost(EventRecord record, SplunkJenkinsInstallation config) {
         HttpPost postMethod;
@@ -127,7 +127,7 @@ public class LogEventHelper {
         if (isJson) {
             entity.setContentType("application/json; profile=urn:splunk:event:1.0; charset=utf-8");
         }
-        if (gizpEnabled && entity.getContentLength() > GZIP_THRESHOLD) {
+        if (gzipEnabled && entity.getContentLength() > GZIP_THRESHOLD) {
             postMethod.setEntity(new GzipCompressingEntity(entity));
         } else {
             postMethod.setEntity(entity);
