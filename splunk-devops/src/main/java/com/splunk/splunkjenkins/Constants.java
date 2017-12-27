@@ -34,6 +34,7 @@ public class Constants {
             "f43916477139eb890e72c1602e0851b4", "aac4abe92db9bf90e3b27a4e41728526");
     // min buffer size for raw data (usually log file and console)
     public static final int MIN_BUFFER_SIZE = Integer.getInteger("splunkins.buffer", 4096);
+    public static final int JDK_FINE_LOG_BATCH = Integer.getInteger("splunkins.debugLogBatchSize", 128);
     // max buffer size for raw data (usually log file and console)
     public static final int MAX_BUFFER_SIZE = 1 << 21;
     // use gzip for http posting

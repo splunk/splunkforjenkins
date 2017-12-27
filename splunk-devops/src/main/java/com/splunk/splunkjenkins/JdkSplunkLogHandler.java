@@ -16,11 +16,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.*;
 import java.util.logging.Formatter;
 
+import static com.splunk.splunkjenkins.Constants.JDK_FINE_LOG_BATCH;
+
 
 public class JdkSplunkLogHandler extends Handler {
     private Lock maintenanceLock = new ReentrantLock();
-    private final int cacheSize = 128;
-    private List<EventRecord> verboseLogCache = Collections.synchronizedList(new ArrayList(cacheSize));
+
+    private List<EventRecord> verboseLogCache = Collections.synchronizedList(new ArrayList(JDK_FINE_LOG_BATCH));
     private Level filterLevel = Level.parse(System.getProperty(JdkSplunkLogHandler.class.getName() + ".level", "INFO"));
     private LogEventFormatter splunkFormatter;
 
@@ -46,7 +48,7 @@ public class JdkSplunkLogHandler extends Handler {
         logEventRecord.setSource("logger://" + record.getLoggerName());
         if (record.getLevel().intValue() < Level.INFO.intValue()) {
             verboseLogCache.add(logEventRecord);
-            if (verboseLogCache.size() >= cacheSize) {
+            if (verboseLogCache.size() >= JDK_FINE_LOG_BATCH) {
                 flush();
             }
         } else {
