@@ -119,6 +119,7 @@ public class JdkSplunkLogHandler extends Handler {
 
         public Map getEvent(LogRecord record) {
             Map event = new HashMap<>();
+            event.put("thread_id", record.getThreadID());
             event.put("level", record.getLevel().getName());
             //event.put("level_int", record.getLevel().intValue());
             event.put("message", formatMessage(record));
