@@ -70,7 +70,7 @@ public class JdkSplunkLogHandler extends Handler {
         } finally {
             maintenanceLock.unlock();
         }
-        SplunkLogService.getInstance().sendBatch(copyList, EventType.CONSOLE_LOG);
+        SplunkLogService.getInstance().sendBatch(copyList, EventType.LOG);
     }
 
     @Override
