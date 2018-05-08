@@ -69,7 +69,8 @@ public class LogEventHelper {
     private static final Pattern ERROR_SPAN_CONTENT = Pattern.compile("error.*?>(.*?)</span>", Pattern.CASE_INSENSITIVE);
     public static final String SEPARATOR = "    ";
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogEventHelper.class.getName());
-    private static final String channel = UUID.randomUUID().toString().toUpperCase();
+    private static final String JSON_CHANNEL_ID = UUID.randomUUID().toString().toUpperCase();
+    private static final String RAW_CHANNEL_ID = UUID.randomUUID().toString().toUpperCase();
     private static final Gson gson = new GsonBuilder().disableHtmlEscaping().setFieldNamingStrategy(new LowerCaseStrategy())
             .setDateFormat(LOG_TIME_FORMAT)
             .registerTypeAdapter(CoverageMetricsAdapter.CoverageDetail.class, new CoverageDetailJsonSerializer())
@@ -92,6 +93,7 @@ public class LogEventHelper {
         if (config.canPostRaw(record.getEventType())) {
             postMethod = new HttpPost(record.getRawEndpoint(config));
             updateContent(postMethod, record.getMessageString(), false);
+            postMethod.setHeader("x-splunk-request-channel", RAW_CHANNEL_ID);
         } else {
             postMethod = new HttpPost(config.getJsonUrl());
             String jsonRecord;
@@ -116,8 +118,8 @@ public class LogEventHelper {
             }
             LOG.log(Level.FINEST, jsonRecord);
             updateContent(postMethod, jsonRecord, true);
+            postMethod.setHeader("x-splunk-request-channel", JSON_CHANNEL_ID);
         }
-        postMethod.setHeader("x-splunk-request-channel", channel);
         postMethod.setHeader("Authorization", "Splunk " + config.getToken());
         return postMethod;
     }
