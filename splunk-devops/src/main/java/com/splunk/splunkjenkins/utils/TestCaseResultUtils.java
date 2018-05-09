@@ -30,14 +30,16 @@ public class TestCaseResultUtils {
         if (results.isEmpty()) {
             return testCasesCollect;
         }
-        JunitTestCaseGroup group = new JunitTestCaseGroup();
-        testCasesCollect.add(group);
+        JunitTestCaseGroup group = null;
+        int count = 1;
         for (T testCase : results) {
-            group.add(testCase);
-            if (group.getTotal() >= pageSize) {
+            if (count % pageSize == 1) {
+                //new page
                 group = new JunitTestCaseGroup();
                 testCasesCollect.add(group);
             }
+            count++;
+            group.add(testCase);
         }
         return testCasesCollect;
     }
