@@ -324,20 +324,24 @@ public class LogEventHelper {
         if (run.getParent().getClass().getName().equals("hudson.maven.MavenModule")) {
             return "(maven)";
         }
-
+        Cause.UpstreamCause upstreamCause = null;
+        String triggerUserName = null;
         findUserLoop:
         for (CauseAction action : run.getActions(CauseAction.class)) {
             for (Cause cause : action.getCauses()) {
-                String triggerUserName = getUsernameOrTimer(cause);
-                if (triggerUserName == null && cause instanceof Cause.UpstreamCause) {
-                    triggerUserName = getUpStreamUser((Cause.UpstreamCause) cause);
-                }
+                triggerUserName = getUsernameOrTimer(cause);
                 //check if we located the user name
                 if (triggerUserName != null) {
-                    userName = triggerUserName;
                     break findUserLoop;
+                } else if (upstreamCause == null && cause instanceof Cause.UpstreamCause) {
+                    upstreamCause = (Cause.UpstreamCause) cause;
                 }
             }
+        }
+        if (triggerUserName != null) {
+            userName = triggerUserName;
+        } else if (upstreamCause != null) {
+            userName = getUpStreamUser(upstreamCause);
         }
         return userName;
     }
