@@ -64,7 +64,7 @@ public class SplunkLogService {
         SSLContext sslContext = null;
         try {
             TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
-            sslContext = SSLContexts.custom().loadTrustMaterial(
+            sslContext = SSLContexts.custom().useProtocol("TLSv1.2").loadTrustMaterial(
                     null, acceptingTrustStrategy).build();
         } catch (Exception e) {
             sslContext = SSLContexts.createDefault();
