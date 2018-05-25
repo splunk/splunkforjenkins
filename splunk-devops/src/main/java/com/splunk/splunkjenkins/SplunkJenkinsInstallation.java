@@ -177,8 +177,6 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
                 || hostName.endsWith("splunktrial.com")) &&
                 !(hostName.startsWith("input-") || hostName.startsWith("http-inputs-"))) {
             return FormValidation.warning(Messages.CloudHostPrefix(hostName));
-        } else if (hostName.contains(",")) {
-            return FormValidation.warning(Messages.HostNameListWarning());
         } else {
             return FormValidation.ok();
         }
@@ -258,9 +256,9 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             }
         }
         try {
-            String scheme = useSSL ? "https" : "http";
-            jsonUrl = new URI(scheme, null, host, port, JSON_ENDPOINT, null, null).toString();
-            rawUrl = new URI(scheme, null, host, port, RAW_ENDPOINT, null, null).toString();
+            String scheme = useSSL ? "https://" : "http://";
+            jsonUrl = scheme + host + ":" + port + JSON_ENDPOINT;
+            rawUrl = scheme + host + ":" + port + RAW_ENDPOINT;
             //discard previous metadata cache and load new one
             metaDataProperties = new Properties();
             String combinedMetaData = Util.fixNull(defaultMetaData) + "\n" + Util.fixNull(metaDataConfig);

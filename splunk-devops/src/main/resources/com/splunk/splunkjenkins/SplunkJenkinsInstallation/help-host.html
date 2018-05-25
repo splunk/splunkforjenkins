@@ -1,10 +1,12 @@
 <div>
-    <p>The Splunk Indexer hostname or IP address. Example: "192.168.1.4"</p>
+    <p>The Splunk Indexer hostname or IP address, multiple hosts separated by comma. Example:
+        "192.168.1.4,192.168.1.5"</p>
     <ul>
         <li>For Splunk cloud user, the host name is something like http-inputs-xx.splunkcloud.com or
             http-inputs-xx.cloud.splunk.com, and HTTP Input Port is 443
         </li>
-        <li>For Splunk enterprise user, the host name is the indexer host name, and HTTP Input Port is 8088 by default</li>
+        <li>For Splunk enterprise user, the host name is the indexer host name, and HTTP Input Port is 8088 by default
+        </li>
     </ul>
     You need enable "HTTP Event Collector" In Splunk to use the plugin, please checkout
     <a href="http://dev.splunk.com/view/event-collector/SP-CAAAE7G"> HTTP Event Collector</a>

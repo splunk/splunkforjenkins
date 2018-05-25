@@ -4,18 +4,22 @@ import com.google.common.base.Strings;
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
+import shaded.splk.org.apache.http.HttpResponse;
 import shaded.splk.org.apache.http.client.HttpClient;
 import shaded.splk.org.apache.http.config.Registry;
 import shaded.splk.org.apache.http.config.RegistryBuilder;
 import shaded.splk.org.apache.http.config.SocketConfig;
+import shaded.splk.org.apache.http.conn.ConnectionKeepAliveStrategy;
 import shaded.splk.org.apache.http.conn.HttpClientConnectionManager;
 import shaded.splk.org.apache.http.conn.socket.ConnectionSocketFactory;
 import shaded.splk.org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import shaded.splk.org.apache.http.conn.ssl.NoopHostnameVerifier;
 import shaded.splk.org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import shaded.splk.org.apache.http.conn.ssl.TrustStrategy;
+import shaded.splk.org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import shaded.splk.org.apache.http.impl.client.HttpClients;
 import shaded.splk.org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import shaded.splk.org.apache.http.protocol.HttpContext;
 import shaded.splk.org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
@@ -37,6 +41,7 @@ public class SplunkLogService {
     public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
     private final static int QUEUE_SIZE = 1 << 17;
+    private final static long KEEP_ALIVE_TIME_MINUTES = 2;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
     List<LogConsumer> workers;
@@ -53,7 +58,17 @@ public class SplunkLogService {
 
     private void initHttpClient() {
         this.connMgr = buildConnectionManager();
-        this.client = HttpClients.custom().setConnectionManager(this.connMgr).build();
+        ConnectionKeepAliveStrategy myStrategy = new DefaultConnectionKeepAliveStrategy() {
+            @Override
+            public long getKeepAliveDuration(HttpResponse httpResponse, HttpContext httpContext) {
+                long keepAliveTime = super.getKeepAliveDuration(httpResponse, httpContext);
+                if (keepAliveTime == -1L) {
+                    keepAliveTime = TimeUnit.MINUTES.toMillis(KEEP_ALIVE_TIME_MINUTES);
+                }
+                return keepAliveTime;
+            }
+        };
+        this.client = HttpClients.custom().setConnectionManager(this.connMgr).setKeepAliveStrategy(myStrategy).build();
     }
 
     public static SplunkLogService getInstance() {
@@ -69,13 +84,13 @@ public class SplunkLogService {
         } catch (Exception e) {
             sslContext = SSLContexts.createDefault();
         }
-        SSLConnectionSocketFactory sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext,
-                new NoopHostnameVerifier());
+        SSLConnectionSocketFactory sslConnectionSocketFactory = new CustomSSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
                 .register("https", sslConnectionSocketFactory)
                 .build();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(registry);
+        PoolingHttpClientConnectionManager cm =
+                new PoolingHttpClientConnectionManager(registry, null, null, new MultipleHostResolver(), -1L, TimeUnit.MINUTES);
         // Increase max total connection to 200
         cm.setMaxTotal(200);
         // Increase default max connection per route to 20
@@ -221,7 +236,7 @@ public class SplunkLogService {
         if (incomingCount % 2000 == 0) {
             LOG.info(this.getStats());
             synchronized (InstanceHolder.service) {
-                connMgr.closeIdleConnections(SOCKET_TIMEOUT, TimeUnit.MINUTES);
+                connMgr.closeIdleConnections(KEEP_ALIVE_TIME_MINUTES, TimeUnit.MINUTES);
             }
         }
         return true;
