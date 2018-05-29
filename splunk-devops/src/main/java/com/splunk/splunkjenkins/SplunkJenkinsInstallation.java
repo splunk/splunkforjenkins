@@ -214,8 +214,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     }
 
     public FormValidation doCheckMaxEventsBatchSize(@QueryParameter int value) {
-        if (value < MIN_BUFFER_SIZE || value > MAX_BUFFER_SIZE) {
-            return FormValidation.error(String.format("please consider a value between %d and %d", MIN_BUFFER_SIZE, MAX_BUFFER_SIZE));
+        if (value < MIN_BUFFER_SIZE || value > MAX_BATCH_SIZE) {
+            return FormValidation.error(String.format("please consider a value between %d and %d", MIN_BUFFER_SIZE, MAX_BATCH_SIZE));
         }
         return FormValidation.ok();
     }

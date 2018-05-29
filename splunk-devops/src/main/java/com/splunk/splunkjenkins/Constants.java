@@ -36,10 +36,10 @@ public class Constants {
     public static final int MIN_BUFFER_SIZE = Integer.getInteger("splunkins.buffer", 4096);
     public static final int JDK_FINE_LOG_BATCH = Integer.getInteger("splunkins.debugLogBatchSize", 128);
     // max buffer size for raw data (usually log file and console)
-    public static final int MAX_BUFFER_SIZE = 1 << 21;
+    public static final int MAX_BATCH_SIZE = 1 << 23;
     // use gzip for http posting
     public static final int GZIP_THRESHOLD = 1024; //1kb
-    // 20 KB for slave log
+    // 16 KB for slave log
     public static final int SLAVE_LOG_BUFFER_SIZE = MIN_BUFFER_SIZE * 4;
     public static final String COVERAGE_OVERALL_NAME = "project";
 }
