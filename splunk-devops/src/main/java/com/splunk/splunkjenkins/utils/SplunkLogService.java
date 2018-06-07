@@ -197,28 +197,7 @@ public class SplunkLogService {
         }
         boolean added = logQueue.offer(record);
         if (!added) {
-            LOG.log(Level.SEVERE, "failed to send message due to queue is full");
-            if (maintenanceLock.tryLock()) {
-                try {
-                    //the event in the queue may have format issue and caused congestion, remove non-critical failed events
-                    List<EventRecord> stuckRecords = new ArrayList<>(logQueue.size());
-                    logQueue.drainTo(stuckRecords);
-                    LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
-                    for (EventRecord queuedRecord : stuckRecords) {
-                        if (!queuedRecord.getEventType().equals(EventType.BUILD_REPORT)) {
-                            continue;
-                        }
-                        boolean enqueued = logQueue.offer(queuedRecord);
-                        if (!enqueued) {
-                            LOG.log(Level.SEVERE, "failed to add {0}", record.getShortDescription());
-                            break;
-                        }
-                    }
-                } finally {
-                    maintenanceLock.unlock();
-                }
-            }
-            return false;
+            added = maintainQueue(record);
         }
         if (workers.size() < MAX_WORKER_COUNT) {
             synchronized (workers) {
@@ -239,7 +218,43 @@ public class SplunkLogService {
                 connMgr.closeIdleConnections(KEEP_ALIVE_TIME_MINUTES, TimeUnit.MINUTES);
             }
         }
-        return true;
+        return added;
+    }
+
+    /**
+     * discard non critical events, then queue the event
+     *
+     * @param record the event record to be queued
+     * @return true if the event is queued
+     */
+    private boolean maintainQueue(EventRecord record) {
+        boolean added = false;
+        maintenanceLock.lock();
+        try {
+            if (logQueue.remainingCapacity() > 2000) {
+                //logQueue was already cleaned up
+                added = logQueue.offer(record);
+            }
+            if (!added) {
+                //the event in the queue may have format issue and caused congestion, remove raw events
+                List<EventRecord> stuckRecords = new ArrayList<>(logQueue.size());
+                logQueue.drainTo(stuckRecords);
+                LOG.log(Level.SEVERE, "jenkins is too busy or has too few workers, clearing up queue");
+                int count = 0;
+                for (EventRecord queuedRecord : stuckRecords) {
+                    if (queuedRecord.getEventType().ordinal() > EventType.JENKINS_CONFIG.ordinal()) {
+                        count++;
+                        continue;
+                    }
+                    logQueue.offer(queuedRecord);
+                }
+                added = logQueue.offer(record);
+                LOG.log(Level.INFO, "discarded: {0}, remaining: {1}", new Object[]{count, logQueue.size()});
+            }
+        } finally {
+            maintenanceLock.unlock();
+        }
+        return added;
     }
 
     public void stopWorker() {

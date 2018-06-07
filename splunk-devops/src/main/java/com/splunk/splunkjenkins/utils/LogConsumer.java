@@ -82,39 +82,37 @@ public class LogConsumer extends Thread {
         while (acceptingTask) {
             try {
                 EventRecord record = queue.take();
-                if (!record.isDiscarded()) {
-                    HttpPost post = null;
-                    try {
-                        sending = true;
-                        post = buildPost(record, SplunkJenkinsInstallation.get());
-                        client.execute(post, responseHandler);
-                    } catch (IOException ex) {
-                        boolean isDiscarded = false;
-                        for (Class<? extends IOException> giveUpException : giveUpExceptions) {
-                            if (giveUpException.isInstance(ex)) {
-                                isDiscarded = true;
-                                LOG.log(Level.SEVERE, "message not delivered:" + record.getShortDescription(), ex);
-                                break;
-                            }
-                        }
-                        if (!isDiscarded) {
-                            handleRetry(ex, record);
-                        }
-                    } catch (Exception e) {
-                        LOG.log(Level.SEVERE, "failed construct post message" + record.getShortDescription(), e);
-                    } finally {
-                        sending = false;
-                        if (post != null) {
-                            post.releaseConnection();
+                HttpPost post = null;
+                try {
+                    sending = true;
+                    post = buildPost(record, SplunkJenkinsInstallation.get());
+                    client.execute(post, responseHandler);
+                } catch (IOException ex) {
+                    boolean isDiscarded = false;
+                    for (Class<? extends IOException> giveUpException : giveUpExceptions) {
+                        if (giveUpException.isInstance(ex)) {
+                            isDiscarded = true;
+                            LOG.log(Level.SEVERE, "message not delivered:" + record.getShortDescription(), ex);
+                            break;
                         }
                     }
-                } else {
-                    //message discarded
-                    LOG.log(Level.SEVERE, "failed to send " + record.getShortDescription());
+                    if (!isDiscarded) {
+                        handleRetry(ex, record);
+                    }
+                } catch (Exception e) {
+                    LOG.log(Level.SEVERE, "failed construct post message" + record.getShortDescription(), e);
+                } finally {
+                    sending = false;
+                    if (post != null) {
+                        post.releaseConnection();
+                    }
                 }
             } catch (InterruptedException e) {
                 errorCount++;
                 //thread interrupted, just ignore
+            } catch (Exception ex) {
+                errorCount++;
+                LOG.log(Level.SEVERE, "get exception in worker thread", ex);
             }
         }
     }
@@ -157,8 +155,13 @@ public class LogConsumer extends Thread {
      * @throws InterruptedException
      */
     private void retry(EventRecord record, int sleepIntervalInSeconds) throws InterruptedException {
+        //try bump error count
+        record.increase();
+        if (record.isDiscarded()) {
+            LOG.log(Level.SEVERE, "discarded " + record.getShortDescription());
+            return;
+        }
         if (acceptingTask) {
-            record.increase();
             if (queue.size() < RETRY_SLEEP_THRESHOLD) {
                 //We don't have much data in queue so wait a while for the service to recovery(hopefully)
                 Thread.sleep(sleepIntervalInSeconds * 1000);
