@@ -26,6 +26,7 @@ import javax.net.ssl.SSLContext;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -231,6 +232,7 @@ public class SplunkLogService {
         boolean added = false;
         maintenanceLock.lock();
         try {
+            removeDeadWorker();
             if (logQueue.remainingCapacity() > 2000) {
                 //logQueue was already cleaned up
                 added = logQueue.offer(record);
@@ -255,6 +257,16 @@ public class SplunkLogService {
             maintenanceLock.unlock();
         }
         return added;
+    }
+
+    private void removeDeadWorker() {
+        //check if sending LogConsumer thread alive
+        Iterator<LogConsumer> workerIterator = workers.iterator();
+        while (workerIterator.hasNext()) {
+            if (!workerIterator.next().isAlive()) {
+                workerIterator.remove();
+            }
+        }
     }
 
     public void stopWorker() {
