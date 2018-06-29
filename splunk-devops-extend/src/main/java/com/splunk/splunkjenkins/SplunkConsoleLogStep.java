@@ -61,6 +61,10 @@ public class SplunkConsoleLogStep extends Step {
          */
         @Override
         public boolean start() throws Exception {
+            if (!SplunkJenkinsInstallation.get().isEnabled()) {
+                getContext().onSuccess("splunk-devops plugin is not enabled");
+                return true;
+            }
             //refer to WithContextStep implementation
             StepContext context = getContext();
             Run run = context.get(Run.class);
