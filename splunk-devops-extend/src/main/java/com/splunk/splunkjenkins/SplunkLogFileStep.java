@@ -90,7 +90,7 @@ public class SplunkLogFileStep extends Step {
     }
 
     public static class SplunkLogFileStepExecution extends AbstractSynchronousNonBlockingStepExecution<Void> {
-        protected SplunkLogFileStepExecution(StepContext context, SplunkLogFileStep step) throws Exception{
+        protected SplunkLogFileStepExecution(StepContext context, SplunkLogFileStep step) throws Exception {
             super(context);
             this.step = step;
             listener = context.get(TaskListener.class);
@@ -108,6 +108,9 @@ public class SplunkLogFileStep extends Step {
 
         @Override
         protected Void run() throws Exception {
+            if (!SplunkJenkinsInstallation.get().isEnabled()) {
+                return null;
+            }
             sendFiles(build, workspace, envVars, listener,
                     step.includes, step.excludes, step.publishFromSlave, parseFileSize(step.sizeLimit));
             return null;
