@@ -20,7 +20,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
     private static final long serialVersionUID = 5303809353063980298L;
     private static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(LogFileCallable.class.getName());
-    private static final int LOOKAHEAD_NEW_LINE = 151;
     private static final String TIMEOUT_NAME = LogFileCallable.class.getName() + ".timeout";
     private final int WAIT_MINUTES = Integer.getInteger(TIMEOUT_NAME, 5);
     private final String baseName;
@@ -67,6 +66,11 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
     }
 
     public Integer send(String fileName, InputStream input) throws IOException, InterruptedException {
+        long throttleSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
+        if (!SplunkJenkinsInstallation.get().isRawEventEnabled()) {
+            //if raw event is not supported, we need split the content line by line and append metadata to each line
+            throttleSize = throttleSize / 2;
+        }
         //always use unix style path because windows slave maybe launched by ssh
         String sourceName = fileName.replace("\\", "/");
         String ws_posix_path = baseName.replace("\\", "/");
@@ -77,29 +81,22 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
         long totalSize = 0;
         Integer count = 0;
-        int c;
-        while ((c = input.read()) >= 0) {
-            totalSize++;
+        int n;
+        byte[] buffer = new byte[MIN_BUFFER_SIZE];
+        while ((n = input.read(buffer)) >= 0) {
+            totalSize += n;
+            for (int i = 0; i < n; i++) {
+                logText.write(buffer[i]);
+                if (logText.size() >= throttleSize && buffer[i] == '\n') {
+                    flushLog(sourceName, logText);
+                    count++;
+                }
+            }
             if (maxFileSize != 0 && totalSize > maxFileSize) {
-                logText.reset();
                 logText.write(("file truncated to size:" + maxFileSize).getBytes(UTF_8));
                 SplunkLogService.getInstance().send(sourceName + " too large", "large_file");
                 break;
             }
-            logText.write(c);
-            long throttleSize = SplunkJenkinsInstallation.get().getMaxEventsBatchSize();
-            if (!SplunkJenkinsInstallation.get().isRawEventEnabled()) {
-                //if raw event is not supported, we need split the content line by line and append metadata to each line
-                throttleSize = throttleSize / 2;
-            }
-            if (c == '\n') {
-                throttleSize = throttleSize - LOOKAHEAD_NEW_LINE;
-            }
-            if (logText.size() >= throttleSize) {
-                flushLog(sourceName, logText);
-                count++;
-            }
-
         }
         if (logText.size() > 0) {
             flushLog(sourceName, logText);
