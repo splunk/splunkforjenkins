@@ -74,6 +74,8 @@ public class EventRecord {
     public String getShortDescription() {
         if (isString()) {
             return "{length:" + ((String) message).length() + " " + StringUtils.substring((String) message, 0, 160) + " ...}";
+        } else if (message.getClass().getName().contains("LazyMap")) {
+            return "{source:" + source + ", message class is LazyMap}";
         } else {
             return "{raw data" + StringUtils.abbreviate("" + message, 160) + "}";
         }
