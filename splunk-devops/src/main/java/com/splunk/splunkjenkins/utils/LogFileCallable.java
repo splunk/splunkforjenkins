@@ -88,13 +88,13 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             totalSize += n;
             for (int i = 0; i < n; i++) {
                 logText.write(buffer[i]);
-                if (logText.size() >= throttleSize && buffer[i] == '\n') {
+                if (buffer[i] == '\n' && logText.size() >= throttleSize) {
                     flushLog(sourceName, logText);
                     count++;
                 }
             }
             if (maxFileSize != 0 && totalSize > maxFileSize) {
-                logText.write(("file truncated to size:" + maxFileSize).getBytes(UTF_8));
+                logText.write(("file truncated to size:" + totalSize).getBytes(UTF_8));
                 SplunkLogService.getInstance().send(sourceName + " too large", "large_file");
                 break;
             }
