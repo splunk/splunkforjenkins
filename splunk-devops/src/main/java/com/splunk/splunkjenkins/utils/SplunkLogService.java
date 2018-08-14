@@ -41,7 +41,7 @@ import static com.splunk.splunkjenkins.model.EventType.BATCH_JSON;
 public class SplunkLogService {
     public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
     private final static int SOCKET_TIMEOUT = 3;
-    private final static int QUEUE_SIZE = 1 << 17;
+    private final static int QUEUE_SIZE = Integer.getInteger(SplunkLogService.class.getName() + ".queueSize", 1 << 17);
     private final static long KEEP_ALIVE_TIME_MINUTES = 2;
     int MAX_WORKER_COUNT = Integer.getInteger(SplunkLogService.class.getName() + ".workerCount", 2);
     BlockingQueue<EventRecord> logQueue;
