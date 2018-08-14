@@ -213,7 +213,7 @@ public class SplunkLogService {
             }
         }
         long incomingCount = incomingCounter.incrementAndGet();
-        if (incomingCount % 2000 == 0) {
+        if (incomingCount % 4000 == 0 && getQueueSize() > 4000) {
             LOG.info(this.getStats());
             synchronized (InstanceHolder.service) {
                 connMgr.closeIdleConnections(KEEP_ALIVE_TIME_MINUTES, TimeUnit.MINUTES);
