@@ -5,6 +5,7 @@ import com.splunk.splunkjenkins.utils.LogEventHelper;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
+import java.lang.ref.SoftReference;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -14,6 +15,7 @@ import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 
 public class EventRecord {
     private final static String METADATA_KEYS[] = {"index", "source", EVENT_SOURCE_TYPE};
+    private final static String MESSAGE_CLEARED = "error: message was cleared for memory demand by garbage collector";
     private long time;
     private int retryCount;
     private Object message;
@@ -41,7 +43,7 @@ public class EventRecord {
     public boolean isDiscarded() {
         try {
             return retryCount > SplunkJenkinsInstallation.get().getMaxRetries();
-        }catch (IllegalStateException ex){
+        } catch (IllegalStateException ex) {
             //jenkins server was shutdown
             return true;
         }
@@ -57,11 +59,19 @@ public class EventRecord {
 
     @Nonnull
     public Object getMessage() {
-        return message;
+        if (message instanceof SoftReference) {
+            String text = (String) ((SoftReference) message).get();
+            if (text == null) {
+                text = MESSAGE_CLEARED;
+            }
+            return text;
+        } else {
+            return message;
+        }
     }
 
     public String getMessageString() {
-        return message.toString();
+        return getMessage().toString();
     }
 
     private boolean isString() {
@@ -146,7 +156,7 @@ public class EventRecord {
     public Map<String, Object> toMap(SplunkJenkinsInstallation config) {
         Map<String, Object> values = new HashMap<>();
         values.put("time", getTimestamp());
-        values.put("event", message);
+        values.put("event", getMessage());
         Map<String, String> metaDataConfig = getMetaData(config);
         values.putAll(metaDataConfig);
         return values;

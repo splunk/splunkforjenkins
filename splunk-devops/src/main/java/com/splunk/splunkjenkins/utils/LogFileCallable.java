@@ -9,6 +9,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.jenkinsci.remoting.RoleChecker;
 
 import java.io.*;
+import java.lang.ref.SoftReference;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -127,8 +128,8 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
     private void flushLog(String source, ByteArrayOutputStream out) {
         try {
             String text = out.toString("UTF-8");
-            SplunkLogService.getInstance().send(text, FILE, source);
-
+            SoftReference<String> textRef = new SoftReference<>(text);
+            SplunkLogService.getInstance().send(textRef, FILE, source);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
