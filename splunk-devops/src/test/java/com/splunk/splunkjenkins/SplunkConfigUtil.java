@@ -101,14 +101,14 @@ public class SplunkConfigUtil {
             String tokenMessage = IOUtils.toString(response.getContent());
             SplunkResponse result = gson.fromJson(tokenMessage, SplunkResponse.class);
             String token = result.getFirst("token");
-            return setupSender(service.getHost(), service.getPort(), token);
+            return setupSender(service.getHost(), token);
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
 
-    public static boolean setupSender(String host, int port, String token) {
+    public static boolean setupSender(String host, String token) {
         LOG.info("host:" + host + " token:" + token);
         SplunkJenkinsInstallation config = SplunkJenkinsInstallation.get();
         String metadataConfig = "";
