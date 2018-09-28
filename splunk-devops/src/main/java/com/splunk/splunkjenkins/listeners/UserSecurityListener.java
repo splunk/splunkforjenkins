@@ -16,7 +16,7 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 public class UserSecurityListener extends SecurityListener {
     @Override
     protected void authenticated(@Nonnull UserDetails details) {
-        //covered by loggedIn
+        logUserAction(details.getUsername(), "authenticated");
     }
 
     @Override
