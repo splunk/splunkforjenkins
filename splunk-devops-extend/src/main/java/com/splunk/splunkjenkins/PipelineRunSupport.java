@@ -4,10 +4,11 @@ import com.cloudbees.workflow.rest.external.*;
 import com.splunk.splunkjenkins.model.LoggingJobExtractor;
 import hudson.Extension;
 import hudson.model.Result;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.flow.FlowExecution;
 import org.jenkinsci.plugins.workflow.graphanalysis.ForkScanner;
+import org.jenkinsci.plugins.workflow.graphanalysis.LabelledChunkFinder;
 import org.jenkinsci.plugins.workflow.job.WorkflowRun;
-import org.jenkinsci.plugins.workflow.pipelinegraphanalysis.StageChunkFinder;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,29 +16,39 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 @Extension
 public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
+
     @Override
     public Map<String, Object> extract(WorkflowRun workflowRun, boolean jobCompleted) {
         Map<String, Object> info = new HashMap<String, Object>();
         if (jobCompleted) {
             FlowExecution execution = workflowRun.getExecution();
             if (execution != null) {
-                ChunkVisitor visitor = new ChunkVisitor(workflowRun);
-                ForkScanner.visitSimpleChunks(execution.getCurrentHeads(), visitor, new StageChunkFinder());
+                WorkspaceChunkVisitor visitor = new WorkspaceChunkVisitor(workflowRun);
+                //LabelledChunkFinder to find stages and parallel branches
+                ForkScanner.visitSimpleChunks(execution.getCurrentHeads(), visitor, new LabelledChunkFinder());
                 Collection<StageNodeExt> nodes = visitor.getStages();
+                Map<String, String> execNodes = visitor.getWorkspaceNodes();
+                Map<String, String> parallelNodeStages = visitor.getParallelNodes();
                 if (!nodes.isEmpty()) {
-                    List<Map> stages = new ArrayList<Map>(nodes.size());
+                    List<Map> labeledChunks = new ArrayList<Map>(nodes.size());
                     for (StageNodeExt stageNodeExt : nodes) {
-                        Map<String, Object> stage = flowNodeToMap(stageNodeExt);
+                        Map<String, Object> stage = flowNodeToMap(stageNodeExt, execNodes);
                         List<Map<String, Object>> children = new ArrayList<>();
                         for (FlowNodeExt childNode : stageNodeExt.getStageFlowNodes()) {
-                            children.add(flowNodeToMap(childNode));
+                            children.add(flowNodeToMap(childNode, execNodes));
                         }
-                        stage.put("children", children);
-                        stages.add(stage);
+                        if (!children.isEmpty()) {
+                            stage.put("children", children);
+                            if (parallelNodeStages.containsKey(stageNodeExt.getId())) {
+                                stage.put("enclosing_stage", parallelNodeStages.get(stageNodeExt.getId()));
+                            }
+                        }
+                        labeledChunks.add(stage);
                     }
-                    info.put("stages", stages);
+                    info.put("stages", labeledChunks);
                 }
             }
         }
@@ -48,7 +59,7 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
      * @param node FlowNodeExt
      * @return a map contains basic info
      */
-    private Map<String, Object> flowNodeToMap(FlowNodeExt node) {
+    private Map<String, Object> flowNodeToMap(FlowNodeExt node, Map<String, String> execNodes) {
         Map<String, Object> result = new HashMap();
         ErrorExt error = node.getError();
         result.put("name", node.getName());
@@ -61,6 +72,13 @@ public class PipelineRunSupport extends LoggingJobExtractor<WorkflowRun> {
             result.put("error", error.getMessage());
             result.put("error_type", error.getType());
         }
+        result.put("arguments", node.getParameterDescription());
+        String execNodeName = node.getExecNode();
+        if (StringUtils.isEmpty(execNodeName)) {
+            //lockup the workspace nodes
+            execNodeName = execNodes.get(node.getId());
+        }
+        result.put("exec_node", execNodeName);
         return result;
     }
 
