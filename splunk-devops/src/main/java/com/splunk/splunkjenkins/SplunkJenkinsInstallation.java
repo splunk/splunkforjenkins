@@ -41,7 +41,6 @@ import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
 
 
-@Restricted(NoExternalUse.class)
 @Extension
 public class SplunkJenkinsInstallation extends GlobalConfiguration {
     private static transient boolean logHandlerRegistered = false;
