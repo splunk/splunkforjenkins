@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.splunk.splunkjenkins.Constants.CONSOLE_TEXT_SINGLE_LINE_MAX_LENGTH;
 import static com.splunk.splunkjenkins.Constants.LOG_TIME_FORMAT;
 import static com.splunk.splunkjenkins.model.EventType.CONSOLE_LOG;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.decodeConsoleBase64Text;
@@ -97,8 +98,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         boolean requireLineNumber = true;
         String sourceName;
         long lineCounter = 0;
+        private final int RECEIVE_BUFFER_SIZE = 512;
         //holds data received, will be cleared when \n received
-        private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(512);
+        private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(RECEIVE_BUFFER_SIZE);
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
         private ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(Constants.MIN_BUFFER_SIZE);
         SimpleDateFormat sdf = new SimpleDateFormat(LOG_TIME_FORMAT, Locale.US);
@@ -141,7 +143,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         public void write(int b) throws IOException {
             super.write(b);
             branch.write(b);
-            if (b == LF) {
+            if (b == LF || branch.size() > CONSOLE_TEXT_SINGLE_LINE_MAX_LENGTH) {
                 eol();
             }
         }

@@ -42,4 +42,8 @@ public class Constants {
     // 16 KB for slave log
     public static final int SLAVE_LOG_BUFFER_SIZE = MIN_BUFFER_SIZE * 4;
     public static final String COVERAGE_OVERALL_NAME = "project";
+    // maximum line length (very long lines are, however, often a sign of garbage data)
+    // if it is increased, please also increase the TRUNCATE config in splunk props.conf
+    // ref: http://docs.splunk.com/Documentation/Splunk/7.2.1/Admin/Propsconf
+    public static final int CONSOLE_TEXT_SINGLE_LINE_MAX_LENGTH = Integer.getInteger("splunkins.lineTruncate", 100000);
 }
