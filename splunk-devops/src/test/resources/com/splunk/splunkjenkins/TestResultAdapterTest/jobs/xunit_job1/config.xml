@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>cat &gt;test-result.xml &lt;&lt;&apos;EOF&apos;
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;testsuite name=&quot;hudson.util.ProcessTreeTest&quot; time=&quot;0.357&quot; tests=&quot;3&quot; errors=&quot;0&quot; skipped=&quot;0&quot; failures=&quot;0&quot;&gt;
+ &lt;testcase name=&quot;remoting&quot; classname=&quot;hudson.util.ProcessTreeTest&quot; time=&quot;0.157&quot;/&gt;
+ &lt;testcase name=&quot;remoting-a&quot; classname=&quot;hudson.util.ProcessTreeTest&quot; time=&quot;0.157&quot;/&gt;
+ &lt;testcase name=&quot;remoting-b&quot; classname=&quot;hudson.util.ProcessTreeTest&quot; time=&quot;0.157&quot;/&gt;
+
+&lt;/testsuite&gt;
+EOF</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <xunit plugin="xunit@1.102">
+      <types>
+        <JUnitType>
+          <pattern>test-result.xml</pattern>
+          <skipNoTestFiles>true</skipNoTestFiles>
+          <failIfNotNew>true</failIfNotNew>
+          <deleteOutputFiles>true</deleteOutputFiles>
+          <stopProcessingIfError>true</stopProcessingIfError>
+        </JUnitType>
+      </types>
+      <thresholds>
+        <org.jenkinsci.plugins.xunit.threshold.FailedThreshold>
+          <unstableThreshold></unstableThreshold>
+          <unstableNewThreshold>1</unstableNewThreshold>
+          <failureThreshold></failureThreshold>
+          <failureNewThreshold>2</failureNewThreshold>
+        </org.jenkinsci.plugins.xunit.threshold.FailedThreshold>
+        <org.jenkinsci.plugins.xunit.threshold.SkippedThreshold>
+          <unstableThreshold></unstableThreshold>
+          <unstableNewThreshold>1</unstableNewThreshold>
+          <failureThreshold></failureThreshold>
+          <failureNewThreshold>2</failureNewThreshold>
+        </org.jenkinsci.plugins.xunit.threshold.SkippedThreshold>
+      </thresholds>
+      <thresholdMode>1</thresholdMode>
+      <extraConfiguration>
+        <testTimeMargin>3000</testTimeMargin>
+      </extraConfiguration>
+    </xunit>
+  </publishers>
+  <buildWrappers/>
+</project>

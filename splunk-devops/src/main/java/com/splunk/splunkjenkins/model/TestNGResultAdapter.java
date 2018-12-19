@@ -23,7 +23,7 @@ public class TestNGResultAdapter extends AbstractTestResultAdapter<TestNGTestRes
         List<TestCaseResult> caseResults = new ArrayList<>();
         for (TestNGTestResult testResult : testResults) {
             for (ClassResult classResult : testResult.getClassList()) {
-                for (MethodResult methodResult : classResult.getChildren()) {
+                for (MethodResult methodResult : classResult.getTestMethods()) {
                     TestCaseResult testCaseResult = new TestCaseResult();
                     testCaseResult.setTestName(methodResult.getName());
                     testCaseResult.setUniqueName(methodResult.getSafeName());

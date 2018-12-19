@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>touch testng-reporter-log-result.xml</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.plugins.testng.Publisher plugin="testng-plugin@1.14">
+      <reportFilenamePattern>testng-reporter-log-result.xml</reportFilenamePattern>
+      <escapeTestDescp>true</escapeTestDescp>
+      <escapeExceptionMsg>true</escapeExceptionMsg>
+      <failureOnFailedTestConfig>false</failureOnFailedTestConfig>
+      <showFailedBuilds>false</showFailedBuilds>
+      <unstableSkips>100</unstableSkips>
+      <unstableFails>0</unstableFails>
+      <failedSkips>100</failedSkips>
+      <failedFails>100</failedFails>
+      <thresholdMode>2</thresholdMode>
+    </hudson.plugins.testng.Publisher>
+  </publishers>
+  <buildWrappers/>
+</project>
