@@ -6,6 +6,8 @@ import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
 import shaded.splk.org.apache.http.HttpResponse;
 import shaded.splk.org.apache.http.client.HttpClient;
+import shaded.splk.org.apache.http.client.config.CookieSpecs;
+import shaded.splk.org.apache.http.client.config.RequestConfig;
 import shaded.splk.org.apache.http.config.Registry;
 import shaded.splk.org.apache.http.config.RegistryBuilder;
 import shaded.splk.org.apache.http.config.SocketConfig;
@@ -69,7 +71,10 @@ public class SplunkLogService {
                 return keepAliveTime;
             }
         };
-        this.client = HttpClients.custom().setConnectionManager(this.connMgr).setKeepAliveStrategy(myStrategy).build();
+        this.client = HttpClients.custom()
+            .setConnectionManager(this.connMgr).setKeepAliveStrategy(myStrategy)
+            .setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build())
+            .build();
     }
 
     public static SplunkLogService getInstance() {
