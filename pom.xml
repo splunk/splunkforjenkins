@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.19</version>
+        <version>3.42</version>
         <relativePath />
     </parent>
 
@@ -51,7 +51,7 @@
         <project.patchManagement.url>https://api.github.com</project.patchManagement.url>
         <patch.tracker.serverId>jenkins-jira</patch.tracker.serverId>
         <findbugs-maven-plugin.version>3.0.1</findbugs-maven-plugin.version>
-        <java.level>7</java.level>
+        <java.level>8</java.level>
         <!-- jenkins requirement -->
         <jenkins.version>1.642.4</jenkins.version>
     </properties>
