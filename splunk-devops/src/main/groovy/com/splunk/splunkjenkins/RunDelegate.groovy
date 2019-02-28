@@ -216,7 +216,7 @@ public class RunDelegate {
         event.put(BUILD_ID, url);
         event.put(BUILD_REPORT_ENV_TAG, env);
         event.put("build_number", build.getNumber());
-        event.put("job_name", build.getParent().getUrl());
+        event.put("job_name", build.getParent().getFullName());
         return event;
     }
 
