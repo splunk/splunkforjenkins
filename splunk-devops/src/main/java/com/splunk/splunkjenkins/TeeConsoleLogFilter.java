@@ -84,7 +84,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
     }
 
     private OutputStream teeOutput(OutputStream output, String source, boolean useLineNumber, long cacheSize) {
-        if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG)) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(CONSOLE_LOG) || SplunkJenkinsInstallation.get().isJobIgnored(source)) {
             return output;
         }
         TeeOutputStream teeOutput = new TeeOutputStream(output, source);
