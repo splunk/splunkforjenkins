@@ -17,8 +17,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext;
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
-import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
