@@ -135,7 +135,7 @@ public class LoggingRunListener extends RunListener<Run> {
             event.put("job_type", jobType);
         }
         Executor executor = run.getExecutor();
-        String nodeName = null;
+        String nodeName = "";
         String label=null;
         if (executor != null && executor.getOwner().getNode()!=null) {
             label=executor.getOwner().getNode().getLabelString();
