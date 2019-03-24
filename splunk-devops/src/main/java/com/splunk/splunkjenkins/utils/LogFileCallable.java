@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins.utils;
 
 import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
+import com.splunk.splunkjenkins.model.EventType;
 import hudson.FilePath;
 import hudson.remoting.VirtualChannel;
 import hudson.util.ByteArrayOutputStream2;
@@ -129,7 +130,12 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         try {
             String text = out.toString("UTF-8");
             SoftReference<String> textRef = new SoftReference<>(text);
-            SplunkLogService.getInstance().send(textRef, FILE, source);
+            EventType eventType = EventType.FILE;
+            if (source.endsWith(".json")) {
+                //guess it is a json file
+                eventType = EventType.BATCH_JSON;
+            }
+            SplunkLogService.getInstance().send(textRef, eventType, source);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
