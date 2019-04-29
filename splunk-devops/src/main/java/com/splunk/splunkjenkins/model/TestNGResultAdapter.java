@@ -59,6 +59,9 @@ public class TestNGResultAdapter extends AbstractTestResultAdapter<TestNGTestRes
                         case "pass":
                             testCaseResult.setStatus(TestStatus.PASSED);
                             break;
+                        default:
+                            // empty status, marked as passed
+                            testCaseResult.setStatus(TestStatus.PASSED);
                     }
                     testCaseResult.setSkippedMessage(methodResult.getDescription());
                     testCaseResult.setStdout(methodResult.getReporterOutput());

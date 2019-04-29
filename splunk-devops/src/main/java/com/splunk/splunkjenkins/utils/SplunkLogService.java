@@ -248,8 +248,11 @@ public class SplunkLogService {
                         count++;
                         continue;
                     }
-                    logQueue.offer(queuedRecord);
+                    if (!logQueue.offer(queuedRecord)) {
+                        break;
+                    }
                 }
+                stuckRecords.clear();
                 added = logQueue.offer(record);
                 LOG.log(Level.INFO, "discarded: {0}, remaining: {1}", new Object[]{count, logQueue.size()});
             }

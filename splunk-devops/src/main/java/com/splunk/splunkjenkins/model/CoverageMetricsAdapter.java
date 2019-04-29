@@ -170,8 +170,8 @@ public abstract class CoverageMetricsAdapter<M extends HealthReportingAction> im
         }
 
         public void putAll(Map<Metric, Integer> subReport) {
-            for (Metric metric : subReport.keySet()) {
-                report.put(metric.toString(), subReport.get(metric));
+            for (Map.Entry<Metric, Integer> entry : subReport.entrySet()) {
+                report.put(entry.getKey().toString(), entry.getValue());
             }
         }
 

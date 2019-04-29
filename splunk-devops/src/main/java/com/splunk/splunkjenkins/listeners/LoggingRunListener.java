@@ -61,7 +61,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("type", "completed");
         float duration = getRunDuration(run);
         event.put("job_duration", duration);
-        event.put(JOB_RESULT, run.getResult().toString());
+        event.put(JOB_RESULT, "" + run.getResult());
         Map testSummary = TestCaseResultUtils.getSummary(run);
         if (!testSummary.isEmpty()) {
             event.put("test_summary", testSummary);

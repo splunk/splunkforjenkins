@@ -701,7 +701,6 @@ public class LogEventHelper {
         String exampleText = "//post script section";
         try (InputStream input = LogEventHelper.class.getClassLoader().getResourceAsStream("sample.groovy")) {
             exampleText = IOUtils.toString(input);
-            input.close();
         } catch (IOException e) {
             LOG.log(Level.SEVERE, "failed to read example.groovy", e);
         }
@@ -875,17 +874,11 @@ public class LogEventHelper {
     }
 
     public static String getBuildVersion() {
-        InputStream pomInput = LogEventHelper.class.getResourceAsStream(
-                "/META-INF/maven/com.splunk.splunkins/splunk-devops/pom.properties"
-        );
         Properties properties = new Properties();
-        if (pomInput != null) {
-            try {
-                properties.load(pomInput);
-                pomInput.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        try (InputStream pomInput = LogEventHelper.class.getResourceAsStream("/META-INF/maven/com.splunk.splunkins/splunk-devops/pom.properties")) {
+            properties.load(pomInput);
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "failed to open file splunk-devops/pom.properties", e);
         }
         return properties.getProperty("version", "snapshot");
     }

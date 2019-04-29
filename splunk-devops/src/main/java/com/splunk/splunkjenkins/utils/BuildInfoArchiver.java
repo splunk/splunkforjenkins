@@ -11,7 +11,7 @@ import hudson.util.NullStream;
 import hudson.util.RunList;
 import jenkins.model.Jenkins;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -179,7 +179,7 @@ public class BuildInfoArchiver {
         }
 
         @Override
-        public boolean apply(@Nullable Run run) {
+        public boolean apply(@Nonnull Run run) {
             long jobTimestamp = run.getStartTimeInMillis() + run.getDuration();
             //check whether the build is in the time range
             if (jobTimestamp >= startTime && jobTimestamp < endTime) {
@@ -198,7 +198,7 @@ public class BuildInfoArchiver {
         }
 
         @Override
-        public boolean apply(@Nullable Run run) {
+        public boolean apply(@Nonnull Run run) {
             //check whether the build is in the time range
             if (run.getNumber() >= startId && run.getNumber() < endId) {
                 return true;

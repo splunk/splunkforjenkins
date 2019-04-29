@@ -82,7 +82,10 @@ public class MetaDataConfigItem implements Describable<MetaDataConfigItem> {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof MetaDataConfigItem) || obj == null) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof MetaDataConfigItem)) {
             return false;
         }
         return this.toString().equals(obj.toString());

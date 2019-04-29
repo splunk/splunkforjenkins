@@ -12,12 +12,12 @@ public class MultipleHostResolver implements DnsResolver {
 
     @Override
     public InetAddress[] resolve(final String host) throws UnknownHostException {
+        if (host == null) {
+            return null;
+        }
         String hostname = host;
         //split by comma
         String[] hosts = hostname.split(NAME_DELIMITER);
-        if (hosts == null) {
-            return null;
-        }
         List<InetAddress> addressList = new ArrayList<>();
         for (String endpointHost : hosts) {
             InetAddress[] addresses = InetAddress.getAllByName(endpointHost);

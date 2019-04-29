@@ -278,12 +278,8 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         // Tried proxy for com.splunk.splunkjenkins.SplunkJenkinsInstallation to support a circular dependency, but it is not an interface.
         // Use Jenkins.getAuthentication() will by pass the issue
         Authentication auth = Jenkins.getAuthentication();
-        String userName;
-        if (auth != null) {
-            userName = auth.getName();
-        } else {
-            userName = Jenkins.ANONYMOUS.getName();
-        }
+        String userName = auth.getName();
+
         ApprovalContext context = ApprovalContext.create().withUser(userName).withKey(this.getClass().getName());
         //check approval and save pending for admin approval
         ScriptApproval.get().configuring(scriptText, GroovyLanguage.get(), context);

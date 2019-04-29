@@ -123,7 +123,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         boolean requireLineNumber = true;
         String sourceName;
         long lineCounter = 0;
-        private final int RECEIVE_BUFFER_SIZE = 512;
+        private static final int RECEIVE_BUFFER_SIZE = 512;
         //holds data received, will be cleared when \n received
         private ByteArrayOutputStream2 branch = new ByteArrayOutputStream2(RECEIVE_BUFFER_SIZE);
         //holds decoded text with timestamp and line number, will be cleared when job is finished or batch size is reached
