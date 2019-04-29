@@ -71,7 +71,7 @@ public class LoggingRunListener extends RunListener<Run> {
         if (!coverage.isEmpty()) {
             event.put("coverage", coverage);
         }
-        appendScm(event,run);
+        appendScm(event, run);
         if (run instanceof AbstractBuild) {
             AbstractBuild build = (AbstractBuild) run;
             List<String> changelog = getChangeLog(build);
@@ -97,14 +97,26 @@ public class LoggingRunListener extends RunListener<Run> {
      * @param run Jenkins job Run
      * @return the upstream job url
      */
-    private String getUpStreamUrl(Run run) {
+    private String getUpStreamURL(Run run) {
         for (CauseAction action : run.getActions(CauseAction.class)) {
             Cause.UpstreamCause upstreamCause = action.findCause(Cause.UpstreamCause.class);
             if (upstreamCause != null) {
-                return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
+                return getUpStreamCauseURL(upstreamCause);
             }
         }
         return "";
+    }
+
+    private String getUpStreamCauseURL(Cause.UpstreamCause upstreamCause) {
+        if (upstreamCause == null) {
+            return "";
+        }
+        for (Cause upCause : upstreamCause.getUpstreamCauses()) {
+            if (upCause instanceof Cause.UpstreamCause) {
+                return getUpStreamCauseURL((Cause.UpstreamCause) upCause);
+            }
+        }
+        return upstreamCause.getUpstreamUrl() + upstreamCause.getUpstreamBuild() + "/";
     }
 
     /**
@@ -123,7 +135,7 @@ public class LoggingRunListener extends RunListener<Run> {
         event.put("queue_time", queueTime);
         event.put("queue_id", queueId);
         event.put(Constants.BUILD_ID, run.getUrl());
-        event.put("upstream", getUpStreamUrl(run));
+        event.put("upstream", getUpStreamURL(run));
         event.put("job_started_at", run.getTimestampString2());
         event.put("job_name", run.getParent().getFullName());
         Map parameters = getBuildVariables(run, completed);
@@ -136,17 +148,17 @@ public class LoggingRunListener extends RunListener<Run> {
         }
         Executor executor = run.getExecutor();
         String nodeName = "";
-        String label=null;
-        if (executor != null && executor.getOwner().getNode()!=null) {
-            label=executor.getOwner().getNode().getLabelString();
+        String label = null;
+        if (executor != null && executor.getOwner().getNode() != null) {
+            label = executor.getOwner().getNode().getLabelString();
             nodeName = executor.getOwner().getName();
             if (StringUtils.isEmpty(nodeName)) {
                 nodeName = Constants.MASTER;
             }
-        }else if(run instanceof AbstractBuild){
-            nodeName=((AbstractBuild) run).getBuiltOnStr();
+        } else if (run instanceof AbstractBuild) {
+            nodeName = ((AbstractBuild) run).getBuiltOnStr();
         }
-        event.put("label",label);
+        event.put("label", label);
         event.put(NODE_NAME_KEY, nodeName);
         for (LoggingJobExtractor extendListener : LoggingJobExtractor.canApply(run)) {
             try {
