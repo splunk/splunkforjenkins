@@ -13,7 +13,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.IOException;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static com.splunk.splunkjenkins.Constants.JENKINS_CONFIG_PREFIX;
 import static com.splunk.splunkjenkins.model.EventType.JENKINS_CONFIG;
@@ -30,9 +33,23 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.logUserAction;
 @Extension
 public class LoggingConfigListener extends SaveableListener {
     private static final String XML_COMMENT = "<!--<![CDATA[%s]]>-->\n";
+    private static final Logger LOGGER = Logger.getLogger(LoggingConfigListener.class.getName());
     //queue.xml or build/*/config.xml
-    private static final Pattern IGNORED = Pattern.compile("(queue|nodeMonitors|UpdateCenter|global-build-stats" +
-            "|fingerprint|build)(.*?xml)", Pattern.CASE_INSENSITIVE);
+    private static final String IGNORE_CONFIG_CHANGE_PATTERN = "(queue|nodeMonitors|UpdateCenter|global-build-stats" +
+            "|fingerprint|build)(.*?xml)";
+    private static final Pattern IGNORED;
+
+    static {
+        String ignorePatternStr = System.getProperty("splunkins.ignoreConfigChangePattern", IGNORE_CONFIG_CHANGE_PATTERN);
+        Pattern ignorePattern;
+        try {
+            ignorePattern = Pattern.compile(ignorePatternStr, Pattern.CASE_INSENSITIVE);
+        } catch (PatternSyntaxException ex) {
+            ignorePattern = Pattern.compile(IGNORE_CONFIG_CHANGE_PATTERN, Pattern.CASE_INSENSITIVE);
+        }
+        IGNORED = ignorePattern;
+    }
+
     private WeakHashMap cached = new WeakHashMap(512);
 
     @Override
@@ -42,13 +59,23 @@ public class LoggingConfigListener extends SaveableListener {
         }
         String configPath = file.getFile().getAbsolutePath();
         if (saveable == null || IGNORED.matcher(configPath).find()) {
+            LOGGER.log(Level.FINE, "{} is ignored", configPath);
             return;
         }
         if (saveable instanceof User) {
             //we use SecurityListener to capture login/logout events
             return;
         }
-        if ("SYSTEM".equals(Jenkins.getAuthentication().getName()) || SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
+        if (SplunkJenkinsInstallation.get().isEventDisabled(JENKINS_CONFIG)) {
+            return;
+        }
+        //log audit trail, excludes Item instances which were already tracked by other listener
+        String relativePath = getRelativeJenkinsHomePath(configPath);
+        if (!(saveable instanceof Item)) {
+            logUserAction(getUserName(), Messages.audit_update_item(relativePath));
+        }
+        if ("SYSTEM".equals(Jenkins.getAuthentication().getName())) {
+            LOGGER.log(Level.FINE, "{} is changed by system", configPath);
             //ignore changes made by daemons or background jobs
             return;
         }
@@ -61,15 +88,10 @@ public class LoggingConfigListener extends SaveableListener {
                 return;
             }
             cached.put(checkSum, 0);
-            String relativePath = getRelativeJenkinsHomePath(configPath);
             String sourceName = JENKINS_CONFIG_PREFIX + relativePath;
             String userName = getUserName();
             String comment = String.format(XML_COMMENT, userName);
             SplunkLogService.getInstance().send(comment + configContent, JENKINS_CONFIG, sourceName);
-            //log audit trail, excludes Item instances which were already tracked by other listener
-            if (!(saveable instanceof Item)) {
-                logUserAction(getUserName(), Messages.audit_update_item(relativePath));
-            }
         } catch (IOException e) {
             //just ignore
         }
