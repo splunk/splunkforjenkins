@@ -163,7 +163,7 @@ public class LogEventHelper {
             }
         } catch (IOException e) {
             return FormValidation.error(e.getMessage());
-        }finally {
+        } finally {
             post.releaseConnection();
         }
         return FormValidation.ok("Splunk connection verified");
@@ -879,7 +879,9 @@ public class LogEventHelper {
     public static String getBuildVersion() {
         Properties properties = new Properties();
         try (InputStream pomInput = LogEventHelper.class.getResourceAsStream("/META-INF/maven/com.splunk.splunkins/splunk-devops/pom.properties")) {
-            properties.load(pomInput);
+            if (pomInput != null) {
+                properties.load(pomInput);
+            }
         } catch (IOException e) {
             LOG.log(Level.WARNING, "failed to open file splunk-devops/pom.properties", e);
         }

@@ -1,6 +1,7 @@
 package com.splunk.splunkjenkins;
 
 import com.cloudbees.workflow.rest.external.ChunkVisitor;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.workflow.actions.ArgumentsAction;
 import org.jenkinsci.plugins.workflow.actions.WorkspaceAction;
@@ -109,6 +110,7 @@ public class WorkspaceChunkVisitor extends ChunkVisitor {
      *
      * @param scan Scanner
      */
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     private void recordParallelNode(@Nonnull ForkScanner scan) {
         if (scan.getCurrentParallelStartNode() != null) {
             //store parallel node start id
@@ -133,6 +135,7 @@ public class WorkspaceChunkVisitor extends ChunkVisitor {
      * @param functionName
      * @return
      */
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     private StepStartNode getPipelineBlockBoundaryStartNode(FlowNode atomNode, String functionName) {
         StepStartNode startNode = null;
         // it should have BodyInvocationAction
