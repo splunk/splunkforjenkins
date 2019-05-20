@@ -144,12 +144,13 @@ public class LogEventHelper {
             if (response.getStatusLine().getStatusCode() != 200) {
                 String reason = response.getStatusLine().getReasonPhrase();
                 if (response.getStatusLine().getStatusCode() == 400) {
-                    return FormValidation.error("incorrect index name or do not have write permission to the default index, please check MetaData configuration");
+                    return FormValidation.error("Incorrect index name or do not have write permission to the default index, please check MetaData configuration");
                 } else {
-                    return FormValidation.error("token:" + config.getToken() + " response:" + reason);
+                    return FormValidation.error("Token:" + config.getToken() + " response:" + reason);
                 }
             }
             EntityUtils.consume(response.getEntity());
+            post.releaseConnection();
             //check if raw events is supported
             config.setRawEventEnabled(true);
             post = buildPost(new EventRecord("ping from jenkins plugin\nraw event ping", EventType.LOG), config);
@@ -162,6 +163,8 @@ public class LogEventHelper {
             }
         } catch (IOException e) {
             return FormValidation.error(e.getMessage());
+        }finally {
+            post.releaseConnection();
         }
         return FormValidation.ok("Splunk connection verified");
     }
