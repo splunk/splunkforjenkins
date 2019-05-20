@@ -76,9 +76,11 @@ System properties are defined by passing -Dproperty=value to the java command li
 
 `java -Dsplunkins.buffer=4096 -jar jenkins.war`
 
-|Property|Default value|Note|
+
+|Property|Default Value|Note|
+|-------------|-------------|-------------|
 |splunkins.buffer|4096|console log buffer size|
-|com.splunk.splunkjenkins.JdkSplunkLogHandler.level|INFO|Log message levels lower than this will not be send to splunk|
+|com.splunk.splunkjenkins.JdkSplunkLogHandler.level|INFO|log message levels lower than this will not be send to splunk|
 |splunkins.debugLogBatchSize|128|batch size for sending verbose level (FINE,FINER,FINEST) log record|
 |splunkins.consoleLogFilterPattern|(empty)| regular expression for 'interesting' build. if it is set, only send console log to splunk for the job whose build url matches the pattern|
 |splunkins.ignoreConfigChangePattern|(queue\|nodeMonitors\|UpdateCenter\|global-build-stats\|fingerprint\|build)(.*?xml)|regular expression for ignoring config file changes|
