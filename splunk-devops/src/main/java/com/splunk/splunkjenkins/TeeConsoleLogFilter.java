@@ -148,9 +148,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         @Override
         public void close() throws IOException {
             super.close();
-            if (logText.size() > 0) {
-                flushLog();
-            }
+            flushLog();
             logText.close();
             branch.close();
         }
@@ -158,9 +156,7 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         @Override
         public void flush() throws IOException {
             super.flush();
-            if (logText.size() > 0) {
-                flushLog();
-            }
+            flushLog();
             branch.reset();
         }
 
@@ -193,6 +189,9 @@ public class TeeConsoleLogFilter extends ConsoleLogFilter implements Serializabl
         }
 
         private void flushLog() {
+            if (logText.size() == 0) {
+                return;
+            }
             try {
                 String logs = logText.toString("UTF-8");
                 SplunkLogService.getInstance().send(logs, CONSOLE_LOG, sourceName);
