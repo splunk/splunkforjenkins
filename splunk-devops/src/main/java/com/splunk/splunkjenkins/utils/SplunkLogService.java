@@ -42,6 +42,7 @@ import static com.splunk.splunkjenkins.model.EventType.BATCH_JSON;
 
 public class SplunkLogService {
     public static final java.util.logging.Logger LOG = java.util.logging.Logger.getLogger(SplunkLogService.class.getName());
+    private static final boolean VERIFY_SSL = Boolean.getBoolean("splunkins.verifySSL");
     private final static int SOCKET_TIMEOUT = 3;
     private final static int QUEUE_SIZE = Integer.getInteger(SplunkLogService.class.getName() + ".queueSize", 1 << 17);
     private final static long KEEP_ALIVE_TIME_MINUTES = 2;
@@ -82,15 +83,24 @@ public class SplunkLogService {
     }
 
     private HttpClientConnectionManager buildConnectionManager() {
-        SSLContext sslContext = null;
-        try {
-            TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
-            sslContext = SSLContexts.custom().useProtocol("TLSv1.2").loadTrustMaterial(
-                    null, acceptingTrustStrategy).build();
-        } catch (Exception e) {
-            sslContext = SSLContexts.createDefault();
+        SSLConnectionSocketFactory sslConnectionSocketFactory = null;
+        if (!VERIFY_SSL) {
+            SSLContext sslContext = null;
+            try {
+                TrustStrategy acceptingTrustStrategy = new TrustAllStrategy();
+                sslContext = SSLContexts.custom().setProtocol("TLSv1.2").loadTrustMaterial(
+                        null, acceptingTrustStrategy).build();
+            } catch (Exception e) {
+                sslContext = SSLContexts.createDefault();
+            }
+            sslConnectionSocketFactory = new CustomSSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
+        } else {
+            sslConnectionSocketFactory = new SSLConnectionSocketFactory(
+                    SSLContexts.createDefault(),
+                    new String[]{"TLSv1.2"},
+                    null,
+                    SSLConnectionSocketFactory.getDefaultHostnameVerifier());
         }
-        SSLConnectionSocketFactory sslConnectionSocketFactory = new CustomSSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
         Registry<ConnectionSocketFactory> registry = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", PlainConnectionSocketFactory.getSocketFactory())
                 .register("https", sslConnectionSocketFactory)
