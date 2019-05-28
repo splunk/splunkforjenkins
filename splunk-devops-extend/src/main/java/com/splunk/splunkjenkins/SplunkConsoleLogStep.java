@@ -1,12 +1,19 @@
 package com.splunk.splunkjenkins;
 
+import com.google.common.collect.ImmutableSet;
 import hudson.Extension;
 import hudson.console.ConsoleLogFilter;
 import hudson.model.Run;
-import org.jenkinsci.plugins.workflow.steps.*;
+import org.jenkinsci.plugins.workflow.steps.BodyExecutionCallback;
+import org.jenkinsci.plugins.workflow.steps.BodyInvoker;
+import org.jenkinsci.plugins.workflow.steps.Step;
+import org.jenkinsci.plugins.workflow.steps.StepContext;
+import org.jenkinsci.plugins.workflow.steps.StepDescriptor;
+import org.jenkinsci.plugins.workflow.steps.StepExecution;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
+import java.util.Set;
 
 public class SplunkConsoleLogStep extends Step {
     @DataBoundConstructor
@@ -19,9 +26,10 @@ public class SplunkConsoleLogStep extends Step {
     }
 
     @Extension(optional = true)
-    public static class DescriptorImpl extends AbstractStepDescriptorImpl {
-        public DescriptorImpl() {
-            super(ConsoleLogExecutionImpl.class);
+    public static class DescriptorImpl extends StepDescriptor {
+        @Override
+        public Set<? extends Class<?>> getRequiredContext() {
+            return ImmutableSet.of(Run.class);
         }
 
         /**
