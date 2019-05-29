@@ -82,7 +82,7 @@ public class LoggingRunListener extends RunListener<Run> {
         String sourceName = SplunkJenkinsInstallation.get().getMetadataSource(JOB_EVENT_TAG_NAME);
         SplunkLogService.getInstance().send(event, BUILD_EVENT, sourceName);
         //custom event processing dsl
-        postJobAction.perform(run, listener, SplunkJenkinsInstallation.get().getScript());
+        postJobAction.perform(run, listener, SplunkJenkinsInstallation.get().getCode());
 
         if (run.getExecutor() != null) {
             //JdkSplunkLogHandler.LogHolder.getSlaveLog(run.getExecutor().getOwner());

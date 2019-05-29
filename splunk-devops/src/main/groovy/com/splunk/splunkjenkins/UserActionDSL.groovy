@@ -9,9 +9,6 @@ import jenkins.model.Jenkins
 import org.apache.commons.lang.StringUtils
 import org.codehaus.groovy.control.CompilerConfiguration
 import org.codehaus.groovy.control.customizers.ImportCustomizer
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox
-import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.SecureGroovyScript;
-import org.jenkinsci.plugins.scriptsecurity.scripts.ApprovalContext
 import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage
 
@@ -23,9 +20,10 @@ import static com.splunk.splunkjenkins.utils.LogEventHelper.getBuildVariables
 public class UserActionDSL {
     static final LOG = Logger.getLogger(LoggingRunListener.class.name)
 
-    public void perform(Run build, TaskListener listener, String scriptText) {
+    public void perform(Run build, TaskListener listener, GroovyCodeSource codeSource) {
         try {
             Map buildParameters = getBuildVariables(build);
+            String scriptText=codeSource.getScriptText()
             if (StringUtils.isNotEmpty(scriptText)) {
                 def workSpace;
                 if (build.metaClass.respondsTo(build, "getWorkspace")) {
@@ -38,7 +36,7 @@ public class UserActionDSL {
                 binding.setVariable("splunkins", delegate);
                 try {
                     //check approval, will throw UnapprovedUsageException
-                    ScriptApproval.get().using(scriptText, GroovyLanguage.get());
+                    ScriptApproval.get().using(scriptText, GroovyLanguage.get())
                     //call setDelegate to RunDelegate instance and run
                     CompilerConfiguration cc = new CompilerConfiguration();
                     cc.scriptBaseClass = ClosureScript.class.name;
@@ -47,7 +45,7 @@ public class UserActionDSL {
                     ic.addStarImport("jenkins.model")
                     cc.addCompilationCustomizers(ic)
                     ClosureScript dslScript = (ClosureScript) new GroovyShell(Jenkins.instance.pluginManager.uberClassLoader, binding, cc)
-                            .parse(scriptText)
+                            .parse(codeSource)
                     dslScript.setDelegate(delegate);
                     dslScript.run()
                 } catch (Exception e) {

@@ -3,6 +3,7 @@ package com.splunk.splunkjenkins;
 import com.splunk.splunkjenkins.model.EventType;
 import com.splunk.splunkjenkins.model.MetaDataConfigItem;
 import com.splunk.splunkjenkins.utils.SplunkLogService;
+import groovy.lang.GroovyCodeSource;
 import hudson.Extension;
 import hudson.Util;
 import hudson.util.FormValidation;
@@ -34,6 +35,7 @@ import java.util.regex.PatternSyntaxException;
 import static com.splunk.splunkjenkins.Constants.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.*;
 import static com.splunk.splunkjenkins.utils.LogEventHelper.getDefaultDslScript;
+import static groovy.lang.GroovyShell.DEFAULT_CODE_BASE;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.apache.commons.lang.StringUtils.isNotEmpty;
@@ -238,9 +240,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             refreshScriptText();
         } else if (nonEmpty(scriptContent)) {
             postActionScript = scriptContent;
+            scriptTimestamp = System.currentTimeMillis();
             checkApprove(postActionScript);
         } else {
             postActionScript = null;
+            scriptTimestamp = 0;
         }
         if (StringUtils.isEmpty(ignoredJobs)) {
             ignoredJobPattern = null;
@@ -326,6 +330,12 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
             refreshScriptText();
         }
         return this.postActionScript;
+    }
+
+    public GroovyCodeSource getCode() {
+        String script = getScript();
+        GroovyCodeSource codeSource = new GroovyCodeSource(script, "SplunkinUserScript" + scriptTimestamp, DEFAULT_CODE_BASE);
+        return codeSource;
     }
 
     public boolean isRawEventEnabled() {
