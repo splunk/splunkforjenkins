@@ -75,7 +75,7 @@ public class LoggingConfigListener extends SaveableListener {
             logUserAction(getUserName(), Messages.audit_update_item(relativePath));
         }
         if ("SYSTEM".equals(Jenkins.getAuthentication().getName())) {
-            LOGGER.log(Level.FINE, "{} is changed by system", configPath);
+            LOGGER.log(Level.FINE, "{0} is changed by system", configPath);
             //ignore changes made by daemons or background jobs
             return;
         }
