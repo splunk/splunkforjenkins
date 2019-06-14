@@ -4,11 +4,12 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Util;
 import hudson.tasks.test.TestResult;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @SuppressFBWarnings("URF_UNREAD_FIELD")
-public class JunitTestCaseGroup {
+public class JunitTestCaseGroup implements Serializable{
     int failures;
     int passes;
     int skips;
