@@ -2,11 +2,15 @@ package com.splunk.splunkjenkins.utils;
 
 import com.google.common.collect.ImmutableMap;
 import com.splunk.splunkjenkins.model.CoverageMetricsAdapter;
+import groovy.lang.GroovyClassLoader;
 import hudson.scm.SCM;
 import jenkins.model.CauseOfInterruption;
 import jenkins.model.InterruptedBuildAction;
 import jenkins.triggers.SCMTriggerItem;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.scriptsecurity.sandbox.groovy.GroovySandbox;
+import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
+import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import shaded.splk.com.google.gson.FieldNamingStrategy;
 import shaded.splk.com.google.gson.Gson;
 import shaded.splk.com.google.gson.GsonBuilder;
@@ -15,7 +19,6 @@ import com.splunk.splunkjenkins.SplunkJenkinsInstallation;
 import com.splunk.splunkjenkins.model.EventRecord;
 import com.splunk.splunkjenkins.model.EventType;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import groovy.lang.GroovyShell;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Util;
@@ -39,7 +42,6 @@ import shaded.splk.org.apache.http.client.methods.HttpPost;
 import shaded.splk.org.apache.http.client.utils.URIBuilder;
 import shaded.splk.org.apache.http.entity.StringEntity;
 import shaded.splk.org.apache.http.util.EntityUtils;
-import org.codehaus.groovy.control.MultipleCompilationErrorsException;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -716,12 +718,13 @@ public class LogEventHelper {
      * @return error message if there is any
      */
     public static FormValidation validateGroovyScript(String script) {
-        try {
-            new GroovyShell(Jenkins.getActiveInstance().pluginManager.uberClassLoader).parse(script);
-        } catch (MultipleCompilationErrorsException e) {
-            return FormValidation.error(e.getMessage());
+        FormValidation validationResult = GroovySandbox.checkScriptForCompilationErrors(script,
+                new GroovyClassLoader(Jenkins.getInstance().getPluginManager().uberClassLoader));
+        if (validationResult.kind == FormValidation.Kind.OK) {
+            return ScriptApproval.get().checking(script, GroovyLanguage.get());
+        } else {
+            return validationResult;
         }
-        return FormValidation.ok();
     }
 
     /**

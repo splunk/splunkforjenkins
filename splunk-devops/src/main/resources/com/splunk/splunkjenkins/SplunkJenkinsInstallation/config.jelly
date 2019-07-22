@@ -6,14 +6,14 @@
             <f:checkbox/>
         </f:entry>
         <f:entry title="${%HTTP Input  Host(s)}" field="host">
-            <f:textbox clazz="required"/>
+            <f:textbox clazz="required" checkMethod="post" />
         </f:entry>
         <f:entry title="${%HTTP Input Port}" field="port"
                  help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
-            <f:number clazz="positive-number" max="65535" default="8088"/>
+            <f:number clazz="positive-number" max="65535" default="8088" checkMethod="post" />
         </f:entry>
         <f:entry title="${%HTTP Input Token}" field="token">
-            <f:textbox clazz="required"/>
+            <f:textbox clazz="required" checkMethod="post" />
         </f:entry>
         <f:entry title="${%SSL Enabled}" field="useSSL"
                  help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/httpInputConfig">
@@ -41,13 +41,13 @@
             </f:entry>
 
             <f:entry title="${%Max Events Batch Size}" field="maxEventsBatchSize">
-                <f:number clazz="positive-number"/>
+                <f:number clazz="positive-number" checkMethod="post" />
             </f:entry>
             <f:entry title="${%Retries on Error}" field="retriesOnError">
-                <f:textbox/>
+                <f:number clazz="positive-number" />
             </f:entry>
             <f:entry title="${%Ignored Job Names Pattern}" field="ignoredJobs">
-                <f:textbox />
+                <f:textbox checkMethod="post" />
             </f:entry>
             <f:radioBlock name="commandsOrFileInSplunkins" value="file"
                           title="${%Customize Event Processing Script}"
@@ -60,8 +60,9 @@
             <f:radioBlock name="commandsOrFileInSplunkins" value="content"
                           title="${%Customize Event Processing Command}"
                           checked="${instance.getScriptPath() == null }" inline="true">
-                <f:entry help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding">
-                    <f:textarea class="fixed-width" name="scriptContent" value="${instance.getScriptOrDefault()}"
+                <f:entry help="/descriptorByName/com.splunk.splunkjenkins.SplunkJenkinsInstallation/help/groovyBinding"
+                         field="scriptContent">
+                    <f:textarea class="fixed-width" value="${instance.getScriptOrDefault()}" checkMethod="post"
                     />
                 </f:entry>
             </f:radioBlock>

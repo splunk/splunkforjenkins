@@ -20,6 +20,7 @@ import org.jenkinsci.plugins.scriptsecurity.scripts.ScriptApproval;
 import org.jenkinsci.plugins.scriptsecurity.scripts.languages.GroovyLanguage;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.io.File;
 import java.io.IOException;
@@ -136,6 +137,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
 
     @Override
     public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         this.metadataItemSet = null; // otherwise bindJSON will never clear it once set
         boolean previousState = this.enabled;
         req.bindJSON(this, formData);
@@ -161,6 +163,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
     /*
      * Form validation methods
      */
+    @RequirePOST
     public FormValidation doCheckHost(@QueryParameter("value") String hostName) {
         if (StringUtils.isBlank(hostName)) {
             return FormValidation.warning(Messages.PleaseProvideHost());
@@ -181,6 +184,7 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         }
     }
 
+    @RequirePOST
     public FormValidation doCheckToken(@QueryParameter("value") String value) {
         //check GUID format such as 18654C68-B28B-4450-9CF0-6E7645CA60CA
         if (StringUtils.isBlank(value) || !uuidPattern.matcher(value).find()) {
@@ -190,9 +194,11 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return FormValidation.ok();
     }
 
+    @RequirePOST
     public FormValidation doTestHttpInput(@QueryParameter String host, @QueryParameter int port,
                                           @QueryParameter String token, @QueryParameter boolean useSSL,
                                           @QueryParameter String metaDataConfig) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         //create new instance to avoid pollution global config
         SplunkJenkinsInstallation config = new SplunkJenkinsInstallation(false);
         config.host = host;
@@ -208,10 +214,16 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return verifyHttpInput(config);
     }
 
+    @RequirePOST
     public FormValidation doCheckScriptContent(@QueryParameter String value) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+        if (StringUtils.isBlank(value)) {
+            return FormValidation.ok();
+        }
         return validateGroovyScript(value);
     }
 
+    @RequirePOST
     public FormValidation doCheckMaxEventsBatchSize(@QueryParameter int value) {
         if (value < MIN_BUFFER_SIZE || value > MAX_BATCH_SIZE) {
             return FormValidation.error(String.format("please consider a value between %d and %d", MIN_BUFFER_SIZE, MAX_BATCH_SIZE));
@@ -219,7 +231,9 @@ public class SplunkJenkinsInstallation extends GlobalConfiguration {
         return FormValidation.ok();
     }
 
+    @RequirePOST
     public FormValidation doCheckIgnoredJobs(@QueryParameter String value) {
+        Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
         try {
             Pattern.compile(value);
         } catch (PatternSyntaxException ex) {
