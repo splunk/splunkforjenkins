@@ -473,7 +473,8 @@ public class LogEventHelper {
         slaveInfo.put("is_online", computer.isOnline());
         if (computer.isOffline()) {
             String offlineReason = computer.getOfflineCauseReason();
-            if (hudson.model.Messages.Hudson_NodeBeingRemoved().equals(offlineReason)) {
+            //hudson.model.Messages.Hudson_NodeBeingRemoved() can not used externally in latest version
+            if (StringUtils.contains(offlineReason, "removed")) {
                 //overwrite num_executors to zero
                 slaveInfo.put("num_executors", 0);
                 slaveInfo.put("removed", "true");
