@@ -94,6 +94,7 @@ public class LogEventHelper {
         HttpPost postMethod;
         if (config.canPostRaw(record.getEventType())) {
             postMethod = new HttpPost(record.getRawEndpoint(config));
+            LOG.log(Level.FINEST, "sending raw data, source=" + record.getSource());
             updateContent(postMethod, record.getMessageString(), false);
             postMethod.setHeader("x-splunk-request-channel", RAW_CHANNEL_ID);
         } else {

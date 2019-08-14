@@ -16,7 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import static com.splunk.splunkjenkins.Constants.MIN_BUFFER_SIZE;
-import static com.splunk.splunkjenkins.model.EventType.FILE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class LogFileCallable implements FilePath.FileCallable<Integer> {
@@ -80,6 +79,12 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             sourceName = sourceName.substring(ws_posix_path.length() + 1);
         }
         sourceName = buildUrl + sourceName;
+        boolean jsonFile = fileName.endsWith(".json");
+        EventType eventType = EventType.FILE;
+        if (jsonFile && SplunkJenkinsInstallation.get().isRawEventEnabled()) {
+            throttleSize = maxFileSize;
+            eventType = EventType.JSON_FILE;
+        }
         ByteArrayOutputStream2 logText = new ByteArrayOutputStream2(MIN_BUFFER_SIZE);
         long totalSize = 0;
         Integer count = 0;
@@ -89,8 +94,10 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             totalSize += n;
             for (int i = 0; i < n; i++) {
                 logText.write(buffer[i]);
-                if (buffer[i] == '\n' && logText.size() >= throttleSize) {
-                    flushLog(sourceName, logText);
+                if (buffer[i] == '\n' && logText.size() > throttleSize) {
+                    // file is too big to send in one request, use EventType.FILE
+                    eventType = EventType.FILE;
+                    flushLog(sourceName, logText, eventType);
                     count++;
                 }
             }
@@ -101,7 +108,7 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
             }
         }
         if (logText.size() > 0) {
-            flushLog(sourceName, logText);
+            flushLog(sourceName, logText, eventType);
             count++;
         }
         return count;
@@ -126,15 +133,10 @@ public class LogFileCallable implements FilePath.FileCallable<Integer> {
         enabledSplunkConfig = true;
     }
 
-    private void flushLog(String source, ByteArrayOutputStream out) {
+    private void flushLog(String source, ByteArrayOutputStream out, EventType eventType) {
         try {
             String text = out.toString("UTF-8");
             SoftReference<String> textRef = new SoftReference<>(text);
-            EventType eventType = EventType.FILE;
-            if (source.endsWith(".json")) {
-                //guess it is a json file
-                eventType = EventType.BATCH_JSON;
-            }
             SplunkLogService.getInstance().send(textRef, eventType, source);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();

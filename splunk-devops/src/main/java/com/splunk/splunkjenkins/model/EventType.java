@@ -9,7 +9,8 @@ public enum EventType {
     FILE(true),
     SLAVE_INFO(false),
     LOG(false),
-    BATCH_JSON(false);
+    BATCH_JSON(false),
+    JSON_FILE(true);
 
     /**
      * whether the data need to be split by line breaker before send
