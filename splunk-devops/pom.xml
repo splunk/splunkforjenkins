@@ -109,6 +109,8 @@
                                 <exclude>org.apache.maven.reporting:maven-reporting-api</exclude>
                                 <exclude>org.apache.maven.doxia:doxia-sink-api</exclude>
                                 <exclude>org.apache.maven.doxia:doxia-logging-api</exclude>
+                                <exclude>org.apache.maven:maven-plugin-api</exclude>
+                                <exclude>org.codehaus.plexus:plexus-classworlds</exclude>
                             </excludes>
                         </requireUpperBoundDeps>
                     </rules>
