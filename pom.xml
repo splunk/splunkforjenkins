@@ -91,7 +91,7 @@
         <dependency>
             <groupId>com.splunk</groupId>
             <artifactId>splunk</artifactId>
-            <version>1.5.0.0</version>
+            <version>1.6.5.0</version>
             <scope>test</scope> <!--only used to setup token and execute search-->
         </dependency>
         <dependency>
