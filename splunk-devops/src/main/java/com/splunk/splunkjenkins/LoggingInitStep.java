@@ -22,7 +22,7 @@ public class LoggingInitStep {
             public void run() {
                 registerHandler();
             }
-        }, 3, TimeUnit.MINUTES);
+        }, 30, TimeUnit.SECONDS);
     }
 
     protected static void registerHandler() {
