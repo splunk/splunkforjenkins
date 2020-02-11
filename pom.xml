@@ -60,7 +60,7 @@
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
@@ -71,14 +71,14 @@
         <repository>
             <id>splunk-artifactory</id>
             <name>Splunk Releases</name>
-            <url>http://splunk.artifactoryonline.com/splunk/ext-releases-local</url>
+            <url>https://splunk.artifactoryonline.com/splunk/ext-releases-local</url>
         </repository>
     </repositories>
 
     <pluginRepositories>
         <pluginRepository>
             <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
+            <url>https://repo.jenkins-ci.org/public/</url>
             <releases>
                 <enabled>true</enabled>
             </releases>
